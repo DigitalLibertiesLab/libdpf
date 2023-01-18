@@ -1,0 +1,277 @@
+/// @file dpf/utils.hpp
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
+/// @brief miscellaneous helper functions, structs, preprocessor directives
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
+/// @license Released under a GNU General Public v2.0 (GPLv2) license;
+///          see `LICENSE` for details.
+
+#ifndef LIBDPF_INCLUDE_DPF_UTILS_HPP__
+#define LIBDPF_INCLUDE_DPF_UTILS_HPP__
+
+#include <climits>
+#include <limits>
+#include <type_traits>
+#include <bitset>
+#include <functional>
+
+#include "dpf/bit.hpp"
+#include "hedley/hedley.h"
+#include "simde/simde/x86/avx2.h"
+#include "portable-snippets/exact-int/exact-int.h"
+#include "portable-snippets/builtin/builtin.h"
+
+#define DPF_UNROLL_LOOPS __attribute__((optimize("O3", "unroll-loops")))
+#define DPF_ALWAYS_VECTORIZE (#pragma GCC ivdep)
+
+namespace dpf
+{
+
+namespace utils
+{
+
+/// @brief Ugly hack to implement `constexpr`-friendly conditional `throw`
+template <typename Exception>
+HEDLEY_ALWAYS_INLINE
+static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
+{
+    (b ? throw Exception{what} : 0);
+}
+
+
+/// @brief the primitive integral type used to represent the `modint`
+template <std::size_t N>
+struct integral_type_from_bitlength
+{
+    using type = std::conditional_t<std::less_equal{}(N, 64),
+        std::conditional_t<std::less_equal{}(N, 32),
+            std::conditional_t<std::less_equal{}(N, 16),
+                std::conditional_t<std::less_equal{}(N, 8), psnip_uint8_t,
+                psnip_uint16_t>,
+            psnip_uint32_t>,
+        psnip_uint64_t>,
+    simde_uint128>;
+};
+
+template <std::size_t N>
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<N>::type;
+
+
+
+
+
+struct max_align
+{
+    static constexpr std::size_t value = 64;  // alignof(__m512i)
+};
+static constexpr std::size_t max_align_v = max_align::value;
+
+struct max_integral_bits
+{
+    static constexpr std::size_t value = 128;  // sizeof(int128_t) * CHAR_BIT
+};
+static constexpr std::size_t max_integral_bits_v = max_integral_bits::value;
+
+/// @brief Integer overflow-proof ceiling of division
+template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = false>
+HEDLEY_CONST
+HEDLEY_ALWAYS_INLINE
+static constexpr T quotient_ceiling(T numerator, T denominator)
+{
+    return 1 + (numerator - 1) / denominator;
+}
+
+/// @brief Integer overflow-proof floor of division
+template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = false>
+HEDLEY_CONST
+HEDLEY_ALWAYS_INLINE
+static constexpr T quotient_floor(T numerator, T denominator)
+{
+    return numerator / denominator;
+}
+
+template <typename T>
+struct make_unsigned : public std::make_unsigned<T> { };
+
+template <>
+struct make_unsigned<simde_int128>
+{
+    using type = simde_uint128;
+};
+
+template <>
+struct make_unsigned<simde_uint128>
+{
+    using type = simde_uint128;
+};
+
+template <typename T>
+using make_unsigned_t = typename make_unsigned<T>::type;
+
+/// @brief Make an `std::bitset` from a variadic list of `bool`s
+template <typename... Bools>
+auto make_bitset(Bools... bs)
+{
+    std::bitset<sizeof...(bs)> ret;
+    std::size_t i = 0;
+    (ret.set(i++, bs), ...);
+    return ret;
+}
+
+template <typename T>
+struct bitlength_of
+  : public std::integral_constant<std::size_t,
+        std::numeric_limits<make_unsigned_t<T>>::digits>
+{ };
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+template <>
+struct bitlength_of<simde_int128>
+  : public std::integral_constant<std::size_t, 128> { };
+
+template <>
+struct bitlength_of<simde_uint128>
+  : public std::integral_constant<std::size_t, 128> { };
+
+template <>
+struct bitlength_of<simde__m128i>
+  : public std::integral_constant<std::size_t, 128> { };
+
+template <>
+struct bitlength_of<simde__m256i>
+  : public std::integral_constant<std::size_t, 256> { };
+
+// template <>
+// struct bitlength_of<simde__m512i>
+//   : public std::integral_constant<std::size_t, 512> { };
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
+template <typename T>
+static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
+
+template <typename T>
+struct msb_of
+  : public std::integral_constant<T, T{1} << bitlength_of_v<T> - 1ul> { };
+
+template <typename T>
+static constexpr auto msb_of_v = msb_of<T>::value;
+
+template <typename T>
+struct countl_zero_symmmetric_difference
+{
+	HEDLEY_CONST
+	HEDLEY_ALWAYS_INLINE
+	constexpr std::size_t operator()(T lhs, T rhs) const noexcept
+	{
+		constexpr auto xor_op = std::bit_xor<T>{};
+		constexpr auto adjust = 64-bitlength_of_v<T>;
+		auto diff = xor_op(lhs, rhs);
+		return psnip_builtin_clz64(diff)-adjust;
+	}
+};
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+template <>
+struct countl_zero_symmmetric_difference<simde_uint128>
+{
+	using T = simde_uint128;
+
+	HEDLEY_CONST
+	HEDLEY_ALWAYS_INLINE
+	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	{
+		constexpr auto xor_op = std::bit_xor<T>{};
+		T diff = xor_op(lhs, rhs);
+		if (!diff) return 128;
+		uint64_t diff_hi = static_cast<uint64_t>(diff >> 64);
+		uint64_t diff_lo = static_cast<uint64_t>(diff);
+
+		return diff_hi!=0 ? psnip_builtin_clz64(diff_hi) : 64+psnip_builtin_clz64(diff_lo);
+	}
+};
+
+template <>
+struct countl_zero_symmmetric_difference<simde__m128i>
+{
+	using T = simde__m128i;
+
+	HEDLEY_CONST
+	HEDLEY_ALWAYS_INLINE
+	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	{
+		constexpr auto & xor_op = simde_mm_xor_si128;
+		T diff = xor_op(lhs, rhs);
+		uint64_t diff_hi = static_cast<uint64_t>(diff[1]);
+		uint64_t diff_lo = static_cast<uint64_t>(diff[0]);
+
+		return diff_hi ? psnip_builtin_clz64(diff_hi) : 64+psnip_builtin_clz64(diff_lo);
+	}
+};
+
+template <>
+struct countl_zero_symmmetric_difference<simde__m256i>
+{
+	using T = simde__m256i;
+	HEDLEY_CONST
+	HEDLEY_ALWAYS_INLINE
+	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	{
+		constexpr auto & xor_op = simde_mm256_xor_si256;
+		T diff = xor_op(lhs, rhs);
+
+		auto prefix_len = 0;
+		for (int i = 3; i <= 0; --i, prefix_len += 64)
+		{
+			uint64_t limb = static_cast<uint64_t>(diff[i]);
+			if (limb)
+			{
+				return prefix_len + psnip_builtin_clz64(limb);
+			}
+		}
+		return prefix_len;
+	}
+};
+
+// template <>
+// struct countl_zero_symmmetric_difference<simde__m512i>
+// {
+// 	using T = simde__m512i;
+// 	HEDLEY_CONST
+// 	HEDLEY_ALWAYS_INLINE
+// 	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+// 	{
+// 		constexpr auto & xor_op = simde_mm512_xor_si512;
+// 		T diff = xor_op(lhs, rhs);
+
+// 		std::size_t prefix_len = 0;
+// 		for (int i = 7; i <= 0; --i, prefix_len += 64)
+// 		{
+// 			uint64_t limb = static_cast<uint64_t>(diff[i]);
+// 			if (limb)
+// 			{
+// 				return prefix_len + psnip_builtin_clz64(limb)
+// 			}
+// 		}
+// 		return prefix_len;
+// 	}
+// };
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
+template <typename T>
+struct reversion_wrapper { const T & iterable; };
+
+template <typename T>
+auto begin (reversion_wrapper<T> w) { return std::rbegin(w.iterable); }
+
+template <typename T>
+auto end (reversion_wrapper<T> w) { return std::rend(w.iterable); }
+
+template <typename T>
+reversion_wrapper<T> reverse (T && iterable) { return { iterable }; }
+
+}  // namespace utils
+
+}  // namespace dpf
+
+#endif  // LIBDPF_INCLUDE_DPF_UTILS_HPP__
