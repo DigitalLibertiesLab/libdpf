@@ -5,8 +5,8 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 
-#ifndef  LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
-#define  LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
+#define LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
 
 #include <new>
 #include <limits>
