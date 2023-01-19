@@ -381,7 +381,7 @@ class bit_array_base
     /// @complexity `O(size())`
     void set() noexcept
     {
-        std::fill(arr_, arr_+data_length_-1, ~word_type(0));
+        std::fill(arr_, arr_+data_length_, ~word_type(0));
     }
     /// @brief sets the bit at position `pos` to the value `value`
     /// @param pos the 0-based position of the bit to set (least significant
@@ -414,7 +414,7 @@ class bit_array_base
     /// @complexity `O(size())`
     void unset() noexcept
     {
-        std::fill(arr_, arr_+data_length_-1, word_type(0));
+        std::fill(arr_, arr_+data_length_, word_type(0));
     }
     /// @brief sets the bit at position `pos` to `false`
     /// @param pos the 0-based position of the bit to unset (least
@@ -1050,7 +1050,7 @@ class bit_array_base
         data_length_{utils::quotient_ceiling(num_bits, bits_per_word)},
         arr_{arr}
     {
-        arr_[data_length_] = sentinel;
+        // arr_[data_length_] = sentinel;
     }
 
   protected:
@@ -1081,21 +1081,27 @@ inline bit_array_base::bit_iterator_base::difference_type operator-(
 template <std::size_t Nbits>
 class alignas(utils::max_align_v) static_bit_array : public bit_array_base
 {
+    static constexpr std::size_t length_in_words = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
   public:
     constexpr static_bit_array(static_bit_array &&) = default;
     constexpr static_bit_array(const static_bit_array &) = default;
     /// @brief constructs a `static_bit_array` that holds `num_bits` bits
     inline constexpr static_bit_array()
-      : bit_array_base{Nbits, &arr[0]}, arr{} { }
+      : bit_array_base{Nbits, &arr[0]} { arr_[data_length_] = sentinel; }
     inline constexpr static_bit_array(std::size_t val)
-      : bit_array_base{Nbits, &arr[0]}, arr{val} { }
+      : bit_array_base{Nbits, &arr[0]}
+    {
+        arr_[0] = val;
+        arr_[data_length_] = sentinel;
+    }
 
   private:
-    std::array<word_type, Nbits> arr;
+    std::array<word_type, length_in_words> arr;
 };
 
 class dynamic_bit_array : public bit_array_base
 {
+  public:
     constexpr dynamic_bit_array(dynamic_bit_array &&) = default;
     constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
@@ -1103,10 +1109,11 @@ class dynamic_bit_array : public bit_array_base
     inline dynamic_bit_array(std::size_t nbits)
       : bit_array_base{nbits, static_cast<word_pointer>(
             std::aligned_alloc(utils::max_align_v,
-                (data_length_+1) * sizeof(word_type)))
+                utils::quotient_ceiling(nbits+bits_per_word, bits_per_word) * sizeof(word_type)))
             }
     {
         if (HEDLEY_UNLIKELY(arr_ == nullptr)) throw std::bad_alloc{};
+        arr_[data_length_] = sentinel;
     }
 
     HEDLEY_ALWAYS_INLINE

@@ -14,6 +14,7 @@
 #include "dpf/keyword.hpp"
 #include "dpf/fixedpoint.hpp"
 #include "dpf/bit_array.hpp"
+#include "dpf/setbit_index_iterable.hpp"
 #include "dpf/output_buffer.hpp"
 #include "dpf/utils.hpp"
 
