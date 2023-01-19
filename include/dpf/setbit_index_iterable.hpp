@@ -1,7 +1,7 @@
 /// @file dpf/setbit_index_iterable.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines `bit_array` and associated helpers
-/// @copyright Copyright (c) 2019-2022 Ryan Henry and others
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 

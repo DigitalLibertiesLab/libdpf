@@ -16,6 +16,7 @@
 #include "dpf/bit_array.hpp"
 #include "dpf/setbit_index_iterable.hpp"
 #include "dpf/output_buffer.hpp"
+#include "dpf/prg_aes.hpp"
 #include "dpf/utils.hpp"
 
 #endif
