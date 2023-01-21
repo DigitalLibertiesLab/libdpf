@@ -73,45 +73,20 @@ class bitstring : public dpf::static_bit_array<N>
     };
 };
 
-bool subtract_bit_with_borrow(bool lhs, bool rhs, bool & borrow)
-{
-    bool diff;
-    if (borrow)
-    {
-        diff = !(lhs ^ rhs);
-        borrow = !lhs || (lhs && rhs);
-    }
-    else
-    {
-        diff = lhs ^ rhs;
-        borrow = !lhs && rhs;
-    }
-    return diff;
-}
-
-template <std::size_t N>
-auto subtract(const bitstring<N> & lhs, const bitstring<N> & rhs)
-{
-    bool borrow = false;
-    bitstring<N> diff;
-    for (int i = 0; i < N; ++i)
-    {
-        diff[i] = subtract_bit_with_borrow(lhs[i], rhs[i], borrow);
-    }
-    return diff;
-}
-
 template <std::size_t N>
 constexpr bool operator<(const bitstring<N> & lhs, const bitstring<N> & rhs)
 {
-    auto diff = subtract(lhs, rhs);
-    return diff[N-1];
+    auto lhs_iter = std::rbegin(lhs), rhs_iter = std::rbegin(rhs);
+    while (*lhs-- == *rhs--)
+    {
+        if (lhs_iter == std::rend(lhs)) return false;
+    }
+    return *lhs < *rhs;
 }
 
 template <std::size_t N>
 constexpr bool operator<=(const bitstring<N> & lhs, const bitstring<N> & rhs)
 {
-    auto diff = subtract(lhs, rhs);
     return (lhs < rhs) || lhs == rhs;
 }
 
