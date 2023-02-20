@@ -110,14 +110,14 @@ constexpr xor_wrapper<T> operator-(const xor_wrapper<T> & lhs,
     return xor_wrapper<T>::bit_xor(lhs.value, rhs.value);
 }
 
-// template <typename T>
-// HEDLEY_ALWAYS_INLINE
-// HEDLEY_NO_THROW
-// constexpr xor_wrapper<T> operator*(const xor_wrapper<T> & lhs,
-//     const xor_wrapper<T> & rhs) noexcept
-// {
-//     return xor_wrapper<T>::bit_and(lhs.value, rhs.value);
-// }
+template <typename T>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_NO_THROW
+constexpr xor_wrapper<T> operator*(const xor_wrapper<T> & lhs,
+    const xor_wrapper<T> & rhs) noexcept
+{
+    return xor_wrapper<T>::bit_and(lhs.value, rhs.value);
+}
 
 using xint128_t = xor_wrapper<simde_uint128>;  ///< `xor_wrapper<simde_uint128>`
 using xint64_t = xor_wrapper<psnip_uint64_t>;  ///< `xor_wrapper<psnip_uint64_t>`

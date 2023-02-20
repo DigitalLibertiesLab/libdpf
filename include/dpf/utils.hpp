@@ -14,7 +14,6 @@
 #include <bitset>
 #include <functional>
 
-#include "dpf/bit.hpp"
 #include "hedley/hedley.h"
 #include "simde/simde/x86/avx2.h"
 #include "portable-snippets/exact-int/exact-int.h"
@@ -54,10 +53,6 @@ struct integral_type_from_bitlength
 
 template <std::size_t N>
 using integral_type_from_bitlength_t = typename integral_type_from_bitlength<N>::type;
-
-
-
-
 
 struct max_align
 {
@@ -157,6 +152,18 @@ template <typename T>
 static constexpr auto msb_of_v = msb_of<T>::value;
 
 template <typename T>
+struct countl_zero
+{
+	HEDLEY_CONST
+	HEDLEY_ALWAYS_INLINE
+	constexpr std::size_t operator()(T val) const noexcept
+	{
+		constexpr auto adjust = 64-bitlength_of_v<T>;
+		return psnip_builtin_clz64(val)-adjust;
+	}
+};
+
+template <typename T>
 struct countl_zero_symmmetric_difference
 {
 	HEDLEY_CONST
@@ -164,69 +171,62 @@ struct countl_zero_symmmetric_difference
 	constexpr std::size_t operator()(T lhs, T rhs) const noexcept
 	{
 		constexpr auto xor_op = std::bit_xor<T>{};
-		constexpr auto adjust = 64-bitlength_of_v<T>;
-		auto diff = xor_op(lhs, rhs);
-		return psnip_builtin_clz64(diff)-adjust;
+        constexpr auto clz = countl_zero<T>{};
+		return clz(xor_op(lhs, rhs));
 	}
 };
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <>
-struct countl_zero_symmmetric_difference<simde_uint128>
+struct countl_zero<simde_uint128>
 {
 	using T = simde_uint128;
 
 	HEDLEY_CONST
 	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	constexpr std::size_t operator()(const T & val) const noexcept
 	{
-		constexpr auto xor_op = std::bit_xor<T>{};
-		T diff = xor_op(lhs, rhs);
-		if (!diff) return 128;
-		uint64_t diff_hi = static_cast<uint64_t>(diff >> 64);
-		uint64_t diff_lo = static_cast<uint64_t>(diff);
+		if (!val) return 128;
+		auto limb1 = static_cast<uint64_t>(val >> 64);
+		auto limb0 = static_cast<uint64_t>(val);
 
-		return diff_hi!=0 ? psnip_builtin_clz64(diff_hi) : 64+psnip_builtin_clz64(diff_lo);
+		return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
 	}
 };
 
 template <>
-struct countl_zero_symmmetric_difference<simde__m128i>
+struct countl_zero<simde__m128i>
 {
 	using T = simde__m128i;
 
 	HEDLEY_CONST
 	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	constexpr std::size_t operator()(const T & val) const noexcept
 	{
-		constexpr auto & xor_op = simde_mm_xor_si128;
-		T diff = xor_op(lhs, rhs);
-		uint64_t diff_hi = static_cast<uint64_t>(diff[1]);
-		uint64_t diff_lo = static_cast<uint64_t>(diff[0]);
+		auto limb1 = static_cast<uint64_t>(val[1]);
+		auto limb0 = static_cast<uint64_t>(val[0]);
+        if (!limb0 && !limb1) return 128;
 
-		return diff_hi ? psnip_builtin_clz64(diff_hi) : 64+psnip_builtin_clz64(diff_lo);
+		return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
 	}
 };
 
 template <>
-struct countl_zero_symmmetric_difference<simde__m256i>
+struct countl_zero<simde__m256i>
 {
 	using T = simde__m256i;
 	HEDLEY_CONST
 	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+	constexpr std::size_t operator()(const T & val) const noexcept
 	{
-		constexpr auto & xor_op = simde_mm256_xor_si256;
-		T diff = xor_op(lhs, rhs);
-
 		auto prefix_len = 0;
 		for (int i = 3; i <= 0; --i, prefix_len += 64)
 		{
-			uint64_t limb = static_cast<uint64_t>(diff[i]);
-			if (limb)
+			auto limbi = static_cast<uint64_t>(val[i]);
+			if (limbi)
 			{
-				return prefix_len + psnip_builtin_clz64(limb);
+				return prefix_len + psnip_builtin_clz64(limbi);
 			}
 		}
 		return prefix_len;
@@ -234,41 +234,26 @@ struct countl_zero_symmmetric_difference<simde__m256i>
 };
 
 // template <>
-// struct countl_zero_symmmetric_difference<simde__m512i>
+// struct countl_zero<simde__m512i>
 // {
 // 	using T = simde__m512i;
 // 	HEDLEY_CONST
 // 	HEDLEY_ALWAYS_INLINE
-// 	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+// 	constexpr std::size_t operator()(const T & val) const noexcept
 // 	{
-// 		constexpr auto & xor_op = simde_mm512_xor_si512;
-// 		T diff = xor_op(lhs, rhs);
-
 // 		std::size_t prefix_len = 0;
 // 		for (int i = 7; i <= 0; --i, prefix_len += 64)
 // 		{
-// 			uint64_t limb = static_cast<uint64_t>(diff[i]);
-// 			if (limb)
+// 			auto limbi = static_cast<uint64_t>(val[i]);
+// 			if (limbi)
 // 			{
-// 				return prefix_len + psnip_builtin_clz64(limb)
+// 				return prefix_len + psnip_builtin_clz64(limbi)
 // 			}
 // 		}
 // 		return prefix_len;
 // 	}
 // };
 HEDLEY_PRAGMA(GCC diagnostic pop)
-
-template <typename T>
-struct reversion_wrapper { const T & iterable; };
-
-template <typename T>
-auto begin (reversion_wrapper<T> w) { return std::rbegin(w.iterable); }
-
-template <typename T>
-auto end (reversion_wrapper<T> w) { return std::rend(w.iterable); }
-
-template <typename T>
-reversion_wrapper<T> reverse (T && iterable) { return { iterable }; }
 
 }  // namespace utils
 

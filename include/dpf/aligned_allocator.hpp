@@ -1,6 +1,7 @@
 /// @file aligned_nodes.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief
+/// @brief An allocator that aligns memory allocations to a specified
+///        alignment
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
@@ -21,7 +22,7 @@ namespace dpf
 namespace detail
 {
 
-template <class T, std::size_t Alignment = alignof(T)>
+template <class T, std::size_t Alignment = utils::max_align_v>
 class aligned_allocator : public std::allocator<T>
 {
   public:
@@ -29,6 +30,8 @@ class aligned_allocator : public std::allocator<T>
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
     using pointer = std::add_pointer_t<value_type>;
+    struct deleter { void operator()(pointer p) const { free(p); } };
+    using unique_ptr = std::unique_ptr<pointer, deleter>;
     using const_pointer = std::add_const_t<pointer>;
     using reference = value_type &;
     using const_reference = std::add_const_t<reference>;
@@ -101,6 +104,17 @@ class aligned_allocator : public std::allocator<T>
     constexpr void deallocate(pointer p, size_type /*num*/ = 0)
     {
         free(p);
+    }
+
+    constexpr static auto make_unique(size_type num)
+    {
+        return unique_ptr{allocate(num)};
+    }
+
+    constexpr static auto assume_aligned(pointer ptr)
+    {
+        return static_cast<pointer>(
+            __builtin_assume_aligned(ptr, Alignment));
     }
 };
 

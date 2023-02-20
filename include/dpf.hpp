@@ -8,6 +8,7 @@
 #ifndef LIBDPF_INCLUDE_DPF_HPP__
 #define LIBDPF_INCLUDE_DPF_HPP__
 
+#include "dpf/utils.hpp"
 #include "dpf/bit.hpp"
 #include "dpf/bitstring.hpp"
 #include "dpf/modint.hpp"
@@ -17,6 +18,6 @@
 #include "dpf/setbit_index_iterable.hpp"
 #include "dpf/output_buffer.hpp"
 #include "dpf/prg_aes.hpp"
-#include "dpf/utils.hpp"
+#include "dpf/eval.hpp"
 
 #endif
