@@ -159,22 +159,22 @@ auto make_naked_leaf(input_t x, output_t y)
 }
 
 template <typename prg_t, std::size_t I, typename seed_t,
-    typename output_t, typename... output_ts>
-auto make_leaf_mask1(const seed_t & seed)
+    typename... output_ts>
+auto make_leaf_mask_inner(const seed_t & seed)
 {
     using node_t = typename prg_t::block_t;
-    using type = std::tuple_element_t<I, std::tuple<output_t, output_ts...>>;
+    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
     using leaf_t = dpf::leaf_node_t<node_t, type>;
 
-    if constexpr(sizeof...(output_ts) == 0
-        && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
+    if constexpr(sizeof...(output_ts) == 1
+        && dpf::block_length_of_leaf_v<type, node_t> == 1)
     {
         return seed;
     }
     else
     {
         auto count = dpf::block_length_of_leaf_v<type, node_t>;
-        auto pos = dpf::block_offset_of_leaf_v<I, node_t, output_t, output_ts...>;
+        auto pos = dpf::block_offset_of_leaf_v<I, node_t, output_ts...>;
         leaf_t output;
         prg_t::eval(seed, &output, count, pos);
 
@@ -183,61 +183,51 @@ auto make_leaf_mask1(const seed_t & seed)
 }
 
 template <typename prg_t, std::size_t I, typename seed_t,
-    typename output_t, typename... output_ts>
-auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1,
-    output_t, output_ts...)
+    typename... output_ts>
+auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1, output_ts...)
 {
     using node_t = typename prg_t::block_t;
-    using type = std::tuple_element_t<I, std::tuple<output_t, output_ts...>>;
+    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
 
-    auto mask0 = make_leaf_mask1<prg_t, I, node_t, output_t, output_ts...>(seed0);
-    auto mask1 = make_leaf_mask1<prg_t, I, node_t, output_t, output_ts...>(seed1);
+    auto mask0 = make_leaf_mask_inner<prg_t, I, node_t, output_ts...>(seed0);
+    auto mask1 = make_leaf_mask_inner<prg_t, I, node_t, output_ts...>(seed1);
 
     return dpf::subtract<type, node_t>(mask1, mask0);
 }
 
 template <typename prg_t, std::size_t I, typename input_t, typename seed_t,
-    typename output_t, typename... output_ts>
+    typename... output_ts>
 auto make_leaf(input_t x, const seed_t & seed0, const seed_t & seed1, bool sign,
-    output_t y, output_ts...ys)
+    output_ts...ys)
 {
-    auto tuple = std::make_tuple(y, ys...);
-    using type = std::tuple_element_t<I, std::tuple<output_t, output_ts...>>;
+    auto tuple = std::make_tuple(ys...);
+    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
     auto Y = std::get<I>(tuple);
 
     using node_t = typename prg_t::block_t;
     return sign ? dpf::subtract<type, node_t>(
                     make_naked_leaf<node_t>(x, Y),
-                    make_leaf_mask<prg_t, I>(seed0, seed1, y, ys...))
+                    make_leaf_mask<prg_t, I>(seed0, seed1, ys...))
                 : dpf::subtract<type, node_t>(
-                    make_leaf_mask<prg_t, I>(seed0, seed1, y, ys...),
+                    make_leaf_mask<prg_t, I>(seed0, seed1, ys...),
                     make_naked_leaf<node_t>(x, Y));
 }
 
 template <typename prg_t, typename input_t, typename seed_t,
-    typename output_t, typename... output_ts, std::size_t... Is>
+    typename... output_ts, std::size_t... Is>
 auto make_leaves_impl(input_t x, const seed_t & seed0, const seed_t & seed1,
-    bool sign, std::index_sequence<Is...>, output_t y, output_ts... ys)
+    bool sign, std::index_sequence<Is...>, output_ts... ys)
 {
-    return std::make_tuple(make_leaf<prg_t, 0>(x, seed0, seed1, sign, y, ys...),
-        make_leaf<prg_t, Is+1>(x, seed0, seed1, sign, y, ys...)...);
+    return std::make_tuple(make_leaf<prg_t, Is>(x, seed0, seed1, sign, ys...)...);
 }
 
-template <typename prg_t, typename input_t, typename seed_t,
-    typename output_t, typename... output_ts,
-    typename Indices = std::make_index_sequence<sizeof...(output_ts)>>
-auto __make_leaves(input_t x, const seed_t & seed0, const seed_t & seed1,
-    bool sign, output_t y, output_ts... ys)
-{
-    return make_leaves_impl<prg_t>(x, seed0, seed1, sign, Indices{}, y, ys...);
-}
-
-template <typename prg_t, typename input_t, typename seed_t, typename... output_ts>
+template <typename prg_t, typename input_t, typename seed_t, typename... output_ts,
+          typename Indices = std::make_index_sequence<sizeof...(output_ts)>>
 auto make_leaves(input_t x, const seed_t & seed0, const seed_t & seed1,
     bool sign, output_ts... ys)
 {
     using node_t = typename prg_t::block_t;
-    auto tup = __make_leaves<prg_t>(x, seed0, seed1, sign, ys...);
+    auto tup = make_leaves_impl<prg_t>(x, seed0, seed1, sign, Indices{}, ys...);
     std::pair<decltype(tup), decltype(tup)> ret;
 
     // post-processing to secret-share any wildcard leaves

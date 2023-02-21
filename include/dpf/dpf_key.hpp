@@ -99,7 +99,7 @@ struct dpf_key
         const exterior_node_t & cw) noexcept
     {
         return dpf::subtract<std::tuple_element_t<I, outputs_t>, exterior_node_t>(
-            make_leaf_mask1<exterior_prg_t, I, exterior_node_t, output_t, output_ts...>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t, output_t, output_ts...>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
     }
 
