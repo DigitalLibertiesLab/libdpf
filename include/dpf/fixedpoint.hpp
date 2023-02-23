@@ -35,7 +35,9 @@ struct fixedpoint
     static constexpr int fractional_bits = FractionalBits;
     static constexpr int integer_bits = utils::bitlength_of_v<integral_type> - fractional_bits;
 
-    static_assert(std::numeric_limits<integral_type>::is_integer);
+    static_assert(std::numeric_limits<integral_type>::is_integer
+        || std::is_same_v<integral_type, simde_int128>
+        || std::is_same_v<integral_type, simde_uint128>);
     static_assert(fractional_bits <= utils::bitlength_of_v<integral_type>);
     static_assert(integer_bits >= 0);
 
@@ -335,7 +337,7 @@ template <class CharT,
           unsigned FractionalBits,
           typename IntegralType>
 std::basic_ostream<CharT, Traits> &
-operator>>(std::basic_ostream<CharT, Traits> & os, 
+operator<<(std::basic_ostream<CharT, Traits> & os, 
     const fixedpoint<FractionalBits, IntegralType> & f) noexcept
 {
     return os << static_cast<double>(f);
