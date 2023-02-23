@@ -27,6 +27,10 @@
 namespace dpf
 {
 
+template <unsigned FractionalBits, 
+          typename IntegerType>
+auto constexpr make_fixed_from_integral_type(IntegerType value) noexcept;
+
 template <unsigned FractionalBits,
           typename IntegralType = LIBDPF_FIXED_DEFAULT_INTEGRAL_REPRESENTATION>
 struct fixedpoint
@@ -183,8 +187,7 @@ struct fixedpoint
     HEDLEY_CONST
     constexpr auto operator*(fixedpoint<FractionalBits1, IntegralType> rhs) noexcept
     {
-        using product_t = fixedpoint<FractionalBits + FractionalBits1, IntegralType>;
-        return product_t(this->integral_representation() * rhs.integral_representation());
+        return make_fixed_from_integral_type<FractionalBits + FractionalBits1>(this->integral_representation() * rhs.integral_representation());
     }
 
     /// @name Equality
@@ -327,7 +330,7 @@ struct fixedpoint
     template <unsigned F, typename T> friend constexpr auto nextafter(fixedpoint<F, T> f) noexcept;
     template <unsigned F, typename T> friend constexpr auto nextbefore(fixedpoint<F, T> f) noexcept;
     template <unsigned F0, unsigned F1, typename T> friend constexpr auto precision_cast(fixedpoint<F1, T> f) noexcept;
-
+    template <unsigned F, typename T> friend constexpr auto make_fixed_from_integral_type(T value) noexcept;
 
     integral_type value;
 };
@@ -355,6 +358,13 @@ operator>>(std::basic_istream<CharT, Traits> & is,
     is >> d;
     f = d;
     return is;
+}
+
+template <unsigned FractionalBits, 
+          typename IntegerType>
+auto constexpr make_fixed_from_integral_type(IntegerType value) noexcept
+{
+    return fixedpoint<FractionalBits, IntegerType>(value);
 }
 
 template <unsigned FractionalBits,
