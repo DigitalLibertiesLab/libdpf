@@ -30,14 +30,15 @@ auto eval_point(const dpf_t & dpf, input_t x, memoizer_t & buf)
 {
     if (dpf.is_wildcard(I))
     {
-        throw std::runtime_error("cannot to evaluate wildcards");
+        throw std::runtime_error("cannot evaluate wildcards");
     }
     using output_t = std::tuple_element_t<I, typename dpf_t::outputs_t>;
 
     std::size_t i = buf.assign_x(x);
-    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth-1; ++i)
+    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i)
     {
-        bool bit = !!(x & (mask>>=1));
+        bool bit = !!(x & mask);
+        mask >>= 1;
         auto cw = set_lo_bit(dpf.interior_cws[i],
             dpf.correction_advice[i]>>bit);
         buf[i+1] = dpf_t::traverse_interior(buf[i], cw, bit);
