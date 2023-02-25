@@ -178,6 +178,21 @@ auto make_dpf(input_t x, output_t y, output_ts... ys)
         specialization{root[1], correction_word, correction_advice, leaves.second, wildcard_mask});
 }  // make_dpf
 
+// carries the state for assigning a leaf, which is interactive
+struct leaf_assigner
+{
+};
+
+// carries the state for dorner-shelat method, which is interactive
+struct dorner_shelat_dpf_maker
+{
+};
+
+// carries the state for a linear sketch for 1-hotness
+struct linear_sketch
+{
+};
+
 }  // namespace dpf
 
 #endif  // LIBDPF_INCLUDE_DPF_DPF_KEY_HPP__
