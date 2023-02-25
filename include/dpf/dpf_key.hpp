@@ -139,9 +139,9 @@ auto make_dpf(input_t x, output_t y, output_ts... ys)
     interior_node_t parent[2] = { root[0], root[1] };
     bool advice[2];
 
-    for (std::size_t level = 0; level < depth-1; ++level)
+    for (std::size_t level = 0; level < depth; ++level, mask >>= 1)
     {
-        bool bit = !!((mask >>= 1) & x);
+        bool bit = !!(mask & x);
 
         advice[0] = dpf::get_lo_bit_and_clear_lo_2bits(parent[0]);
         advice[1] = dpf::get_lo_bit_and_clear_lo_2bits(parent[1]);
