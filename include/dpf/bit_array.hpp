@@ -1060,10 +1060,10 @@ class bit_array_base
     static constexpr word_type sentinel = ~word_type(0);
 
     /// @brief the number of bits represented by the `bit_array_base`
-    const size_type num_bits_;
+    size_type num_bits_;
     /// @brief the number of `word_type`s are being used to represent the
     ///        `num_bits_` bits
-    const size_type data_length_;
+    size_type data_length_;
 
     /// @brief the array
     word_pointer arr_;
@@ -1102,7 +1102,11 @@ class alignas(utils::max_align_v) static_bit_array : public bit_array_base
 class dynamic_bit_array : public bit_array_base
 {
   public:
-    constexpr dynamic_bit_array(dynamic_bit_array &&) = default;
+    constexpr dynamic_bit_array(dynamic_bit_array && other)
+        : bit_array_base(other)
+    {
+        other.arr_ = nullptr;
+    }
     constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
     /// @throws `std::bad_alloc` if allocating storage fails

@@ -42,7 +42,13 @@ class output_buffer
 };
 
 template <>
-class output_buffer<dpf::bit> : public dpf::dynamic_bit_array {};
+class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
+{
+  public:
+    output_buffer(size_type size) : dynamic_bit_array(size) { };
+    output_buffer(output_buffer &&) = default;
+    output_buffer(const output_buffer &) = delete;
+};
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

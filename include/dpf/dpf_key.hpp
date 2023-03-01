@@ -36,6 +36,7 @@ struct dpf_key
     using interior_node_t = typename interior_prg::block_t;
     using exterior_prg_t = exterior_prg;
     using exterior_node_t = typename exterior_prg::block_t;
+    using input_type = input_t;
     using outputs_t = std::tuple<output_t, output_ts...>;
     using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, output_t, output_ts...>;
     static constexpr std::size_t tree_depth = utils::bitlength_of_v<input_t> - dpf::lg_outputs_per_leaf_v<output_t, exterior_node_t>;
@@ -99,7 +100,7 @@ struct dpf_key
         const exterior_node_t & cw) noexcept
     {
         return dpf::subtract<std::tuple_element_t<I, outputs_t>, exterior_node_t>(
-            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t, output_t, output_ts...>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t, outputs_t>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
     }
 
@@ -139,10 +140,9 @@ auto make_dpf(input_t x, output_t y, output_ts... ys)
     interior_node_t parent[2] = { root[0], root[1] };
     bool advice[2];
 
-    for (std::size_t level = 0; level < depth; ++level)
+    for (std::size_t level = 0; level < depth; ++level, mask>>=1)
     {
         bool bit = !!(mask & x);
-        mask >>= 1;
 
         advice[0] = dpf::get_lo_bit_and_clear_lo_2bits(parent[0]);
         advice[1] = dpf::get_lo_bit_and_clear_lo_2bits(parent[1]);

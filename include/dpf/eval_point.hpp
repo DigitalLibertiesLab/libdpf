@@ -35,10 +35,9 @@ auto eval_point(const dpf_t & dpf, input_t x, memoizer_t & buf)
     using output_t = std::tuple_element_t<I, typename dpf_t::outputs_t>;
 
     std::size_t i = buf.assign_x(x);
-    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i)
+    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i, mask>>=1)
     {
         bool bit = !!(x & mask);
-        mask >>= 1;
         auto cw = set_lo_bit(dpf.interior_cws[i],
             dpf.correction_advice[i]>>bit);
         buf[i+1] = dpf_t::traverse_interior(buf[i], cw, bit);
@@ -112,18 +111,12 @@ auto eval_point(const dpf_t & dpf, input_t x)
     return eval_point<I>(dpf, x, buf);
 }
 
-template <class interior_prg,
-          class exterior_prg,
-          typename input_t,
-          typename output_t,
-          typename... output_ts>
-auto make_path_memoizer(const dpf_key<interior_prg, exterior_prg, input_t,
-    output_t, output_ts...> & dpf)
+template <typename dpf_t>
+auto make_path_memoizer(const dpf_t & dpf)
 {
-    using specialization = const dpf_key<interior_prg, exterior_prg, input_t,
-        output_t, output_ts...>;
-    using node_t = typename interior_prg::block_t;
-    return basic_path_memoizer<specialization::tree_depth, input_t, node_t>(dpf.root);
+    using input_t = typename dpf_t::input_t;
+    using node_t = typename dpf_t::interior_node_t;
+    return basic_path_memoizer<dpf_t::tree_depth, input_t, node_t>(dpf.root);
 }
 
 }  // namespace dpf

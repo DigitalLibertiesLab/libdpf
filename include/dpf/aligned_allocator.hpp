@@ -31,7 +31,7 @@ class aligned_allocator : public std::allocator<T>
     using difference_type = std::ptrdiff_t;
     using pointer = std::add_pointer_t<value_type>;
     struct deleter { void operator()(pointer p) const { free(p); } };
-    using unique_ptr = std::unique_ptr<pointer, deleter>;
+    using unique_ptr = std::unique_ptr<value_type[], deleter>;
     using const_pointer = std::add_const_t<pointer>;
     using reference = value_type &;
     using const_reference = std::add_const_t<reference>;
@@ -67,7 +67,7 @@ class aligned_allocator : public std::allocator<T>
     /// @details Returns the maximum theoretically possible value of ``num``,
     ///          for which the call ``allocate(num)`` could succeed.
     /// @return The maximum supported allocation size.
-    constexpr size_type max_size() const noexcept
+    constexpr size_type max_size() noexcept
     {
         return std::numeric_limits<size_type>::max() / sizeof(value_type);
     }
@@ -86,14 +86,16 @@ class aligned_allocator : public std::allocator<T>
     {
         if (max_size() < num)
         {
-            throw std::bad_array_new_length("alloc size is too large");
+            std::cout << max_size() << " < " << num << "\n";
+            throw std::runtime_error("alloc size is too large");
         }
         void * ptr = std::aligned_alloc(alignment, num * sizeof(T));
-        if (ptr == nullptr)
-        {
-            throw std::bad_alloc("std::aligned_alloc failed");
-        }
         return static_cast<pointer>(ptr);
+    }
+
+    constexpr auto allocate_unique_ptr(size_type num)
+    {
+        return unique_ptr{allocate(num)};
     }
 
     /// @brief deallocates storage
@@ -104,11 +106,6 @@ class aligned_allocator : public std::allocator<T>
     constexpr void deallocate(pointer p, size_type /*num*/ = 0)
     {
         free(p);
-    }
-
-    constexpr static auto make_unique(size_type num)
-    {
-        return unique_ptr{allocate(num)};
     }
 
     constexpr static auto assume_aligned(pointer ptr)

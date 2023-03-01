@@ -67,22 +67,22 @@ constexpr std::size_t offset_within_block(std::size_t x) noexcept
     return x % dpf::outputs_per_leaf_v<output_t, node_t>;
 }
 
-template <std::size_t I, typename N, std::size_t I_, typename T, typename... Ts>
+template <std::size_t I, typename N, std::size_t I_, typename outputs_t>
 struct block_offset_of_leaf
 {
-    static constexpr std::size_t value = dpf::block_length_of_leaf_v<T, N>
-        + block_offset_of_leaf<I, N, I_+1, T, Ts...>::value;
+    static constexpr std::size_t value = dpf::block_length_of_leaf_v<std::tuple_element_t<I_, outputs_t>, N>
+        + block_offset_of_leaf<I, N, I_+1, outputs_t>::value;
 };
 
-template <std::size_t I, typename N, typename T, typename... Ts>
-struct block_offset_of_leaf<I, N, I, T, Ts...>
+template <std::size_t I, typename N, typename outputs_t>
+struct block_offset_of_leaf<I, N, I, outputs_t>
 {
     static constexpr std::size_t value = 0;
 };
 
-template <std::size_t I, typename N, typename T, typename... Ts>
+template <std::size_t I, typename N, typename outputs_t>
 inline constexpr std::size_t block_offset_of_leaf_v
-    = block_offset_of_leaf<I, N, 0, T, Ts...>::value;
+    = block_offset_of_leaf<I, N, 0, outputs_t>::value;
 
 
 template <typename node_t,
@@ -159,22 +159,22 @@ auto make_naked_leaf(input_t x, output_t y)
 }
 
 template <typename prg_t, std::size_t I, typename seed_t,
-    typename... output_ts>
+    typename outputs_t>
 auto make_leaf_mask_inner(const seed_t & seed)
 {
     using node_t = typename prg_t::block_t;
-    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
-    using leaf_t = dpf::leaf_node_t<node_t, type>;
+    using output_t = std::tuple_element_t<I, outputs_t>;
+    using leaf_t = dpf::leaf_node_t<node_t, output_t>;
 
-    if constexpr(sizeof...(output_ts) == 1
-        && dpf::block_length_of_leaf_v<type, node_t> == 1)
+    // if constexpr(std::tuple_size_v<outputs_t> == 1
+    //     && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
+    // {
+    //     return seed;
+    // }
+    // else
     {
-        return seed;
-    }
-    else
-    {
-        auto count = dpf::block_length_of_leaf_v<type, node_t>;
-        auto pos = dpf::block_offset_of_leaf_v<I, node_t, output_ts...>;
+        auto count = dpf::block_length_of_leaf_v<output_t, node_t>;
+        auto pos = dpf::block_offset_of_leaf_v<I, node_t, outputs_t>;
         leaf_t output;
         prg_t::eval(seed, &output, count, pos);
 
@@ -187,12 +187,13 @@ template <typename prg_t, std::size_t I, typename seed_t,
 auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1, output_ts...)
 {
     using node_t = typename prg_t::block_t;
-    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
+    using outputs_t = std::tuple<output_ts...>;
+    using output_t = std::tuple_element_t<I, outputs_t>;
 
-    auto mask0 = make_leaf_mask_inner<prg_t, I, node_t, output_ts...>(seed0);
-    auto mask1 = make_leaf_mask_inner<prg_t, I, node_t, output_ts...>(seed1);
+    auto mask0 = make_leaf_mask_inner<prg_t, I, node_t, outputs_t>(seed0);
+    auto mask1 = make_leaf_mask_inner<prg_t, I, node_t, outputs_t>(seed1);
 
-    return dpf::subtract<type, node_t>(mask1, mask0);
+    return dpf::subtract<output_t, node_t>(mask1, mask0);
 }
 
 template <typename prg_t, std::size_t I, typename input_t, typename seed_t,
