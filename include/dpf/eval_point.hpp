@@ -35,9 +35,15 @@ auto eval_point(const dpf_t & dpf, input_t x, memoizer_t & buf)
     using output_t = std::tuple_element_t<I, typename dpf_t::outputs_t>;
 
     std::size_t i = buf.assign_x(x);
+<<<<<<< HEAD
     for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i, mask>>=1)
     {
         bool bit = !!(x & mask);
+=======
+    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i, mask >>= 1)
+    {
+        bool bit = !!(mask & x);
+>>>>>>> 6b74f66b91c0a65ecbdfa6dd15da724296846dd6
         auto cw = set_lo_bit(dpf.interior_cws[i],
             dpf.correction_advice[i]>>bit);
         buf[i+1] = dpf_t::traverse_interior(buf[i], cw, bit);
