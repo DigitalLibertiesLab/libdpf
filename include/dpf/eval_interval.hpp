@@ -22,79 +22,73 @@
 namespace dpf
 {
 
-template <class interior_prg,
-          typename node_t = typename interior_prg::block_t>
-HEDLEY_NO_THROW
-HEDLEY_ALWAYS_INLINE
-HEDLEY_CONST
-auto traverse(const node_t & node, const node_t & cw, bool direction)
-{
-    return dpf::xor_if_lo_bit(
-        interior_prg::eval(unset_lo_2bits(node), direction), cw, node);
-}
-
 template <std::size_t I = 0,
           typename dpf_t,
-          class memoizer_t,
-          class outbuf_t,
+          class IntervalLevelMemoizer,
+          class OutputBuffer,
           typename input_t>
+DPF_UNROLL_LOOPS
 auto eval_interval(const dpf_t & dpf, input_t from, input_t to,
-    memoizer_t & memoizer, outbuf_t & outbuf)
+    IntervalLevelMemoizer & memoizer, OutputBuffer & outbuf)
 {
     if (dpf.is_wildcard(I))
     {
-        throw std::runtime_error("cannot evaluate wildcards");
+        throw std::runtime_error("cannot evaluate to wildcards");
     }
-    using interior_prg = typename dpf_t::interior_prg_t;
     using exterior_node_t = typename dpf_t::exterior_node_t;
     using outputs_t = typename dpf_t::outputs_t;
     using output_t = std::tuple_element_t<I, outputs_t>;
-    using exterior_prg = typename dpf_t::exterior_prg_t;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t, exterior_node_t>;
-
-    input_t mask = dpf.msb_mask;
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     std::size_t from_node = utils::quotient_floor(from, (input_t)outputs_per_leaf), to_node = utils::quotient_ceiling(to, (input_t)outputs_per_leaf);
     auto nodes_in_interval = std::max(std::size_t(0), to_node - from_node);
 
-    bool currhalf = (dpf.tree_depth & 1);
+    bool currhalf = !(dpf.tree_depth & 1);
     memoizer[!currhalf][0] = dpf.root;
-
     std::size_t nodes_at_level = 1;
-    for (std::size_t level_index = 0; level_index < dpf.tree_depth-1; ++level_index, currhalf=!currhalf, mask>>=1)
+    
+    input_t mask = dpf.msb_mask;
+    for (std::size_t level_index = 0; level_index < dpf.tree_depth;
+        ++level_index, mask>>=1, currhalf=!currhalf)
     {
+        std::size_t i = !!(mask & from), j = i;
         const __m128i cw[2] = {
             set_lo_bit(dpf.interior_cws[level_index], dpf.correction_advice[level_index]&1),
             set_lo_bit(dpf.interior_cws[level_index], (dpf.correction_advice[level_index]>>1)&1)
         };
 
-        std::size_t i = !!(mask & from), j = i;
         if (i == 1)
         {
-            memoizer[currhalf][0] = traverse<interior_prg>(memoizer[!currhalf][0], cw[1], 1);
+            memoizer[currhalf][0] = dpf_t::traverse_interior(memoizer[!currhalf][0], cw[1], 1);
         }
         for (; j < nodes_at_level-1; ++j)
         {
-            memoizer[currhalf][i++] = traverse<interior_prg>(memoizer[!currhalf][j], cw[0], 0);
-            memoizer[currhalf][i++] = traverse<interior_prg>(memoizer[!currhalf][j], cw[1], 1);
+            memoizer[currhalf][i++] = dpf_t::traverse_interior(memoizer[!currhalf][j], cw[0], 0);
+            memoizer[currhalf][i++] = dpf_t::traverse_interior(memoizer[!currhalf][j], cw[1], 1);
         }
         nodes_at_level = std::ceil(std::ldexp(nodes_in_interval, level_index-dpf.tree_depth+2));
-        memoizer[currhalf][i++] = traverse<interior_prg>(memoizer[!currhalf][j], cw[0], 0);
+        memoizer[currhalf][i++] = dpf_t::traverse_interior(memoizer[!currhalf][j], cw[0], 0);
         if (i < nodes_at_level)
         {
-            memoizer[currhalf][i++] = traverse<interior_prg>(memoizer[!currhalf][j], cw[1], 1);
+            memoizer[currhalf][i++] = dpf_t::traverse_interior(memoizer[!currhalf][j], cw[1], 1);
         }
     }
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
     auto rawbuf = reinterpret_cast<exterior_node_t *>(std::data(outbuf));
-    for (std::size_t j = 0; j < nodes_in_interval; ++j)
+    for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
+        k += dpf::block_length_of_leaf_v<output_t, exterior_node_t>)
     {
-        auto leaf = dpf::subtract<output_t, exterior_node_t>(
-            make_leaf_mask_inner<exterior_prg, I, exterior_node_t, outputs_t>(unset_lo_2bits(memoizer[0][j])),
+        auto leaf = dpf_t::template traverse_exterior<I>(memoizer[0][j],
             dpf::get_if_lo_bit(cw, memoizer[0][j]));
-        std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
+        std::memcpy(&rawbuf[k], &leaf, sizeof(exterior_node_t));
     }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     auto begin = std::begin(outbuf) + (from % outputs_per_leaf);
     auto end = std::end(outbuf) - ((outputs_per_leaf - (to % outputs_per_leaf)) % outputs_per_leaf);
@@ -145,7 +139,10 @@ auto eval_interval(const dpf_t & dpf, input_t from, input_t to)
 
     auto memoizer = make_interval_level_memoizer(dpf, from, to);
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t, exterior_node_t>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     std::size_t from_node = utils::quotient_floor(from, (input_t)outputs_per_leaf), to_node = utils::quotient_ceiling(to, (input_t)outputs_per_leaf);
     std::size_t nodes_in_interval = std::max(std::size_t(0), std::size_t(to_node - from_node));
     dpf::output_buffer<output_t> outbuf(nodes_in_interval*outputs_per_leaf);
@@ -159,7 +156,8 @@ template <std::size_t I = 0,
 auto eval_full(const dpf_t & dpf, buffer_t & outbuf)
 {
     using input_t = typename dpf_t::input_type;
-    return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max(), outbuf);
+    auto memoizer = make_interval_level_memoizer(dpf, input_t(0), std::numeric_limits<input_t>::max());
+    return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max(), memoizer, outbuf);
 }
 
 template <std::size_t I = 0,
@@ -178,6 +176,8 @@ auto make_interval_level_memoizer(const dpf_t &, input_t from = 0,
     using interior_prg = typename dpf_t::interior_prg_t;
     using exterior_prg = typename dpf_t::exterior_prg_t;
     using output_t = std::tuple_element_t<0, typename dpf_t::outputs_t>;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t,
         typename exterior_prg::block_t>;
     auto from_node = from/outputs_per_leaf, to_node = 1+to/outputs_per_leaf;
@@ -185,6 +185,7 @@ auto make_interval_level_memoizer(const dpf_t &, input_t from = 0,
 
     using node_t = typename interior_prg::block_t;
     return basic_interval_level_memoizer<node_t>(nodes_in_interval);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 }  // namespace dpf

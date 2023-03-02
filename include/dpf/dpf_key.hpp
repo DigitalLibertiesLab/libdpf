@@ -38,7 +38,10 @@ struct dpf_key
     using exterior_node_t = typename exterior_prg::block_t;
     using input_type = input_t;
     using outputs_t = std::tuple<output_t, output_ts...>;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, output_t, output_ts...>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t tree_depth = utils::bitlength_of_v<input_t> - dpf::lg_outputs_per_leaf_v<output_t, exterior_node_t>;
     static constexpr input_t msb_mask = input_t(1) << (utils::bitlength_of_v<input_t>-1);
 
@@ -66,7 +69,10 @@ struct dpf_key
 
   public:
     const interior_node_t root;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     const std::array<interior_node_t, tree_depth> interior_cws;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, tree_depth> correction_advice;
 
     HEDLEY_ALWAYS_INLINE
@@ -99,9 +105,12 @@ struct dpf_key
     static auto traverse_exterior(const interior_node_t & node,
         const exterior_node_t & cw) noexcept
     {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         return dpf::subtract<std::tuple_element_t<I, outputs_t>, exterior_node_t>(
             make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t, outputs_t>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
+HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
 };  // struct dpf_key
@@ -134,7 +143,11 @@ auto make_dpf(input_t x, output_t y, output_ts... ys)
         dpf::set_lo_bit(root_sampler())
     };
 
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::array<interior_node_t, depth> correction_word;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     std::array<uint8_t, depth> correction_advice;
 
     interior_node_t parent[2] = { root[0], root[1] };

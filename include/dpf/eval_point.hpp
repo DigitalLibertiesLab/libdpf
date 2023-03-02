@@ -25,31 +25,27 @@ namespace dpf
 template <std::size_t I = 0,
           typename dpf_t,
           typename input_t,
-          class memoizer_t>
-auto eval_point(const dpf_t & dpf, input_t x, memoizer_t & buf)
+          class PathMemoizer>
+DPF_UNROLL_LOOPS
+auto eval_point(const dpf_t & dpf, input_t x, PathMemoizer & path)
 {
     if (dpf.is_wildcard(I))
     {
-        throw std::runtime_error("cannot evaluate wildcards");
+        throw std::runtime_error("cannot evaluate to wildcards");
     }
     using output_t = std::tuple_element_t<I, typename dpf_t::outputs_t>;
 
-    std::size_t i = buf.assign_x(x);
-<<<<<<< HEAD
-    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i, mask>>=1)
-    {
-        bool bit = !!(x & mask);
-=======
-    for (input_t mask = dpf.msb_mask>>i; i < dpf.tree_depth; ++i, mask >>= 1)
+    std::size_t level_index = path.assign_x(x);
+    for (input_t mask = dpf.msb_mask>>level_index;
+        level_index < dpf.tree_depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
->>>>>>> 6b74f66b91c0a65ecbdfa6dd15da724296846dd6
-        auto cw = set_lo_bit(dpf.interior_cws[i],
-            dpf.correction_advice[i]>>bit);
-        buf[i+1] = dpf_t::traverse_interior(buf[i], cw, bit);
+        auto cw = set_lo_bit(dpf.interior_cws[level_index],
+            dpf.correction_advice[level_index]>>bit);
+        path[level_index+1] = dpf_t::traverse_interior(path[level_index], cw, bit);
     }
 
-    auto interior = buf[dpf.tree_depth-1];
+    auto interior = path[dpf.tree_depth-1];
     auto ext = dpf.template exterior_cw<I>();
     return dpf::make_dpf_output<output_t>(
         dpf_t::template traverse_exterior<I>(interior, ext), x);
@@ -112,9 +108,12 @@ template <std::size_t I = 0,
           typename input_t>
 auto eval_point(const dpf_t & dpf, input_t x)
 {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_t = typename dpf_t::interior_node_t;
-    auto buf = nonmemoizing_path_memoizer<node_t>(dpf.root);
-    return eval_point<I>(dpf, x, buf);
+    auto memoizer = nonmemoizing_path_memoizer<node_t>(dpf.root);
+    return eval_point<I>(dpf, x, memoizer);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename dpf_t>

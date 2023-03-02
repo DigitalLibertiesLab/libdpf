@@ -164,14 +164,16 @@ auto make_leaf_mask_inner(const seed_t & seed)
 {
     using node_t = typename prg_t::block_t;
     using output_t = std::tuple_element_t<I, outputs_t>;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_t = dpf::leaf_node_t<node_t, output_t>;
 
-    // if constexpr(std::tuple_size_v<outputs_t> == 1
-    //     && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
-    // {
-    //     return seed;
-    // }
-    // else
+    if constexpr(std::tuple_size_v<outputs_t> == 1
+        && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
+    {
+        return seed;
+    }
+    else
     {
         auto count = dpf::block_length_of_leaf_v<output_t, node_t>;
         auto pos = dpf::block_offset_of_leaf_v<I, node_t, outputs_t>;
@@ -180,12 +182,15 @@ auto make_leaf_mask_inner(const seed_t & seed)
 
         return output;
     }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename prg_t, std::size_t I, typename seed_t,
     typename... output_ts>
 auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1, output_ts...)
 {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_t = typename prg_t::block_t;
     using outputs_t = std::tuple<output_ts...>;
     using output_t = std::tuple_element_t<I, outputs_t>;
@@ -194,6 +199,7 @@ auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1, output_ts...)
     auto mask1 = make_leaf_mask_inner<prg_t, I, node_t, outputs_t>(seed1);
 
     return dpf::subtract<output_t, node_t>(mask1, mask0);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename prg_t, std::size_t I, typename input_t, typename seed_t,
@@ -205,6 +211,8 @@ auto make_leaf(input_t x, const seed_t & seed0, const seed_t & seed1, bool sign,
     using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
     auto Y = std::get<I>(tuple);
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_t = typename prg_t::block_t;
     return sign ? dpf::subtract<type, node_t>(
                     make_naked_leaf<node_t>(x, Y),
@@ -212,6 +220,7 @@ auto make_leaf(input_t x, const seed_t & seed0, const seed_t & seed1, bool sign,
                 : dpf::subtract<type, node_t>(
                     make_leaf_mask<prg_t, I>(seed0, seed1, ys...),
                     make_naked_leaf<node_t>(x, Y));
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename prg_t, typename input_t, typename seed_t,

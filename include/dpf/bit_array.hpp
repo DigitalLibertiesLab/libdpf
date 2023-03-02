@@ -538,6 +538,13 @@ class bit_array_base
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
+        constexpr operator int() const noexcept
+        {
+            return int{static_cast<bool>(*this)};
+        }
+
+        HEDLEY_NO_THROW
+        HEDLEY_ALWAYS_INLINE
         constexpr operator dpf::bit() const noexcept
         {
             return dpf::bit{static_cast<bool>(*this)};
