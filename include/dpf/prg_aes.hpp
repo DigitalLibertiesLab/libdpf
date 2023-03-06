@@ -40,7 +40,7 @@ struct aes final
     static block_t eval(block_t seed, uint32_t pos) noexcept
     {
         block_t rd_key0 = simde_mm_xor_si128(key.rd_key[0],
-            simde_mm_set_epi64x(pos, 0));
+            simde_mm_set_epi64x(0, pos));
         block_t output = simde_mm_xor_si128(seed, rd_key0);
 
         for (std::size_t j = 1; j < key.rounds; ++j)
@@ -60,7 +60,7 @@ struct aes final
     {
         block_t rd_key00 = key.rd_key[0];
         block_t rd_key01 = simde_mm_xor_si128(rd_key00,
-            simde_mm_set_epi64x(1, 0));
+            simde_mm_set_epi64x(0, 1));
 
         block_t output0 = simde_mm_xor_si128(seed, rd_key00);
         block_t output1 = simde_mm_xor_si128(seed, rd_key01);
@@ -86,7 +86,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         uint32_t count, uint32_t pos = 0) noexcept
     {
         static constexpr block_t one{1,0};
-        auto pos_ = simde_mm_set_epi64x(pos, 0);
+        auto pos_ = simde_mm_set_epi64x(0, pos);
         block_t * HEDLEY_RESTRICT out =
             static_cast<block_t *>(__builtin_assume_aligned(output,
             alignof(block_t)));
