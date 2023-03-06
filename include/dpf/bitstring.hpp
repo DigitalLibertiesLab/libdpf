@@ -118,27 +118,27 @@ struct msb_of<dpf::bitstring<N>>
 template <std::size_t N>
 struct countl_zero_symmmetric_difference<dpf::bitstring<N>>
 {
-	using T = dpf::bitstring<N>;
+    using T = dpf::bitstring<N>;
 
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
-	{
-		using word_type = typename T::word_type;
-		constexpr auto xor_op = std::bit_xor<word_type>{};
-		auto adjust = lhs.data_length()*bitlength_of_v<word_type> - N;
-		std::size_t prefix_len = 0;
-		for (auto i = lhs.data_length()-1; i >= 0; --i,
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+    {
+        using word_type = typename T::word_type;
+        constexpr auto xor_op = std::bit_xor<word_type>{};
+        auto adjust = lhs.data_length()*bitlength_of_v<word_type> - N;
+        std::size_t prefix_len = 0;
+        for (auto i = lhs.data_length()-1; i >= 0; --i,
             prefix_len += bitlength_of_v<word_type>)
-		{
-			word_type limb = xor_op(lhs.data(i), rhs.data(i));
-			if (limb)
-			{
-				return prefix_len + psnip_builtin_clz64(limb) - adjust;
-			}
-		}
-		return prefix_len - adjust;
-	}
+        {
+            word_type limb = xor_op(lhs.data(i), rhs.data(i));
+            if (limb)
+            {
+                return prefix_len + psnip_builtin_clz64(limb) - adjust;
+            }
+        }
+        return prefix_len - adjust;
+    }
 };
 
 }  // namespace utils

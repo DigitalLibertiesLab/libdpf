@@ -158,8 +158,9 @@ struct countl_zero
 	HEDLEY_ALWAYS_INLINE
 	constexpr std::size_t operator()(T val) const noexcept
 	{
+		uint64_t val_ = static_cast<uint64_t>(val);
 		constexpr auto adjust = 64-bitlength_of_v<T>;
-		return psnip_builtin_clz64(val)-adjust;
+		return psnip_builtin_clz64(val_)-adjust;
 	}
 };
 
