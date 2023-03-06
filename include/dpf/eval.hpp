@@ -46,8 +46,19 @@ auto make_dpf_output(const Node & node, Input x)
         offset_within_block<Output, Node>(x)};
 }
 
+template <std::size_t I = 0,
+          typename dpf_t>
+void assert_not_wildcard(const dpf_t & dpf)
+{
+    if (dpf.is_wildcard(I))
+    {
+        throw std::runtime_error("cannot evaluate to wildcards");
+    }
+}
+
+
 }  // namespace dpf
 
 #include "eval_point.hpp"
 #include "eval_interval.hpp"
-// #include "eval_sequence.hpp"
+#include "eval_sequence.hpp"
