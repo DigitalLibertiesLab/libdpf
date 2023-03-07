@@ -103,7 +103,6 @@ namespace wildcards
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-
     static constexpr auto int128 = wildcard<simde_int128>;
     static constexpr auto uint128 = wildcard<simde_uint128>;
     static constexpr auto xint128 = wildcard<dpf::xor_wrapper<simde_uint128>>;
