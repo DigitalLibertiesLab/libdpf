@@ -24,38 +24,38 @@ namespace dpf
 template <typename I>
 using root_sampler_t = std::add_pointer_t<typename I::block_t()>;
 
-template <class interior_prg,
-          class exterior_prg,
-          typename input_t,
-          typename output_t,
-          typename... output_ts>
+template <class InteriorPRG,
+          class ExteriorPRG,
+          typename InputT,
+          typename OutputT,
+          typename... OutputTs>
 struct dpf_key
 {
   public:
-    using interior_prg_t = interior_prg;
-    using interior_node_t = typename interior_prg::block_t;
-    using exterior_prg_t = exterior_prg;
-    using exterior_node_t = typename exterior_prg::block_t;
-    using input_type = input_t;
-    using outputs_t = std::tuple<output_t, output_ts...>;
+    using interior_prg_t = InteriorPRG;
+    using interior_node_t = typename InteriorPRG::block_t;
+    using exterior_prg_t = ExteriorPRG;
+    using exterior_node_t = typename ExteriorPRG::block_t;
+    using input_type = InputT;
+    using outputs_t = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, output_t, output_ts...>;
+    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    static constexpr std::size_t tree_depth = utils::bitlength_of_v<input_t> - dpf::lg_outputs_per_leaf_v<output_t, exterior_node_t>;
-    static constexpr input_t msb_mask = input_t(1) << (utils::bitlength_of_v<input_t>-1);
+    static constexpr std::size_t tree_depth = utils::bitlength_of_v<InputT> - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
+    static constexpr InputT msb_mask = InputT(1) << (utils::bitlength_of_v<InputT>-1);
 
-    static_assert(std::conjunction_v<std::is_trivially_copyable<output_t>,
-                                     std::is_trivially_copyable<output_ts>...>,
+    static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
+                                     std::is_trivially_copyable<OutputTs>...>,
         "all output types must be trivially copyable");
-    static_assert(std::has_unique_object_representations_v<input_t>);
+    static_assert(std::has_unique_object_representations_v<InputT>);
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node_t root_,
                       const std::array<interior_node_t, tree_depth> & interior_cws_,
                       const std::array<uint8_t, tree_depth> & correction_advice_,
                       const leaf_nodes_t & exterior_cw_,
-                      std::bitset<sizeof...(output_ts)+1> & wildcards_mask_)
+                      std::bitset<sizeof...(OutputTs)+1> & wildcards_mask_)
       : wildcard_mask{wildcards_mask_},
         mutable_exterior_cw{exterior_cw_},
         root{root_},
@@ -64,7 +64,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     { }
 
   private:
-    std::bitset<sizeof...(output_ts)+1> wildcard_mask;
+    std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
     leaf_nodes_t mutable_exterior_cw;
 
   public:
@@ -122,25 +122,25 @@ static T basic_uniform_root_sampler()
     return ret;
 }
 
-template <class interior_prg = dpf::prg::aes128,
-          class exterior_prg = interior_prg,
-          dpf::root_sampler_t<interior_prg> root_sampler
-            = &dpf::basic_uniform_root_sampler,
-          typename input_t,
-          typename output_t,
-          typename... output_ts>
-auto make_dpf(input_t x, output_t y, output_ts... ys)
+template <class InteriorPRG = dpf::prg::aes128,
+          class ExteriorPRG = InteriorPRG,
+          dpf::root_sampler_t<InteriorPRG> RootSampler
+              = &dpf::basic_uniform_root_sampler,
+          typename InputT,
+          typename OutputT,
+          typename... OutputTs>
+auto make_dpf(InputT x, OutputT y, OutputTs... ys)
 {
-    using specialization = dpf_key<interior_prg, exterior_prg, input_t,
-                                   output_t, output_ts...>;
+    using specialization = dpf_key<InteriorPRG, ExteriorPRG, InputT,
+                                   OutputT, OutputTs...>;
     using interior_node_t = typename specialization::interior_node_t;
 
-    constexpr std::size_t depth = specialization::tree_depth;
-    input_t mask = specialization::msb_mask;
+    constexpr auto depth = specialization::tree_depth;
+    InputT mask = specialization::msb_mask;
 
     const interior_node_t root[2] = {
-        dpf::unset_lo_bit(root_sampler()),
-        dpf::set_lo_bit(root_sampler())
+        dpf::unset_lo_bit(RootSampler()),
+        dpf::set_lo_bit(RootSampler())
     };
 
 
@@ -160,8 +160,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         advice[0] = dpf::get_lo_bit_and_clear_lo_2bits(parent[0]);
         advice[1] = dpf::get_lo_bit_and_clear_lo_2bits(parent[1]);
 
-        auto child0 = interior_prg::eval01(parent[0]);
-        auto child1 = interior_prg::eval01(parent[1]);
+        auto child0 = InteriorPRG::eval01(parent[0]);
+        auto child1 = InteriorPRG::eval01(parent[1]);
         interior_node_t child[2] = {
             child0[0] ^ child1[0],
             child0[1] ^ child1[1]
@@ -178,34 +178,19 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         correction_word[level] = child[!bit];
         correction_advice[level] = uint_fast8_t(t[1] << 1) | t[0];
     }
-    auto wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<output_t>,
-        dpf::is_wildcard_v<output_ts>...);
+    auto wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
+        dpf::is_wildcard_v<OutputTs>...);
 
     bool sign0 = dpf::get_lo_bit(parent[0]);
     // bool sign1 = dpf::get_lo_bit(parent[1]);
 
-    auto leaves = dpf::make_leaves<exterior_prg>(x, unset_lo_2bits(parent[0]), unset_lo_2bits(parent[1]),
+    auto leaves = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]), unset_lo_2bits(parent[1]),
         sign0, y, ys...);
 
     return std::make_pair(
         specialization{root[0], correction_word, correction_advice, leaves.first, wildcard_mask},
         specialization{root[1], correction_word, correction_advice, leaves.second, wildcard_mask});
 }  // make_dpf
-
-// carries the state for assigning a leaf, which is interactive
-struct leaf_assigner
-{
-};
-
-// carries the state for dorner-shelat method, which is interactive
-struct dorner_shelat_dpf_maker
-{
-};
-
-// carries the state for a linear sketch for 1-hotness
-struct linear_sketch
-{
-};
 
 }  // namespace dpf
 

@@ -20,11 +20,11 @@
 namespace dpf
 {
 
-template <std::size_t N>
-class bitstring : public dpf::static_bit_array<N>
+template <std::size_t Nbits>
+class bitstring : public dpf::static_bit_array<Nbits>
 {
   private:
-    using base = dpf::static_bit_array<N>;
+    using base = dpf::static_bit_array<Nbits>;
   public:
     struct bit_mask;
     constexpr bitstring() = default;
@@ -65,7 +65,7 @@ class bitstring : public dpf::static_bit_array<N>
             which_bit_ -= shift_by;
             return *this;
         }
-        constexpr operator bool() const noexcept { return 0 <= which_bit_ && which_bit_ < N; }
+        constexpr operator bool() const noexcept { return 0 <= which_bit_ && which_bit_ < Nbits; }
         constexpr std::size_t which_bit() const { return which_bit_; }
 
       private:
@@ -73,8 +73,8 @@ class bitstring : public dpf::static_bit_array<N>
     };
 };
 
-template <std::size_t N>
-constexpr bool operator<(const bitstring<N> & lhs, const bitstring<N> & rhs)
+template <std::size_t Nbits>
+constexpr bool operator<(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
 {
     auto lhs_iter = std::rbegin(lhs), rhs_iter = std::rbegin(rhs);
     while (*lhs-- == *rhs--)
@@ -84,20 +84,20 @@ constexpr bool operator<(const bitstring<N> & lhs, const bitstring<N> & rhs)
     return *lhs < *rhs;
 }
 
-template <std::size_t N>
-constexpr bool operator<=(const bitstring<N> & lhs, const bitstring<N> & rhs)
+template <std::size_t Nbits>
+constexpr bool operator<=(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
 {
     return (lhs < rhs) || lhs == rhs;
 }
 
-template <std::size_t N>
-constexpr bool operator>(const bitstring<N> & lhs, const bitstring<N> & rhs)
+template <std::size_t Nbits>
+constexpr bool operator>(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
 {
     return rhs < lhs;
 }
 
-template <std::size_t N>
-constexpr bool operator>=(const bitstring<N> & lhs, const bitstring<N> & rhs)
+template <std::size_t Nbits>
+constexpr bool operator>=(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
 {
     return rhs <= lhs;
 }
@@ -105,20 +105,20 @@ constexpr bool operator>=(const bitstring<N> & lhs, const bitstring<N> & rhs)
 namespace utils
 {
 
-template <std::size_t N>
-struct bitlength_of<dpf::bitstring<N>>
-  : public std::integral_constant<std::size_t, N> { };
+template <std::size_t Nbits>
+struct bitlength_of<dpf::bitstring<Nbits>>
+  : public std::integral_constant<std::size_t, Nbits> { };
 
-template <std::size_t N>
-struct msb_of<dpf::bitstring<N>>
+template <std::size_t Nbits>
+struct msb_of<dpf::bitstring<Nbits>>
 {
-    constexpr static auto value = typename dpf::bitstring<N>::bit_mask(bitlength_of_v<dpf::bitstring<N>>-1ul);
+    constexpr static auto value = typename dpf::bitstring<Nbits>::bit_mask(bitlength_of_v<dpf::bitstring<Nbits>>-1ul);
 };
 
-template <std::size_t N>
-struct countl_zero_symmmetric_difference<dpf::bitstring<N>>
+template <std::size_t Nbits>
+struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
 {
-    using T = dpf::bitstring<N>;
+    using T = dpf::bitstring<Nbits>;
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
@@ -126,7 +126,7 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<N>>
     {
         using word_type = typename T::word_type;
         constexpr auto xor_op = std::bit_xor<word_type>{};
-        auto adjust = lhs.data_length()*bitlength_of_v<word_type> - N;
+        auto adjust = lhs.data_length()*bitlength_of_v<word_type> - Nbits;
         std::size_t prefix_len = 0;
         for (auto i = lhs.data_length()-1; i >= 0; --i,
             prefix_len += bitlength_of_v<word_type>)

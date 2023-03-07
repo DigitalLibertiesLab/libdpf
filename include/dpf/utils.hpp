@@ -38,21 +38,21 @@ static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
 
 
 /// @brief the primitive integral type used to represent the `modint`
-template <std::size_t N>
+template <std::size_t Nbits>
 struct integral_type_from_bitlength
 {
-    using type = std::conditional_t<std::less_equal{}(N, 64),
-        std::conditional_t<std::less_equal{}(N, 32),
-            std::conditional_t<std::less_equal{}(N, 16),
-                std::conditional_t<std::less_equal{}(N, 8), psnip_uint8_t,
+    using type = std::conditional_t<std::less_equal{}(Nbits, 64),
+        std::conditional_t<std::less_equal{}(Nbits, 32),
+            std::conditional_t<std::less_equal{}(Nbits, 16),
+                std::conditional_t<std::less_equal{}(Nbits, 8), psnip_uint8_t,
                 psnip_uint16_t>,
             psnip_uint32_t>,
         psnip_uint64_t>,
     simde_uint128>;
 };
 
-template <std::size_t N>
-using integral_type_from_bitlength_t = typename integral_type_from_bitlength<N>::type;
+template <std::size_t Nbits>
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits>::type;
 
 struct max_align
 {
@@ -67,7 +67,8 @@ struct max_integral_bits
 static constexpr std::size_t max_integral_bits_v = max_integral_bits::value;
 
 /// @brief Integer overflow-proof ceiling of division
-template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = false>
+template <typename T,
+    std::enable_if_t<std::is_integral_v<T>, bool> = false>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr T quotient_ceiling(T numerator, T denominator)
@@ -76,7 +77,8 @@ static constexpr T quotient_ceiling(T numerator, T denominator)
 }
 
 /// @brief Integer overflow-proof floor of division
-template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = false>
+template <typename T,
+    std::enable_if_t<std::is_integral_v<T>, bool> = false>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr T quotient_floor(T numerator, T denominator)

@@ -27,46 +27,46 @@ namespace dpf
 namespace internal
 {
 
-template <typename dpf_t,
-          typename input_t,
+template <typename DpfKey,
+          typename InputT,
           class PathMemoizer>
 DPF_UNROLL_LOOPS
-inline auto eval_point_interior(const dpf_t & dpf, input_t x, PathMemoizer & path)
+inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
     std::size_t level_index = path.assign_x(x);
-    for (input_t mask = dpf.msb_mask>>level_index;
+    for (InputT mask = dpf.msb_mask>>level_index;
         level_index < dpf.tree_depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
         auto cw = set_lo_bit(dpf.interior_cws[level_index],
             dpf.correction_advice[level_index]>>bit);
-        path[level_index+1] = dpf_t::traverse_interior(path[level_index], cw, bit);
+        path[level_index+1] = DpfKey::traverse_interior(path[level_index], cw, bit);
     }
 }
 
 template <std::size_t I = 0,
-          typename dpf_t,
-          typename input_t,
+          typename DpfKey,
+          typename InputT,
           class PathMemoizer>
-inline auto eval_point_exterior(const dpf_t & dpf, input_t x, const PathMemoizer & path)
+inline auto eval_point_exterior(const DpfKey & dpf, InputT x, const PathMemoizer & path)
 {
     assert_not_wildcard<I>(dpf);
 
-    using output_t = std::tuple_element_t<I, typename dpf_t::outputs_t>;
+    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     auto interior = path[dpf.tree_depth];
     auto ext = dpf.template exterior_cw<I>();
     return dpf::make_dpf_output<output_t>(
-        dpf_t::template traverse_exterior<I>(interior, ext), x);
+        DpfKey::template traverse_exterior<I>(interior, ext), x);
 }
 
 }  // namespace internal
 
 template <std::size_t I = 0,
-          typename dpf_t,
-          typename input_t,
+          typename DpfKey,
+          typename InputT,
           class PathMemoizer>
-auto eval_point(const dpf_t & dpf, input_t x, PathMemoizer & path)
+auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
     assert_not_wildcard<I>(dpf);
     internal::eval_point_interior(dpf, x, path);
@@ -74,75 +74,75 @@ auto eval_point(const dpf_t & dpf, input_t x, PathMemoizer & path)
 }
 
 template <std::size_t depth,
-          typename input_t,
-          typename node_t>
-struct alignas(alignof(node_t)) basic_path_memoizer
-    : public std::array<node_t, depth+1>
+          typename InputT,
+          typename NodeT>
+struct alignas(alignof(NodeT)) basic_path_memoizer
+    : public std::array<NodeT, depth+1>
 {
   public:
-    explicit basic_path_memoizer(node_t root)
-      : std::array<node_t, depth+1>{root}, x{std::nullopt} { }
+    explicit basic_path_memoizer(NodeT root)
+      : std::array<NodeT, depth+1>{root}, x{std::nullopt} { }
     basic_path_memoizer(basic_path_memoizer &&) = default;
     basic_path_memoizer(const basic_path_memoizer &) = default;
 
-    inline std::size_t assign_x(input_t new_x)
+    inline std::size_t assign_x(InputT new_x)
     {
         static constexpr auto complement_of = std::bit_not{};
-        input_t old_x = x.value_or(complement_of(new_x));
+        InputT old_x = x.value_or(complement_of(new_x));
         x = new_x;
         return clzx(old_x, new_x);
     }
 
   private:
-    std::optional<input_t> x;
-    static constexpr auto clzx = utils::countl_zero_symmmetric_difference<input_t>{};
+    std::optional<InputT> x;
+    static constexpr auto clzx = utils::countl_zero_symmmetric_difference<InputT>{};
 };
 
-template <typename node_t>
+template <typename NodeT>
 struct nonmemoizing_path_memoizer
 {
   public:
     HEDLEY_ALWAYS_INLINE
-    explicit nonmemoizing_path_memoizer(node_t root)
+    explicit nonmemoizing_path_memoizer(NodeT root)
       : v{root} { }
     nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) = default;
     nonmemoizing_path_memoizer(const nonmemoizing_path_memoizer &) = default;
 
-    template <typename input_t>
+    template <typename InputT>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
-    std::size_t assign_x(input_t) noexcept { return 0; }
+    std::size_t assign_x(InputT) noexcept { return 0; }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    const node_t & operator[](std::size_t) const noexcept { return v; }
+    const NodeT & operator[](std::size_t) const noexcept { return v; }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    node_t & operator[](std::size_t) noexcept { return v; }
+    NodeT & operator[](std::size_t) noexcept { return v; }
 
   private:
-    node_t v;
+    NodeT v;
 };
 
 template <std::size_t I = 0,
-          typename dpf_t,
-          typename input_t>
-auto eval_point(const dpf_t & dpf, input_t x)
+          typename DpfKey,
+          typename InputT>
+auto eval_point(const DpfKey & dpf, InputT x)
 {
     auto memoizer = nonmemoizing_path_memoizer(dpf.root);
     return eval_point<I>(dpf, x, memoizer);
 }
 
-template <typename dpf_t>
-auto make_path_memoizer(const dpf_t & dpf)
+template <typename DpfKey>
+auto make_path_memoizer(const DpfKey & dpf)
 {
-    using input_t = typename dpf_t::input_type;
-    using node_t = typename dpf_t::interior_node_t;
+    using InputT = typename DpfKey::input_type;
+    using node_t = typename DpfKey::interior_node_t;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    return basic_path_memoizer<dpf_t::tree_depth, input_t, node_t>(dpf.root);
+    return basic_path_memoizer<DpfKey::tree_depth, InputT, node_t>(dpf.root);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 

@@ -29,7 +29,7 @@ namespace prg
 #define simde_mm_aeskeygenassist_si128(x, y) _mm_aeskeygenassist_si128(x, y);
 #endif
 
-template <typename aeskey_t>
+template <typename AesKey>
 struct aes final
 {
     using block_t = simde__m128i;
@@ -105,7 +105,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
   private:
-    static const aeskey_t key;
+    static const AesKey key;
 };  // struct aes
 
 #define EXPAND_ASSIST(v1, v2, v3, v4, shuff_const, aes_const)  \

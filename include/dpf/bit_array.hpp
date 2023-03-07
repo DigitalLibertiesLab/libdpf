@@ -248,12 +248,12 @@ class bit_array_base
 
     /// @details checks if all bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if all of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool all(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool all(Iterator first, Iterator last) const noexcept
     {
         word_type init = (*first.word_ptr_ | ~(first.mask_-1)) &
             (*last.word_ptr_ | (last.mask_-1));
@@ -272,12 +272,12 @@ class bit_array_base
 
     /// @details checks if any bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if any of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool any(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool any(Iterator first, Iterator last) const noexcept
     {
         word_type init = (*first.word_ptr_ & ~(first.mask_-1)) |
             (*last.word_ptr_ & (last.mask_-1));
@@ -295,12 +295,12 @@ class bit_array_base
 
     /// @details checks if none bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if none of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool none(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool none(Iterator first, Iterator last) const noexcept
     {
         return !any(first, last);
     }
@@ -321,11 +321,11 @@ class bit_array_base
     }
     /// @details counts the number of bits in a range that are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return the number of bits in the given range that are set to `true`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    size_type count(Iter begin, Iter end) const noexcept
+    template <typename Iterator>
+    size_type count(Iterator begin, Iterator end) const noexcept
     {
         return std::accumulate(begin.word_ptr_, end.word_ptr_,
             size_type(psnip_builtin_popcount64(*end.word_ptr_ & (end.mask_-1))
@@ -351,11 +351,11 @@ class bit_array_base
 
     /// @details counts the parity of bits in a range
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return the parity of all bits in the given range
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    size_type parity(Iter begin, Iter end) const noexcept
+    template <typename Iterator>
+    size_type parity(Iterator begin, Iterator end) const noexcept
     {
         auto x = std::accumulate(begin.word_ptr_, end.word_ptr_,
             word_type((*begin.word_ptr_ & (begin.mask_-1))

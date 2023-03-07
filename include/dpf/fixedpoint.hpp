@@ -479,7 +479,8 @@ enum fixed_cast_policy
     use_arg_sum  //< for multiplies only
 };
 
-template <typename BinaryOperator, fixed_cast_policy Mode = use_max_arg>
+template <typename BinaryOperator,
+          fixed_cast_policy Mode = use_max_arg>
 struct binary_operator_precast_wrapper
 {
     static_assert(Mode == use_default   ||

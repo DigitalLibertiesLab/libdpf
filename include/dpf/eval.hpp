@@ -5,29 +5,32 @@
 namespace dpf
 {
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 struct alignas(utils::max_align_v) dpf_output
 {
     dpf_output(const dpf_output &) = default;
     dpf_output(dpf_output &&) = default;
+    dpf_output & operator=(const dpf_output &) = default;
+    dpf_output & operator=(dpf_output &&) = default;
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
-    constexpr operator output_t() const
+    constexpr operator OutputT() const
     {
-        return extract_leaf<node_t, output_t>(node, offset);;
+        return extract_leaf<NodeT, OutputT>(node, offset);;
     }
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     auto operator*() const
     {
-        return static_cast<output_t>(*this);
+        return static_cast<OutputT>(*this);
     }
-    const node_t node;
-    const std::size_t offset;
+    NodeT node;
+    std::size_t offset;
 
   private:
-    dpf_output(node_t leaf_node, std::size_t off)
+    dpf_output(NodeT leaf_node, std::size_t off)
       : node{leaf_node}, offset{off} { }
 
   public:
@@ -47,8 +50,8 @@ auto make_dpf_output(const Node & node, Input x)
 }
 
 template <std::size_t I = 0,
-          typename dpf_t>
-void assert_not_wildcard(const dpf_t & dpf)
+          typename DpfKey>
+void assert_not_wildcard(const DpfKey & dpf)
 {
     if (dpf.is_wildcard(I))
     {

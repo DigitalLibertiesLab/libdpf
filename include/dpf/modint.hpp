@@ -2,7 +2,7 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines the `dpf::modint` class and associated helpers
 /// @details A `dpf::modint` is a thin wrapper around some primitive integral
-///          type. The underlying value is reduced modulo `2^N` only when the
+///          type. The underlying value is reduced modulo `2^Nbits` only when the
 ///          underlying value is read; arithmetic operations have no overhead
 ///          relative to native operations on the underlying type.
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
@@ -21,14 +21,14 @@
 namespace dpf
 {
 
-/// @brief represents an unsigned integer modulo `2^N` for small values of `N`
-template <std::size_t N>
+/// @brief represents an unsigned integer modulo `2^Nbits` for small values of `Nbits`
+template <std::size_t Nbits>
 class modint
 {
   public:
     /// @brief the primitive integral type used to represent the `modint`
-    static_assert(N && N <= 128, "representation must fit in 128 bits");
-    using integral_type = dpf::utils::integral_type_from_bitlength_t<N>;
+    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    using integral_type = dpf::utils::integral_type_from_bitlength_t<Nbits>;
 
     /// @brief construct the `modint`
     /// @{
@@ -36,7 +36,7 @@ class modint
     /// @brief value constructor
     /// @details Constructs a `modint` whose value is initialized to the
     ///          smallest nonnegative integer that is congruent to `value`
-    ///          modulo `2^N`.
+    ///          modulo `2^Nbits`.
     /// @param value the value to initialize with
     HEDLEY_ALWAYS_INLINE
     constexpr modint(integral_type value)  // NOLINT
@@ -67,7 +67,7 @@ class modint
 
     /// @brief value assignment
     /// @details Sets the `modint` equal to the smallest nonnegative integer
-    ///          that is congruent to `value` modulo `2^N`.
+    ///          that is congruent to `value` modulo `2^Nbits`.
     /// @param value the value to assign with
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator=(integral_type value)
@@ -253,7 +253,7 @@ class modint
     /// @brief bitwise-left-shift operator
     /// @details Returns a `modint` whose value is obtained by shifting this
     ///          one by `shift_amount` bits to the left. The value of `a<<b`
-    ///          is therefore a `modint` congruent to `a * 2^b` modulo `2^N`.
+    ///          is therefore a `modint` congruent to `a * 2^b` modulo `2^Nbits`.
     /// @param shift_amount the number of bits to shift by
     HEDLEY_CONST
     HEDLEY_NO_THROW
@@ -266,7 +266,7 @@ class modint
     /// @brief bitwise-left-shift-assignment operator
     /// @details Left-shifts this `modint` by `shift_amount` bits to the left
     ///          and returns a reference to the result. Upon invoking `a<<=b`,
-    ///          `a` is congruent to `a * 2^b` modulo `2^N`.
+    ///          `a` is congruent to `a * 2^b` modulo `2^Nbits`.
     /// @param shift_amount the number of bits to shift by
     HEDLEY_CONST
     HEDLEY_NO_THROW
@@ -491,8 +491,8 @@ class modint
     }
 
     template <typename CharT,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+              class Traits = std::char_traits<CharT>,
+              class Allocator = std::allocator<CharT>>
     friend std::basic_ostream<CharT, Traits> &
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const modint & i)
@@ -501,8 +501,8 @@ class modint
     }
 
     template <typename CharT,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+              class Traits = std::char_traits<CharT>,
+              class Allocator = std::allocator<CharT>>
     friend std::basic_istream<CharT, Traits> &
     operator>>(std::basic_istream<CharT, Traits> & is,
         const modint & i)
@@ -516,87 +516,87 @@ class modint
     }
 
   private:
-    /// @brief bitmask used for performing reductions modulo `2^N`
-    static constexpr integral_type modulo_mask = (integral_type{1} << N)-1;
+    /// @brief bitmask used for performing reductions modulo `2^Nbits`
+    static constexpr integral_type modulo_mask = (integral_type{1} << Nbits)-1;
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;
 };
 
-/// @brief Multiplies a `modint<N>` with an `modint::integral_type`.
+/// @brief Multiplies a `modint<Nbits>` with an `modint::integral_type`.
 /// @param lhs the `integral_type` multiplicand
 /// @param rhs the `modint` multiplicand
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator*(typename modint<N>::integral_type lhs,
-    modint<N> rhs) noexcept
+constexpr bool operator*(typename modint<Nbits>::integral_type lhs,
+    modint<Nbits> rhs) noexcept
 {
-    return modint<N>{lhs
-        * static_cast<typename modint<N>::integral_type>(rhs)};
+    return modint<Nbits>{lhs
+        * static_cast<typename modint<Nbits>::integral_type>(rhs)};
 }
 
-/// @brief Compare two `modint<N>`s as if they were regular integers
+/// @brief Compare two `modint<Nbits>`s as if they were regular integers
 /// @{
 
 /// @brief less-than operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator<(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator<(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        < static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        < static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @brief less-than-or-equal-to operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator<=(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator<=(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        <= static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        <= static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @brief greater-than operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator>(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator>(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        > static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        > static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @brief greater-than-or-equal-to operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator>=(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator>=(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        >= static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        >= static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @brief equality operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator==(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator==(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        == static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        == static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @brief inequality operator
-template <std::size_t N>
+template <std::size_t Nbits>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
-constexpr bool operator!=(modint<N> lhs, modint<N> rhs) noexcept
+constexpr bool operator!=(modint<Nbits> lhs, modint<Nbits> rhs) noexcept
 {
-    return static_cast<typename modint<N>::integral_type>(lhs)
-        != static_cast<typename modint<N>::integral_type>(rhs);
+    return static_cast<typename modint<Nbits>::integral_type>(lhs)
+        != static_cast<typename modint<Nbits>::integral_type>(rhs);
 }
 
 /// @}
@@ -604,28 +604,28 @@ constexpr bool operator!=(modint<N> lhs, modint<N> rhs) noexcept
 namespace utils
 {
 
-template <std::size_t N>
-struct bitlength_of<dpf::modint<N>>
-  : public std::integral_constant<std::size_t, N> { };
+template <std::size_t Nbits>
+struct bitlength_of<dpf::modint<Nbits>>
+  : public std::integral_constant<std::size_t, Nbits> { };
 
-template <std::size_t N>
-struct msb_of<dpf::modint<N>>
+template <std::size_t Nbits>
+struct msb_of<dpf::modint<Nbits>>
 {
-    static constexpr dpf::modint<N> value
-        = dpf::modint<N>{1} << bitlength_of_v<dpf::modint<N>> - 1ul;
+    static constexpr dpf::modint<Nbits> value
+        = dpf::modint<Nbits>{1} << bitlength_of_v<dpf::modint<Nbits>> - 1ul;
 };
 
-template <std::size_t N>
-struct countl_zero_symmmetric_difference<dpf::modint<N>>
+template <std::size_t Nbits>
+struct countl_zero_symmmetric_difference<dpf::modint<Nbits>>
 {
-	using T = dpf::modint<N>;
+	using T = dpf::modint<Nbits>;
 	HEDLEY_CONST
 	HEDLEY_ALWAYS_INLINE
 	constexpr std::size_t operator()(T lhs, T rhs) const noexcept
 	{
-		using T = typename dpf::modint<N>::integral_type;
+		using T = typename dpf::modint<Nbits>::integral_type;
 		constexpr auto xor_op = std::bit_xor<T>{};
-		constexpr auto adjust = bitlength_of_v<T> - N;
+		constexpr auto adjust = bitlength_of_v<T> - Nbits;
 		auto diff = xor_op(static_cast<T>(lhs), static_cast<T>(rhs));
 
 		if constexpr (std::is_same_v<T, simde_uint128>)
@@ -652,29 +652,30 @@ namespace std
 /// @brief specializes `std::numeric_limits` for CV-qualified `dpf::modint`s
 /// @{
 
-/// @details specializes `std::numeric_limits` for `dpf::modint<N>`
-template<std::size_t N> class numeric_limits<dpf::modint<N>>
-    : public numeric_limits<typename dpf::modint<N>::integral_type>
+/// @details specializes `std::numeric_limits` for `dpf::modint<Nbits>`
+template<std::size_t Nbits>
+class numeric_limits<dpf::modint<Nbits>>
+  : public numeric_limits<typename dpf::modint<Nbits>::integral_type>
 {
   public:
-    static constexpr int digits = N;
-    static constexpr int digits10 = N * std::log10(2);  //< correct if `N<129`
+    static constexpr int digits = Nbits;
+    static constexpr int digits10 = Nbits * std::log10(2);  //< correct if `Nbits<129`
     static constexpr bool is_integral = false;
 };
-/// @details specializes `std::numeric_limits` for `dpf::modint<N> const`
-template<std::size_t N>
-class numeric_limits<dpf::modint<N> const>
-    : public numeric_limits<dpf::modint<N>> {};
+/// @details specializes `std::numeric_limits` for `dpf::modint<Nbits> const`
+template<std::size_t Nbits>
+class numeric_limits<dpf::modint<Nbits> const>
+  : public numeric_limits<dpf::modint<Nbits>> {};
 /// @details specializes `std::numeric_limits` for
-///          `dpf::modint<N> volatile`
-template<std::size_t N>
-class numeric_limits<dpf::modint<N> volatile>
-    : public numeric_limits<dpf::modint<N>> {};
+///          `dpf::modint<Nbits> volatile`
+template<std::size_t Nbits>
+class numeric_limits<dpf::modint<Nbits> volatile>
+  : public numeric_limits<dpf::modint<Nbits>> {};
 /// @details specializes `std::numeric_limits` for
-///          `dpf::modint<N> const volatile`
-template<std::size_t N>
-class numeric_limits<dpf::modint<N> const volatile>
-    : public numeric_limits<dpf::modint<N>> {};
+///          `dpf::modint<Nbits> const volatile`
+template<std::size_t Nbits>
+class numeric_limits<dpf::modint<Nbits> const volatile>
+  : public numeric_limits<dpf::modint<Nbits>> {};
 
 /// @}
 

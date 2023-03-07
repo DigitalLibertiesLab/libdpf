@@ -128,8 +128,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         outputs_per_leaf - (to % outputs_per_leaf));
 }
 
-template <typename node_t,
-          typename Allocator = detail::aligned_allocator<node_t>>
+template <typename NodeT,
+          typename Allocator = detail::aligned_allocator<NodeT>>
 struct basic_interval_level_memoizer
 {
   public:
@@ -139,7 +139,7 @@ struct basic_interval_level_memoizer
       : pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
         tree_depth{depth},
         length{std::max(3*pivot, output_len)},
-        buf{alloc.allocate_unique_ptr(length * sizeof(node_t))},
+        buf{alloc.allocate_unique_ptr(length * sizeof(NodeT))},
         level_index{0}
     {
         if (pivot < 32)  // check alignment (pivot is 0 or some power of 2)
