@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <type_traits>
+#include <ostream>
 
 #include "hedley/hedley.h"
 #include "portable-snippets/exact-int/exact-int.h"
@@ -1142,6 +1143,11 @@ inline constexpr void swap(bit_array_base::bit_reference lhs,
     bool tmp = lhs;
     lhs = rhs;
     rhs = tmp;
+}
+
+std::ostream & operator<<(std::ostream & os, bit_array_base::bit_reference bit)
+{
+    return os << dpf::to_string(bit);
 }
 
 }  // namespace dpf
