@@ -162,8 +162,6 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
 
     eval_sequence_interior(dpf, recipe, memoizer);
     eval_sequence_exterior<I>(dpf, recipe, outbuf, memoizer);
-
-    return;
 }
 
 template <typename RandomAccessIterator>
@@ -320,6 +318,36 @@ struct double_space_sequence_memoizer
     const unique_ptr buf;
 };
 
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename InputT,
+          class OutputBuffer>
+auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
+    OutputBuffer & outbuf)
+{
+    auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
+    return eval_sequence(dpf, recipe, outbuf, memoizer);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename InputT>
+auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe)
+{
+    using exterior_node_t = typename DpfKey::exterior_node_t;
+    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
+    auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t, exterior_node_t>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
+    dpf::output_buffer<output_t> outbuf(recipe.num_leaf_nodes*outputs_per_leaf);
+
+    return eval_sequence(dpf, recipe, outbuf, memoizer);
+}
+
 template <typename DpfKey,
           typename InputT>
 auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
@@ -337,8 +365,6 @@ auto make_double_space_sequence_memoizer(const DpfKey &, const list_recipe<Input
     using allocator_t = detail::aligned_allocator<node_t, utils::max_align_v>;
     return double_space_sequence_memoizer<InputT, node_t, allocator_t>(recipe);
 }
-
-
 
 }  // namespace dpf
 
