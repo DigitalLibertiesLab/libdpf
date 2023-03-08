@@ -163,8 +163,8 @@ auto make_naked_leaf(InputT x, OutputT y)
     leaf_t Y{0};
     if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
-        Y = simde_mm_set_epi64x(uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64),
-                                uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64));
+        Y = simde_mm_set_epi64x(uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64),
+                                uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64));
     }
     else
     {
