@@ -618,28 +618,28 @@ struct msb_of<dpf::modint<Nbits>>
 template <std::size_t Nbits>
 struct countl_zero_symmmetric_difference<dpf::modint<Nbits>>
 {
-	using T = dpf::modint<Nbits>;
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(T lhs, T rhs) const noexcept
-	{
-		using T = typename dpf::modint<Nbits>::integral_type;
-		constexpr auto xor_op = std::bit_xor<T>{};
-		constexpr auto adjust = bitlength_of_v<T> - Nbits;
-		auto diff = xor_op(static_cast<T>(lhs), static_cast<T>(rhs));
+    using T = dpf::modint<Nbits>;
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(T lhs, T rhs) const noexcept
+    {
+        using T = typename dpf::modint<Nbits>::integral_type;
+        constexpr auto xor_op = std::bit_xor<T>{};
+        constexpr auto adjust = bitlength_of_v<T> - Nbits;
+        auto diff = xor_op(static_cast<T>(lhs), static_cast<T>(rhs));
 
-		if constexpr (std::is_same_v<T, simde_uint128>)
-		{
-			uint64_t diff_hi = static_cast<uint64_t>(diff >> 64);
-			uint64_t diff_lo = static_cast<uint64_t>(diff);
+        if constexpr (std::is_same_v<T, simde_uint128>)
+        {
+            uint64_t diff_hi = static_cast<uint64_t>(diff >> 64);
+            uint64_t diff_lo = static_cast<uint64_t>(diff);
 
-			return diff_hi ? psnip_builtin_clz64(diff_hi)-adjust : 64+psnip_builtin_clz64(diff_lo)-adjust;
-		}
-		else
-		{
-			return psnip_builtin_clz64(static_cast<uint64_t>(diff))-adjust;
-		}
-	}
+            return diff_hi ? psnip_builtin_clz64(diff_hi)-adjust : 64+psnip_builtin_clz64(diff_lo)-adjust;
+        }
+        else
+        {
+            return psnip_builtin_clz64(static_cast<uint64_t>(diff))-adjust;
+        }
+    }
 };
 
 }  // namespace utils
