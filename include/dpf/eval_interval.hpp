@@ -117,6 +117,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
         DpfKey::outputs_per_leaf - (to % DpfKey::outputs_per_leaf));
 }
 
+template <typename NodeT>
 struct interval_memoizer
 {
   public:
@@ -124,12 +125,14 @@ struct interval_memoizer
       : level_index{0}
     { }
 
-    virtual void reset() = 0;
+    virtual void reset()
+    {
+        level_index = 0;
+    }
 
     // level -1 should access the root
     // level goes up to (but not including) tree_depth
-    // TODO: figure out best way to force an operator[]
-    // virtual auto operator[](std::size_t) = 0;
+    virtual NodeT* operator[](std::size_t) const noexcept = 0;
 
     static std::size_t get_nodes_at_level(std::size_t depth, std::size_t level, std::size_t from_node, std::size_t to_node)
     {
@@ -163,7 +166,7 @@ struct interval_memoizer
 
 template <typename NodeT,
           typename Allocator = detail::aligned_allocator<NodeT>>
-struct basic_interval_memoizer : public interval_memoizer
+struct basic_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
     using unique_ptr = typename Allocator::unique_ptr;
@@ -181,14 +184,9 @@ struct basic_interval_memoizer : public interval_memoizer
         // }
     }
 
-    void reset()
-    {
-        level_index = 0;
-    }
-
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    auto operator[](std::size_t level) const noexcept
+    NodeT* operator[](std::size_t level) const noexcept override
     {
         auto b = !((tree_depth ^ level) & 1);
         return Allocator::assume_aligned(&buf[b*pivot]);
@@ -205,7 +203,7 @@ struct basic_interval_memoizer : public interval_memoizer
 
 template <typename NodeT,
           typename Allocator = detail::aligned_allocator<NodeT>>
-struct full_tree_interval_memoizer : public interval_memoizer
+struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
     using unique_ptr = typename Allocator::unique_ptr;
@@ -215,17 +213,12 @@ struct full_tree_interval_memoizer : public interval_memoizer
         output_length{output_len},
         idxs{new std::size_t[depth+1]},
         length{calc_length()},
-        buf{alloc.allocate_unique_ptr(length * sizeof(NodeT))}
+        buf{alloc.allocate_unique_ptr(length)}
     { }
-
-    void reset()
-    {
-        level_index = 0;
-    }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    auto operator[](std::size_t level) const noexcept
+    NodeT* operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[idxs[level+1]]);
     }
@@ -310,6 +303,7 @@ auto eval_full(const DpfKey & dpf)
     return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max());
 }
 
+// TODO: find better way to specify which memoizer is being used
 template <typename MemoizerT = basic_interval_memoizer<dpf::prg::aes128::block_t>,
           typename DpfKey,
           typename InputT>
