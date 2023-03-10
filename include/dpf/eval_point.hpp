@@ -5,8 +5,8 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 
-#ifndef LIBDPF_INCLUDE_DPF_POINT_HPP__
-#define LIBDPF_INCLUDE_DPF_POINT_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_EVAL_POINT_HPP__
+#define LIBDPF_INCLUDE_DPF_EVAL_POINT_HPP__
 
 #include <iomanip>
 
@@ -85,4 +85,4 @@ auto eval_point(const DpfKey & dpf, InputT x)
 
 }  // namespace dpf
 
-#endif  // LIBDPF_INCLUDE_DPF_POINT_HPP__
+#endif  // LIBDPF_INCLUDE_DPF_EVAL_POINT_HPP__
