@@ -80,21 +80,24 @@ struct alignas(alignof(NodeT)) basic_path_memoizer
     : public std::array<NodeT, depth+1>
 {
   public:
-    explicit basic_path_memoizer(NodeT root)
-      : std::array<NodeT, depth+1>{root}, x{std::nullopt} { }
+    using input_type = InputT;
+    using node_type = NodeT;
+    
+    explicit basic_path_memoizer(node_type root)
+      : std::array<node_type, depth+1>{root}, x{std::nullopt} { }
     basic_path_memoizer(basic_path_memoizer &&) = default;
     basic_path_memoizer(const basic_path_memoizer &) = default;
 
-    inline std::size_t assign_x(InputT new_x)
+    inline std::size_t assign_x(input_type new_x)
     {
         static constexpr auto complement_of = std::bit_not{};
-        InputT old_x = x.value_or(complement_of(new_x));
+        input_type old_x = x.value_or(complement_of(new_x));
         x = new_x;
         return clzx(old_x, new_x);
     }
 
   private:
-    std::optional<InputT> x;
+    std::optional<input_type> x;
     static constexpr auto clzx = utils::countl_zero_symmmetric_difference<InputT>{};
 };
 
@@ -102,8 +105,10 @@ template <typename NodeT>
 struct nonmemoizing_path_memoizer
 {
   public:
+    using node_type = NodeT;
+
     HEDLEY_ALWAYS_INLINE
-    explicit nonmemoizing_path_memoizer(NodeT root)
+    explicit nonmemoizing_path_memoizer(node_type root)
       : v{root} { }
     nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) = default;
     nonmemoizing_path_memoizer(const nonmemoizing_path_memoizer &) = default;
@@ -116,14 +121,14 @@ struct nonmemoizing_path_memoizer
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    const NodeT & operator[](std::size_t) const noexcept { return v; }
+    const node_type & operator[](std::size_t) const noexcept { return v; }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    NodeT & operator[](std::size_t) noexcept { return v; }
+    node_type & operator[](std::size_t) noexcept { return v; }
 
   private:
-    NodeT v;
+    node_type v;
 };
 
 template <std::size_t I = 0,
@@ -138,11 +143,11 @@ auto eval_point(const DpfKey & dpf, InputT x)
 template <typename DpfKey>
 auto make_path_memoizer(const DpfKey & dpf)
 {
-    using InputT = typename DpfKey::input_type;
+    using input_t = typename DpfKey::input_type;
     using node_t = typename DpfKey::interior_node_t;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    return basic_path_memoizer<DpfKey::tree_depth, InputT, node_t>(dpf.root);
+    return basic_path_memoizer<DpfKey::tree_depth, input_t, node_t>(dpf.root);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 

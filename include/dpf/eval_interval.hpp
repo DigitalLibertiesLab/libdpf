@@ -92,7 +92,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     {
         auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::tree_depth-1][j],
             dpf::get_if_lo_bit(cw, memoizer[DpfKey::tree_depth-1][j]));
-        std::memcpy(&rawbuf[k], &leaf, sizeof(exterior_node_t));
+        std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
@@ -268,7 +268,7 @@ template <std::size_t I = 0,
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to, OutputBuffer & outbuf)
 {
     auto memoizer = make_interval_memoizer(dpf, from, to);
-    return eval_interval(dpf, from, to, outbuf, memoizer);
+    return eval_interval<I>(dpf, from, to, outbuf, memoizer);
 }
 
 template <std::size_t I = 0,
@@ -276,14 +276,9 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to)
 {
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-
     auto memoizer = make_interval_memoizer(dpf, from, to);
-
-    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
-    std::size_t nodes_in_interval = to_node - from_node;
-    dpf::output_buffer<output_t> outbuf(nodes_in_interval*DpfKey::outputs_per_leaf);
-    auto clipped_iterable = eval_interval(dpf, from, to, outbuf, memoizer);
+    auto outbuf = make_output_buffer_for_interval(dpf, from, to);
+    auto clipped_iterable = eval_interval<I>(dpf, from, to, outbuf, memoizer);
     return std::make_tuple(std::move(outbuf), std::move(clipped_iterable));
 }
 

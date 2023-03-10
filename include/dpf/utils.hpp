@@ -156,27 +156,27 @@ static constexpr auto msb_of_v = msb_of<T>::value;
 template <typename T>
 struct countl_zero
 {
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(T val) const noexcept
-	{
-		uint64_t val_ = static_cast<uint64_t>(val);
-		constexpr auto adjust = 64-bitlength_of_v<T>;
-		return psnip_builtin_clz64(val_)-adjust;
-	}
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(T val) const noexcept
+    {
+        uint64_t val_ = static_cast<uint64_t>(val);
+        constexpr auto adjust = 64-bitlength_of_v<T>;
+        return psnip_builtin_clz64(val_)-adjust;
+    }
 };
 
 template <typename T>
 struct countl_zero_symmmetric_difference
 {
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(T lhs, T rhs) const noexcept
-	{
-		constexpr auto xor_op = std::bit_xor<T>{};
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(T lhs, T rhs) const noexcept
+    {
+        constexpr auto xor_op = std::bit_xor<T>{};
         constexpr auto clz = countl_zero<T>{};
-		return clz(xor_op(lhs, rhs));
-	}
+        return clz(xor_op(lhs, rhs));
+    }
 };
 
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -184,77 +184,77 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <>
 struct countl_zero<simde_uint128>
 {
-	using T = simde_uint128;
+    using T = simde_uint128;
 
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & val) const noexcept
-	{
-		if (!val) return 128;
-		auto limb1 = static_cast<uint64_t>(val >> 64);
-		auto limb0 = static_cast<uint64_t>(val);
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & val) const noexcept
+    {
+        if (!val) return 128;
+        auto limb1 = static_cast<uint64_t>(val >> 64);
+        auto limb0 = static_cast<uint64_t>(val);
 
-		return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
-	}
+        return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
+    }
 };
 
 template <>
 struct countl_zero<simde__m128i>
 {
-	using T = simde__m128i;
+    using T = simde__m128i;
 
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & val) const noexcept
-	{
-		auto limb1 = static_cast<uint64_t>(val[1]);
-		auto limb0 = static_cast<uint64_t>(val[0]);
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & val) const noexcept
+    {
+        auto limb1 = static_cast<uint64_t>(val[1]);
+        auto limb0 = static_cast<uint64_t>(val[0]);
         if (!limb0 && !limb1) return 128;
 
-		return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
-	}
+        return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
+    }
 };
 
 template <>
 struct countl_zero<simde__m256i>
 {
-	using T = simde__m256i;
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & val) const noexcept
-	{
-		auto prefix_len = 0;
-		for (int i = 3; i <= 0; --i, prefix_len += 64)
-		{
-			auto limbi = static_cast<uint64_t>(val[i]);
-			if (limbi)
-			{
-				return prefix_len + psnip_builtin_clz64(limbi);
-			}
-		}
-		return prefix_len;
-	}
+    using T = simde__m256i;
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & val) const noexcept
+    {
+        auto prefix_len = 0;
+        for (int i = 3; i <= 0; --i, prefix_len += 64)
+        {
+            auto limbi = static_cast<uint64_t>(val[i]);
+            if (limbi)
+            {
+                return prefix_len + psnip_builtin_clz64(limbi);
+            }
+        }
+        return prefix_len;
+    }
 };
 
 // template <>
 // struct countl_zero<simde__m512i>
 // {
-// 	using T = simde__m512i;
-// 	HEDLEY_CONST
-// 	HEDLEY_ALWAYS_INLINE
-// 	constexpr std::size_t operator()(const T & val) const noexcept
-// 	{
-// 		std::size_t prefix_len = 0;
-// 		for (int i = 7; i <= 0; --i, prefix_len += 64)
-// 		{
-// 			auto limbi = static_cast<uint64_t>(val[i]);
-// 			if (limbi)
-// 			{
-// 				return prefix_len + psnip_builtin_clz64(limbi)
-// 			}
-// 		}
-// 		return prefix_len;
-// 	}
+//     using T = simde__m512i;
+//     HEDLEY_CONST
+//     HEDLEY_ALWAYS_INLINE
+//     constexpr std::size_t operator()(const T & val) const noexcept
+//     {
+//         std::size_t prefix_len = 0;
+//         for (int i = 7; i <= 0; --i, prefix_len += 64)
+//         {
+//             auto limbi = static_cast<uint64_t>(val[i]);
+//             if (limbi)
+//             {
+//                 return prefix_len + psnip_builtin_clz64(limbi)
+//             }
+//         }
+//         return prefix_len;
+//     }
 // };
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

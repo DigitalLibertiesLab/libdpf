@@ -684,16 +684,16 @@ template <unsigned FractionalBits,
           typename IntegralType>
 struct countl_zero_symmmetric_difference<dpf::fixedpoint<FractionalBits, IntegralType>>
 {
-	using T = dpf::fixedpoint<FractionalBits, IntegralType>;
+    using T = dpf::fixedpoint<FractionalBits, IntegralType>;
     static constexpr auto clz = dpf::utils::countl_zero_symmmetric_difference<typename T::integral_type>{};
 
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
-	{
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+    {
         constexpr auto adjust = utils::bitlength_of_v<typename T::integral_type>-T::bits;
-		return clz(static_cast<typename T::integral_type>(lhs), static_cast<typename T::integral_type>(rhs))-adjust;
-	}
+        return clz(static_cast<typename T::integral_type>(lhs), static_cast<typename T::integral_type>(rhs))-adjust;
+    }
 };
 
 }  // namespace utils
