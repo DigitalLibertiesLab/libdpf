@@ -42,7 +42,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    static constexpr std::size_t tree_depth = utils::bitlength_of_v<InputT> - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
+    static constexpr std::size_t depth = utils::bitlength_of_v<InputT> - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
     static constexpr InputT msb_mask = InputT(1) << (utils::bitlength_of_v<InputT>-1);
     static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node_t>;
     static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
@@ -54,8 +54,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node_t root_,
-                      const std::array<interior_node_t, tree_depth> & interior_cws_,
-                      const std::array<uint8_t, tree_depth> & correction_advice_,
+                      const std::array<interior_node_t, depth> & interior_cws_,
+                      const std::array<uint8_t, depth> & correction_advice_,
                       const leaf_nodes_t & exterior_cw_,
                       std::bitset<sizeof...(OutputTs)+1> & wildcards_mask_)
       : wildcard_mask{wildcards_mask_},
@@ -73,9 +73,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     const interior_node_t root;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    const std::array<interior_node_t, tree_depth> interior_cws;
+    const std::array<interior_node_t, depth> interior_cws;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    const std::array<uint8_t, tree_depth> correction_advice;
+    const std::array<uint8_t, depth> correction_advice;
 
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const
@@ -137,7 +137,7 @@ auto make_dpf(InputT x, OutputT y, OutputTs... ys)
                                    OutputT, OutputTs...>;
     using interior_node_t = typename specialization::interior_node_t;
 
-    constexpr auto depth = specialization::tree_depth;
+    constexpr auto depth = specialization::depth;
     InputT mask = specialization::msb_mask;
 
     const interior_node_t root[2] = {

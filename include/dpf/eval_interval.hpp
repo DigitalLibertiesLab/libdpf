@@ -27,13 +27,13 @@ template <typename DpfKey,
           class IntervalMemoizer>
 DPF_UNROLL_LOOPS
 inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, std::size_t to_node,
-    IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::tree_depth)
+    IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using node_t = typename DpfKey::interior_node_t;
     auto nodes_in_interval = to_node - from_node;
 
     typename DpfKey::input_type mask = dpf.msb_mask >> (memoizer.level_index + DpfKey::lg_outputs_per_leaf);
-    std::size_t nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.tree_depth, memoizer.level_index-1, from_node, to_node);
+    std::size_t nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.depth, memoizer.level_index-1, from_node, to_node);
     // TODO: should this be level_index-1 instead of level_index?
 
     if (memoizer.level_index == 0)
@@ -60,7 +60,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[1], 1);
         }
-        nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.tree_depth, memoizer.level_index, from_node, to_node);
+        nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.depth, memoizer.level_index, from_node, to_node);
         memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
         if (i < nodes_at_level)
         {
@@ -91,8 +91,8 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
         k += dpf::block_length_of_leaf_v<output_t, exterior_node_t>)
     {
-        auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::tree_depth-1][j],
-            dpf::get_if_lo_bit(cw, memoizer[DpfKey::tree_depth-1][j]));
+        auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::depth-1][j],
+            dpf::get_if_lo_bit(cw, memoizer[DpfKey::depth-1][j]));
         std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)

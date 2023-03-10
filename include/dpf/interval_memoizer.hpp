@@ -11,6 +11,7 @@
 namespace dpf
 {
 
+template <typename NodeT>
 struct interval_memoizer
 {
   public:
@@ -18,12 +19,14 @@ struct interval_memoizer
       : level_index{0}
     { }
 
-    virtual void reset() = 0;
+    virtual void reset()
+    {
+        level_index = 0;
+    }
 
     // level -1 should access the root
-    // level goes up to (but not including) tree_depth
-    // TODO: figure out best way to force an operator[]
-    // virtual auto operator[](std::size_t) = 0;
+    // level goes up to (but not including) depth
+    virtual NodeT* operator[](std::size_t) const noexcept = 0;
 
     static std::size_t get_nodes_at_level(std::size_t depth, std::size_t level, std::size_t from_node, std::size_t to_node)
     {
@@ -57,14 +60,14 @@ struct interval_memoizer
 
 template <typename NodeT,
           typename Allocator = detail::aligned_allocator<NodeT>>
-struct basic_interval_memoizer : public interval_memoizer
+struct basic_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
     using unique_ptr = typename Allocator::unique_ptr;
 
     explicit basic_interval_memoizer(std::size_t output_len, std::size_t depth, Allocator alloc = Allocator{})
       : pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
-        tree_depth{depth},
+        depth{depth},
         length{std::max(3*pivot, output_len)},
         buf{alloc.allocate_unique_ptr(length * sizeof(NodeT))}
     {
@@ -75,23 +78,18 @@ struct basic_interval_memoizer : public interval_memoizer
         // }
     }
 
-    void reset()
-    {
-        level_index = 0;
-    }
-
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    auto operator[](std::size_t level) const noexcept
+    NodeT* operator[](std::size_t level) const noexcept override
     {
-        auto b = !((tree_depth ^ level) & 1);
+        auto b = !((depth ^ level) & 1);
         return Allocator::assume_aligned(&buf[b*pivot]);
     }
 
   private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
     const std::size_t pivot;
-    const std::size_t tree_depth;
+    const std::size_t depth;
   public:
     const std::size_t length;
     unique_ptr buf;
@@ -99,27 +97,22 @@ struct basic_interval_memoizer : public interval_memoizer
 
 template <typename NodeT,
           typename Allocator = detail::aligned_allocator<NodeT>>
-struct full_tree_interval_memoizer : public interval_memoizer
+struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
     using unique_ptr = typename Allocator::unique_ptr;
 
     explicit full_tree_interval_memoizer(std::size_t output_len, std::size_t depth, Allocator alloc = Allocator{})
-      : tree_depth{depth},
+      : depth{depth},
         output_length{output_len},
         idxs{new std::size_t[depth+1]},
         length{calc_length()},
         buf{alloc.allocate_unique_ptr(length)}
     { }
 
-    void reset()
-    {
-        level_index = 0;
-    }
-
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    auto operator[](std::size_t level) const noexcept
+    NodeT* operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[idxs[level+1]]);
     }
@@ -132,14 +125,14 @@ struct full_tree_interval_memoizer : public interval_memoizer
         idxs[0] = 0;
         idxs[1] = 1;
 
-        for (std::size_t level = tree_depth-1; level > 0; --level)
+        for (std::size_t level = depth-1; level > 0; --level)
         {
             len = std::min(len / 2 + 1, static_cast<std::size_t>(1) << (level));
             ret += len;
             idxs[level+1] = len;
         }
 
-        for (std::size_t i = 0; i < tree_depth; ++i)
+        for (std::size_t i = 0; i < depth; ++i)
         {
             idxs[i+1] = idxs[i] + idxs[i+1];
         }
@@ -147,7 +140,7 @@ struct full_tree_interval_memoizer : public interval_memoizer
         return ret;
     }
 
-    const std::size_t tree_depth;
+    const std::size_t depth;
     const std::size_t output_length;
     std::unique_ptr<std::size_t[]> idxs;
   public:
@@ -155,6 +148,7 @@ struct full_tree_interval_memoizer : public interval_memoizer
     unique_ptr buf;
 };
 
+// TODO: find better way to specify which memoizer is being used
 template <typename MemoizerT = basic_interval_memoizer<dpf::prg::aes128::block_t>,
           typename DpfKey,
           typename InputT>
@@ -168,7 +162,7 @@ auto make_interval_memoizer(const DpfKey &, InputT from = 0,
     auto from_node = from/DpfKey::outputs_per_leaf, to_node = 1+to/DpfKey::outputs_per_leaf;
     auto nodes_in_interval = to_node - from_node;
 
-    return MemoizerT(nodes_in_interval, DpfKey::tree_depth);
+    return MemoizerT(nodes_in_interval, DpfKey::depth);
 }
 
 }  // namespace dpf
