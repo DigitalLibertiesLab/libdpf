@@ -44,6 +44,8 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t tree_depth = utils::bitlength_of_v<InputT> - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
     static constexpr InputT msb_mask = InputT(1) << (utils::bitlength_of_v<InputT>-1);
+    static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node_t>;
+    static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
 
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
