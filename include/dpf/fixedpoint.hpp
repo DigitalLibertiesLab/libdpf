@@ -7,6 +7,10 @@
 #ifndef LIBDPF_INCLUDE_DPF_FIXEDPOINT_HPP__
 #define LIBDPF_INCLUDE_DPF_FIXEDPOINT_HPP__
 
+#include <hedley/hedley.h>
+#include <portable-snippets/exact-int/exact-int.h>
+#include <portable-snippets/builtin/builtin.h>
+
 #include <cstdint>
 #include <limits>
 #include <functional>
@@ -16,10 +20,6 @@
 #include <cmath>
 #include <iostream>
 
-#include <hedley/hedley.h>
-#include <portable-snippets/exact-int/exact-int.h>
-#include <portable-snippets/builtin/builtin.h>
-
 #include "dpf/utils.hpp"
 
 #define LIBDPF_FIXED_DEFAULT_INTEGRAL_REPRESENTATION psnip_uint64_t
@@ -27,7 +27,7 @@
 namespace dpf
 {
 
-template <unsigned FractionalBits, 
+template <unsigned FractionalBits,
           typename IntegralType>
 auto constexpr make_fixed_from_integral_type(IntegralType value) noexcept;
 
@@ -75,7 +75,7 @@ struct fixedpoint
     /// @details Initializes the fixed-point with the value determined by `desired`, using the <a href="https://en.cppreference.com/w/cpp/numeric/fenv/FE_round">current rounding mode</a> for the least-significant bit.
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr fixedpoint(double desired) noexcept
+    constexpr fixedpoint(double desired) noexcept  // NOLINT (implicit c'tor)
       : value{static_cast<integral_type>(std::nearbyint(std::ldexp(desired, fractional_bits)))}
     { }
 
@@ -116,9 +116,6 @@ struct fixedpoint
         return std::ldexp(static_cast<double>(value), -static_cast<double>(fractional_bits));
     }
 
-    /// @brief 
-    /// @param rhs 
-    /// @return 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
@@ -335,8 +332,8 @@ struct fixedpoint
     template <unsigned F, typename T> friend constexpr auto nextbefore(fixedpoint<F, T>) noexcept;
     template <unsigned F0, unsigned F1, typename T> friend constexpr auto precision_cast(fixedpoint<F1, T>) noexcept;
     template <unsigned F, typename T> friend constexpr auto make_fixed_from_integral_type(T) noexcept;
-    template <unsigned F, typename T> friend constexpr auto fabs(fixedpoint<F,T>) noexcept;
-    template <unsigned F, typename T> friend constexpr auto fmod(fixedpoint<F,T>,double) noexcept;
+    template <unsigned F, typename T> friend constexpr auto fabs(fixedpoint<F, T>) noexcept;
+    template <unsigned F, typename T> friend constexpr auto fmod(fixedpoint<F, T>, double) noexcept;
 
     integral_type value;
 };
@@ -346,7 +343,7 @@ template <class CharT,
           unsigned FractionalBits,
           typename IntegralType>
 std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> & os, 
+operator<<(std::basic_ostream<CharT, Traits> & os,
     const fixedpoint<FractionalBits, IntegralType> & f) noexcept
 {
     return os << static_cast<double>(f);
@@ -366,7 +363,7 @@ operator>>(std::basic_istream<CharT, Traits> & is,
     return is;
 }
 
-template <unsigned FractionalBits, 
+template <unsigned FractionalBits,
           typename IntegralType>
 auto constexpr make_fixed_from_integral_type(IntegralType value) noexcept
 {

@@ -2,7 +2,9 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines the `dpf::bit` class and associated helpers
 /// @details A `dpf::bit` is a binary type whose representation can be packed
-///          into one bit.
+///          into one bit. This type is inteded to be used as an output value
+///          of a DPF, in which case leaf nodes will be packed in much the
+///          ways as in an `std::bitset` or `std::vector<bool>`.
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
@@ -22,7 +24,11 @@ namespace dpf
 {
 
 /// @brief binary type whose representation can be packed into one bit
-enum bit : bool { zero = false, one = true };
+enum bit : bool
+{
+    zero = false,  ///< `0`, `false`, "unset", "off"
+    one = true     ///< `1`, `true`, "set", "on"
+};
 
 /// @brief converts a value to a `dpf::bit`
 /// @{
@@ -55,13 +61,13 @@ static constexpr dpf::bit to_bit(bool value) noexcept
     return static_cast<dpf::bit>(value);
 }
 
-/// @brief converts a `bool` to a `dpf::bit`
-/// @details Convert a `bool` to a `dpf::bit`. The resulting `dpf::bit` is
-///          equal to `dpf::bit::one` if `value==true` and `dpf::bit::zero`
+/// @brief converts a character to a `dpf::bit`
+/// @details Convert a character to a `dpf::bit`. The resulting `dpf::bit` is
+///          equal to `dpf::bit::one` if `value==one` and `dpf::bit::zero`
 ///          otherwise.
-/// @param value the `bool` to convert
-/// @param zero character to use to represent `0`
-/// @param one character to use to represent `1`
+/// @param value the character to convert
+/// @param zero character used to represent `0` (default: `CharT{'0'}`)
+/// @param one character used to represent `1` (default: `CharT{'1'}`)
 /// @returns `static_cast<dpf::bit>(0)` if `value==0` or
 ///          `static_cast<dpf::bit>(1)` if `value==1`
 /// @throws `std::domain_error` if `value != zero && value != one`
@@ -83,11 +89,12 @@ static constexpr dpf::bit to_bit(
 /// @}
 
 /// @brief converts a `dpf::bit` to a `std::basic_string`
-/// @details Converts the contents of a `dpf::bit` to a `std::string`. Uses
-///          `zero` to represent the value `0` and `one` to the value `1`.
+/// @details Converts the contents of a `dpf::bit` to a `std::string` for
+///          human-friendly printing. Uses `zero` to represent the value
+///          `0` and `one` to the value `1`.
 /// @param value the `dpf::bit` to convert
-/// @param zero character to use to represent `0`
-/// @param one character to use to represent `1`
+/// @param zero character to use to represent `0` (default: `CharT{'0'}`)
+/// @param one character to use to represent `1` (default: `CharT{'1'}`)
 /// @return `(value == 0) ? zero : one`
 template <class CharT = char,
           class Traits = std::char_traits<CharT>,

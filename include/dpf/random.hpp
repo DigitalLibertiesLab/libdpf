@@ -19,7 +19,7 @@ template <typename T>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto & uniform_fill(T & buf) noexcept
+auto & uniform_fill(T & buf) noexcept  // NOLINT
 {
     arc4random_buf(&buf, sizeof(buf));
     return buf;

@@ -5,9 +5,10 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 
-#ifndef LIBDPF_INCLUDE_DPF_BUFFER_HPP__
-#define LIBDPF_INCLUDE_DPF_BUFFER_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_OUTPUT_BUFFER_HPP__
+#define LIBDPF_INCLUDE_DPF_OUTPUT_BUFFER_HPP__
 
+#include <algorithm>
 #include <vector>
 
 #include "dpf/aligned_allocator.hpp"
@@ -21,17 +22,17 @@ namespace dpf
 
 template <typename T>
 class output_buffer
-  : private std::vector<T, dpf::detail::aligned_allocator<T, utils::max_align_v>>
+  : private std::vector<T, dpf::aligned_allocator<T>>
 {
   private:
-    using vector = std::vector<T, dpf::detail::aligned_allocator<T, utils::max_align_v>>;
+    using vector = std::vector<T, dpf::aligned_allocator<T>>;
   public:
     using value_type = typename vector::value_type;
     using iterator = typename vector::iterator;
     using const_iterator = typename vector::const_iterator;
     using size_type = typename vector::size_type;
     output_buffer() = default;
-    output_buffer(size_type size) : vector(size) { };
+    explicit output_buffer(size_type size) : vector(size) { }
     output_buffer(output_buffer &&) = default;
     output_buffer(const output_buffer &) = delete;
 
@@ -50,7 +51,7 @@ template <>
 class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
 {
   public:
-    output_buffer(size_type size) : dynamic_bit_array(size) { };
+    explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
     output_buffer(output_buffer &&) = default;
     output_buffer(const output_buffer &) = delete;
 };
@@ -71,42 +72,42 @@ class clipped_iterable
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    explicit clipped_iterable(Container & c, std::size_t preclip, std::size_t postclip)
+    explicit clipped_iterable(Container * c, std::size_t preclip, std::size_t postclip)
       : cont_{c}, preclip_{preclip}, postclip_{postclip} { }
 
     HEDLEY_ALWAYS_INLINE
     iterator begin() noexcept
     {
-        return std::begin(cont_)+preclip_;
+        return std::begin(*cont_)+preclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return std::begin(cont_)+preclip_;
+        return std::begin(*cont_)+preclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator cbegin() const noexcept
     {
-        return std::cbegin(cont_)+preclip_;
+        return std::cbegin(*cont_)+preclip_;
     }
     HEDLEY_ALWAYS_INLINE
     iterator end() noexcept
     {
-        return std::end(cont_)-postclip_;
+        return std::end(*cont_)-postclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return std::end(cont_)-postclip_;
+        return std::end(*cont_)-postclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator cend() const noexcept
     {
-        return std::cend(cont_)-postclip_;
+        return std::cend(*cont_)-postclip_;
     }
 
   private:
-    Container & cont_;
+    Container * cont_;
     std::size_t preclip_, postclip_;
 };  // class dpf::clipped_iterable
 
@@ -129,4 +130,4 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace dpf
 
-#endif  // LIBDPF_INCLUDE_DPF_BUFFER_HPP__
+#endif  // LIBDPF_INCLUDE_DPF_OUTPUT_BUFFER_HPP__

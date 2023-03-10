@@ -22,7 +22,7 @@ namespace prg
 {
 
 #ifdef __ARM_NEON
-// TODO
+
 #else
 #define simde_mm_aesenc_si128(x, y) _mm_aesenc_si128(x, y);
 #define simde_mm_aesenclast_si128(x, y) _mm_aesenclast_si128(x, y);
@@ -85,7 +85,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static void eval(block_t seed, block_t * HEDLEY_RESTRICT output,
         uint32_t count, uint32_t pos = 0) noexcept
     {
-        static constexpr block_t one{1,0};
+        static constexpr block_t one{1, 0};
         auto pos_ = simde_mm_set_epi64x(0, pos);
         block_t * HEDLEY_RESTRICT out =
             static_cast<block_t *>(__builtin_assume_aligned(output,
@@ -131,7 +131,7 @@ struct aes128_key
     HEDLEY_PRAGMA(GCC diagnostic pop)
     const rd_key_array rd_key;
 
-    aes128_key(const simde__m128i & userkey)
+    explicit aes128_key(const simde__m128i & userkey)
       : rd_key{compute_round_keys(userkey)} { }
 
   private:
@@ -164,7 +164,7 @@ struct aes128_key
 
         return rd_key;
     }
-};  // struct aes128_key    
+};  // struct aes128_key
 
 struct aes256_key
 {
@@ -177,7 +177,7 @@ struct aes256_key
   HEDLEY_PRAGMA(GCC diagnostic pop)
     const rd_key_array rd_key;
 
-    aes256_key(const simde__m256i & userkey)
+    explicit aes256_key(const simde__m256i & userkey)
       : rd_key{compute_round_keys(userkey)} { }
 
   private:
@@ -224,10 +224,10 @@ using aes128 = aes<aes128_key>;
 using aes256 = aes<aes256_key>;
 
 template <>
-const aes128_key aes128::key = simde__m128i{0, 0};
+const aes128_key aes128::key = aes128_key(simde__m128i{0, 0});
 
 template <>
-const aes256_key aes256::key = simde__m256i{0, 0, 0, 0};
+const aes256_key aes256::key = aes256_key(simde__m256i{0, 0, 0, 0});
 
 }  // namespace prg
 

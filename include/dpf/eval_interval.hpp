@@ -27,13 +27,13 @@ template <typename DpfKey,
           typename InputT>
 DPF_UNROLL_LOOPS
 inline auto eval_interval_interior(const DpfKey & dpf, InputT from_node, InputT to_node,
-    SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::tree_depth)
+    SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using node_t = typename DpfKey::interior_node_t;
     auto nodes_in_interval = std::max(std::size_t(0), to_node-from_node);
 
     InputT mask = dpf.msb_mask >> memoizer.level_index;
-    std::size_t nodes_at_level = std::ceil(std::ldexp(nodes_in_interval, memoizer.level_index-dpf.tree_depth+2));
+    std::size_t nodes_at_level = std::ceil(std::ldexp(nodes_in_interval, memoizer.level_index-dpf.depth+2));
 
     if (memoizer.level_index == 0)
     {
@@ -58,7 +58,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, InputT from_node, InputT 
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[1], 1);
         }
-        nodes_at_level = std::ceil(std::ldexp(nodes_in_interval, memoizer.level_index-dpf.tree_depth+2));
+        nodes_at_level = std::ceil(std::ldexp(nodes_in_interval, memoizer.level_index-dpf.depth+2));
         memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
         if (i < nodes_at_level)
         {
@@ -89,8 +89,8 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
         k += dpf::block_length_of_leaf_v<output_t, exterior_node_t>)
     {
-        auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::tree_depth-1][j],
-            dpf::get_if_lo_bit(cw, memoizer[DpfKey::tree_depth-1][j]));
+        auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::depth-1][j],
+            dpf::get_if_lo_bit(cw, memoizer[DpfKey::depth-1][j]));
         std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -119,12 +119,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     eval_interval_interior(dpf, from_node, to_node, memoizer);
     eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return dpf::clipped_iterable<OutputBuffer>(outbuf, from % outputs_per_leaf,
+    return dpf::clipped_iterable<OutputBuffer>(&outbuf, from % outputs_per_leaf,
         outputs_per_leaf - (to % outputs_per_leaf));
 }
 
 template <typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
+          typename Allocator = aligned_allocator<NodeT>>
 struct basic_interval_memoizer
 {
   public:
@@ -132,7 +132,7 @@ struct basic_interval_memoizer
 
     explicit basic_interval_memoizer(std::size_t output_len, std::size_t depth, Allocator alloc = Allocator{})
       : pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
-        tree_depth{depth},
+        depth{depth},
         length{std::max(3*pivot, output_len)},
         buf{alloc.allocate_unique_ptr(length * sizeof(NodeT))},
         level_index{0}
@@ -152,14 +152,14 @@ struct basic_interval_memoizer
     HEDLEY_NO_THROW
     auto operator[](std::size_t level) const noexcept
     {
-        auto b = !((tree_depth ^ level) & 1);
+        auto b = !((depth ^ level) & 1);
         return Allocator::assume_aligned(&buf[b*pivot]);
     }
 
   private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
     const std::size_t pivot;
-    const std::size_t tree_depth;
+    const std::size_t depth;
   public:
     const std::size_t length;
     unique_ptr buf;
@@ -231,7 +231,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto nodes_in_interval = std::max(std::size_t(1), to_node - from_node);
 
     using node_t = typename interior_prg::block_t;
-    return basic_interval_memoizer<node_t>(nodes_in_interval, DpfKey::tree_depth);
+    return basic_interval_memoizer<node_t>(nodes_in_interval, DpfKey::depth);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
