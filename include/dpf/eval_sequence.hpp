@@ -5,8 +5,8 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 
-#ifndef LIBDPF_INCLUDE_DPF_SEQUENCE_HPP__
-#define LIBDPF_INCLUDE_DPF_SEQUENCE_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_EVAL_SEQUENCE_HPP__
+#define LIBDPF_INCLUDE_DPF_EVAL_SEQUENCE_HPP__
 
 #include <functional>
 #include <memory>
@@ -75,10 +75,10 @@ template <typename DpfKey,
           typename SequenceMemoizer>
 DPF_UNROLL_LOOPS
 inline auto eval_sequence_interior(const DpfKey & dpf, const list_recipe<InputT> & recipe,
-    SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::tree_depth)
+    SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using node_t = typename DpfKey::interior_node_t;
-    bool currhalf = !(dpf.tree_depth & 1);
+    bool currhalf = !(dpf.depth & 1);
     std::size_t nodes_at_level = 1;
 
     for (std::size_t level_index=0, recipe_index=0; level_index < to_level; ++level_index, currhalf = !currhalf)
@@ -225,17 +225,37 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
 
 template <typename InputT,
           typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
-struct inplace_reversing_sequence_memoizer
+          typename Allocator>
+struct sequence_memoizer_base
 {
+  public:
+    using unique_ptr = typename Allocator::unique_ptr;
+    const list_recipe<InputT> & recipe;
+
+    const unique_ptr buf;
+  protected:
+    explicit sequence_memoizer_base(const list_recipe<InputT> & r,
+        std::size_t buffer_size_in_nodes, Allocator alloc)
+      : recipe{r},
+        buf{alloc.make_unique(buffer_size_in_nodes)} { }
+};
+
+template <typename InputT,
+          typename NodeT,
+          typename Allocator = detail::aligned_allocator<NodeT>>
+struct reversing_sequence_memoizer
+  : public sequence_memoizer_base<InputT, NodeT, Allocator>
+{
+  private:
+    using parent = sequence_memoizer_base<InputT, NodeT, Allocator>;
   public:
     using unique_ptr = typename Allocator::unique_ptr;
     using forward_iter = NodeT *;
     using reverse_iter = std::reverse_iterator<forward_iter>;
 
-    explicit inplace_reversing_sequence_memoizer(const list_recipe<InputT> & r, Allocator alloc = Allocator{})
-      : recipe{r},
-        buf{alloc.make_unique(recipe.num_leaf_nodes)} { }
+    explicit reversing_sequence_memoizer(const list_recipe<InputT> & r,
+        Allocator alloc = Allocator{})
+      : parent::sequence_memoizer_base(r, r.num_leaf_nodes, alloc) { }
 
     struct pointer_facade
     {
@@ -271,20 +291,17 @@ struct inplace_reversing_sequence_memoizer
     auto get_iterators(bool b, InputT x) const noexcept
     {
         return std::make_pair(
-          pointer_facade(b, &buf[recipe.num_leaf_nodes-x],
-              std::make_reverse_iterator(&buf[x])),
-          pointer_facade(b, &buf[0],
-              std::make_reverse_iterator(&buf[recipe.num_leaf_nodes])));
+          pointer_facade(b, &parent::buf[parent::recipe.num_leaf_nodes-x],
+              std::make_reverse_iterator(&parent::buf[x])),
+          pointer_facade(b, &parent::buf[0],
+              std::make_reverse_iterator(&parent::buf[parent::recipe.num_leaf_nodes])));
     }
 
     auto get_step(bool b, std::size_t level, std::size_t step)
     {
-        step = b ? step : recipe.level_endpoints[level+1] - step - 1 + recipe.level_endpoints[level];
-        return recipe.recipe_steps(step);
+        step = b ? step : parent::recipe.level_endpoints[level+1] - step - 1 + parent::recipe.level_endpoints[level];
+        return parent::recipe.recipe_steps(step);
     }
-
-    const list_recipe<InputT> & recipe;
-    const unique_ptr buf;
 };
 
 template <typename InputT,
@@ -354,7 +371,7 @@ auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const list_recipe<
 {
     using node_t = typename DpfKey::interior_node_t;
     using allocator_t = detail::aligned_allocator<node_t, utils::max_align_v>;
-    return inplace_reversing_sequence_memoizer<InputT, node_t, allocator_t>(recipe);
+    return reversing_sequence_memoizer<InputT, node_t, allocator_t>(recipe);
 }
 
 template <typename DpfKey,
@@ -368,4 +385,4 @@ auto make_double_space_sequence_memoizer(const DpfKey &, const list_recipe<Input
 
 }  // namespace dpf
 
-#endif  // LIBDPF_INCLUDE_DPF_SEQUENCE_HPP__
+#endif  // LIBDPF_INCLUDE_DPF_EVAL_SEQUENCE_HPP__
