@@ -1,6 +1,11 @@
 /// @file dpf/wildcard.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief
+/// @brief defines the `dpf::wildcard_t` template and associated helpers
+/// @details A `dpf::wildcard` is a struct template with a single parameter
+///          `T`, which must be a trivially copyable type (as indicated by
+///          `std::is_trivially_copyable<T>`). It is used as a placeholder
+///          for an instance of type `T`, which can be assigned later. Its
+///          intended for use as an output of a DPF.
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
@@ -41,9 +46,9 @@ struct wildcard_t
 template <typename T> static constexpr wildcard_t<T> wildcard{};
 
 /// @brief Checks whether `T` is a wildcard type.
-/// @details Provides the member constant `value` which is equal to `true`, if
-///          `T` is a specialization of the `wildcard_t` template. Otherwise,
-///          `value` is equal to `false`.
+/// @details A trait class that provides the member constant `value` which is
+///          equal to `true`, if `T` is a specialization of the `wildcard_t`
+///          template and `false` otherwise.
 /// @see dpf::is_wildcard_v
 template <typename T> struct is_wildcard : std::false_type { };
 template <typename T> struct is_wildcard<wildcard_t<T>> : std::true_type { };

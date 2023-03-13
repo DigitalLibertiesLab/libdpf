@@ -1103,7 +1103,7 @@ inline bit_array_base::bit_iterator_base::difference_type operator-(
 }
 
 template <std::size_t Nbits>
-class alignas(utils::max_align_v) static_bit_array : public bit_array_base
+class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
 {
     static constexpr std::size_t length_in_words
         = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
@@ -1124,7 +1124,7 @@ class alignas(utils::max_align_v) static_bit_array : public bit_array_base
     std::array<word_type, length_in_words> arr;
 };
 
-class dynamic_bit_array : public bit_array_base
+class dynamic_bit_array final : public bit_array_base
 {
   public:
     constexpr dynamic_bit_array(dynamic_bit_array && other)
