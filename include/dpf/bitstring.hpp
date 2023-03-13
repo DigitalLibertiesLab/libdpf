@@ -234,7 +234,7 @@ class bitstring : public bit_array_base
     constexpr bool operator<(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::less{});
+            rbegin(rhs.arr), rend(rhs.arr), std::greater{});
     }
 
     /// @brief Less than or equal
@@ -248,7 +248,7 @@ class bitstring : public bit_array_base
     constexpr bool operator<=(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
+            rbegin(rhs.arr), rend(rhs.arr), std::greater_equal{});
     }
 
     /// @brief Greater than
@@ -262,7 +262,7 @@ class bitstring : public bit_array_base
     constexpr bool operator>(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::greater{});
+            rbegin(rhs.arr), rend(rhs.arr), std::less{});
     }
 
     /// @brief Greater than or equal
@@ -277,7 +277,7 @@ class bitstring : public bit_array_base
     constexpr bool operator>=(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::greater_equal{});
+            rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
     }
 
     /// @}
@@ -336,15 +336,15 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
 
 }  // namespace dpf
 
-/// @brief 
-/// @tparam ...bits 
-/// @return 
+/// @brief user-defined literal for creating `dpf::bitstring` objects
+/// @tparam the bits
+/// @return the `dpf::bitstring<sizeof...(bits)>`
 template <char... bits>
 constexpr static auto operator "" _bits()
 {
     dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = 0;//bs.size()-1;
-    (bs.set(i++, dpf::to_bit(bits)), ...);
+    std::size_t i = bs.size()-1;
+    (bs.set(i--, dpf::to_bit(bits)), ...);
     std::cout << bs.to_string() << "\n";
     return bs;
 }
