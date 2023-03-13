@@ -137,7 +137,6 @@ operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 ///          stored in `value`. The characters to use for zero and one are
 ///          obtained from the currently-imbued locale by calling `is.widen()`
 ///          with `0` and `1` as the arguments.
-
 /// @param is a character input stream
 /// @param value the `dpf::bit` to extract from the input stream
 /// @return `is`
@@ -156,6 +155,7 @@ operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 namespace utils
 {
 
+/// @brief specializes `dpf::bitlength_of` for `dpf::bit`
 template <>
 struct bitlength_of<dpf::bit>
   : public std::integral_constant<std::size_t, 1> { };
