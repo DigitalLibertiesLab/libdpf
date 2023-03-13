@@ -1,4 +1,4 @@
-/// @file dpf/path_memoizer.hpp
+/// @file dpf/interval_memoizer.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief 
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
@@ -7,6 +7,8 @@
 
 #ifndef LIBDPF_INCLUDE_DPF_INTERVAL_MEMOIZER_HPP__
 #define LIBDPF_INCLUDE_DPF_INTERVAL_MEMOIZER_HPP__
+
+#include "dpf/dpf_key.hpp"
 
 namespace dpf
 {
@@ -59,7 +61,7 @@ struct interval_memoizer
 };
 
 template <typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
+          typename Allocator = aligned_allocator<NodeT>>
 struct basic_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
@@ -96,7 +98,7 @@ struct basic_interval_memoizer : public interval_memoizer<NodeT>
 };
 
 template <typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
+          typename Allocator = aligned_allocator<NodeT>>
 struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
 {
   public:
