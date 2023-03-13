@@ -1,4 +1,4 @@
-/// @file dpf/buffer.hpp
+/// @file dpf/output_buffer.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
@@ -21,7 +21,7 @@ namespace dpf
 {
 
 template <typename T>
-class output_buffer
+class output_buffer final
   : private std::vector<T, dpf::aligned_allocator<T>>
 {
   private:
@@ -48,13 +48,14 @@ class output_buffer
 };
 
 template <>
-class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
-{
-  public:
-    explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
-    output_buffer(output_buffer &&) = default;
-    output_buffer(const output_buffer &) = delete;
-};
+using output_buffer<dpf::bit> = dpf::dynamic_bit_array;
+// class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
+// {
+//   public:
+//     explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
+//     output_buffer(output_buffer &&) = default;
+//     output_buffer(const output_buffer &) = delete;
+// };
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

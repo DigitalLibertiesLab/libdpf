@@ -20,4 +20,4 @@
 #include "dpf/prg_aes.hpp"
 #include "dpf/eval.hpp"
 
-#endif
+#endif  // LIBDPF_INCLUDE_DPF_HPP__

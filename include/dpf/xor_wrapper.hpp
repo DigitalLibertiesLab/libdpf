@@ -1,10 +1,11 @@
 /// @file dpf/xor_wrapper.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief
-/// @version 1.0
-/// @date 2022-07-24
-///
-/// @copyright Copyright (c) 2019-2022 Ryan Henry and others
+/// @brief defines the `dpf::xor_wrapper` class and associated helpers
+/// @details A `dpf::xor_wrapper` is a struct template that adapts integral
+///          types to use bitwise arithmetic; that is, it makes an `N`-bit
+///          integer type behave as it it were an element of `GF(2)^N`.
+///          Specifically, 
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
 
@@ -23,25 +24,25 @@ template <typename T>
 struct xor_wrapper
 {
   public:
-    using value_type = T;
-    static constexpr auto bit_xor = std::bit_xor<T>{};
-    // static constexpr auto bit_and = std::bit_and<T>{};
+    using value_type = std::make_unsigned_t<T>;
+    static constexpr auto bit_xor = std::bit_xor<value_type>{};
+    // static constexpr auto bit_and = std::bit_and<value_type>{};
 
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
-    constexpr xor_wrapper() noexcept = default;
+    /// @{
+        
+    /// @brief Default c'tor
+    constexpr xor_wrapper() = default;
 
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
+    /// @brief Copy c'tor
     constexpr explicit xor_wrapper(const xor_wrapper &) noexcept = default;
 
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
+    /// @brief Move c'tor
     constexpr explicit xor_wrapper(xor_wrapper &&) noexcept = default;
 
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
+    /// @brief Value c'tor
     constexpr explicit xor_wrapper(T v) noexcept : value{v} { }
+
+    /// @}
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -88,8 +89,40 @@ struct xor_wrapper
         return value != rhs.value;
     }
 
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    constexpr bool operator<(xor_wrapper rhs) const noexcept
+    {
+        return value < rhs.value;
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    constexpr bool operator<=(xor_wrapper rhs) const noexcept
+    {
+        return value <= rhs.value;
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    constexpr bool operator>(xor_wrapper rhs) const noexcept
+    {
+        return value > rhs.value;
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    constexpr bool operator>=(xor_wrapper rhs) const noexcept
+    {
+        return value >= rhs.value;
+    }
+
   private:
-    T value;
+    value_type value;
 };
 
 template <typename T>

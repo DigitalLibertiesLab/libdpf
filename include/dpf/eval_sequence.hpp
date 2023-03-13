@@ -1,4 +1,4 @@
-/// @file dpf/memoization.hpp
+/// @file dpf/eval_sequence.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief miscellaneous helper functions, structs, preprocessor directives
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others

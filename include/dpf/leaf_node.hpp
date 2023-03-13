@@ -16,12 +16,12 @@
 
 #include "simde/simde/x86/avx2.h"
 
-#include <dpf/bit.hpp>
-#include <dpf/xor_wrapper.hpp>
-#include <dpf/wildcard.hpp>
-#include <dpf/leaf_arithmetic.hpp>
-#include <dpf/utils.hpp>
-#include <dpf/random.hpp>
+#include "dpf/bit.hpp"
+#include "dpf/xor_wrapper.hpp"
+#include "dpf/wildcard.hpp"
+#include "dpf/leaf_arithmetic.hpp"
+#include "dpf/utils.hpp"
+#include "dpf/random.hpp"
 
 namespace dpf
 {

@@ -4,7 +4,7 @@
 /// @details A `dpf::bitstring` is a wrapper around a `dpf::static_bit_array`.
 ///          It is used to represent a fixed-length string of bits that does
 ///          not semantically stand for a numerical value. It is implemented
-///          as a thin wrapper around a `dpf::static_bit_array`, but contains
+///          as a simple subclass of a `dpf::bit_array_base`, but contains
 ///          helper functions for common tasks like performing lexicographic
 ///          comparisons or converting to and from regular C-strings. It is
 ///          intended for use as an input type for a DPF and, as such,
@@ -337,14 +337,22 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
 }  // namespace dpf
 
 /// @brief user-defined literal for creating `dpf::bitstring` objects
-/// @tparam the bits
-/// @return the `dpf::bitstring<sizeof...(bits)>`
+/// @details A user-defined literal that provides syntactic sugar for defining
+///          compile-time constant `dpf::bitstring` instances. For example,
+///          ```auto foo = 1010011101000001011110111010100011101010_bits;```
+///          defines a `dpf::bitstring<40>` representing the bits in the
+///          literal.
+/// @tparam the bits comprising the bitstring
+/// @throws `std::domain_error` if one or more character in the literal is
+///          equal neither to `0` nor to `1`, excluding the `_bitstring`
+///          suffix itsef.
+/// @return the `dpf::bitstring<sizeof...(bitstring)>`
 template <char... bits>
-constexpr static auto operator "" _bits()
+constexpr static auto operator "" _bitstring()
 {
     dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = bs.size()-1;
-    (bs.set(i--, dpf::to_bit(bits)), ...);
+    std::size_t i = 0;
+    (bs.set(i++, dpf::to_bit(bits)), ...);
     std::cout << bs.to_string() << "\n";
     return bs;
 }
