@@ -1,4 +1,4 @@
-/// @file twiddle.hpp
+/// @file dpf/twiddle.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines `enum dpf::bit` and associated helpers
 /// @version 1.0

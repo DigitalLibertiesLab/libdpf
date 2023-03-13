@@ -1,3 +1,13 @@
+/// @file dpf/eval.hpp
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
+/// @brief
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
+/// @license Released under a GNU General Public v2.0 (GPLv2) license;
+///          see `LICENSE` for details.
+
+#ifndef LIBDPF_INCLUDE_DPF_EVAL_HPP__
+#define LIBDPF_INCLUDE_DPF_EVAL_HPP__
+
 #include <hedley/hedley.h>
 
 #include "dpf/leaf_node.hpp"
@@ -65,3 +75,5 @@ void assert_not_wildcard(const DpfKey & dpf)
 #include "eval_point.hpp"
 #include "eval_interval.hpp"
 #include "eval_sequence.hpp"
+
+#endif  // LIBDPF_INCLUDE_DPF_EVAL_HPP__

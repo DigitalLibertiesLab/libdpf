@@ -1,4 +1,4 @@
-/// @file aligned_nodes.hpp
+/// @file dpf/aligned_allocator.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief An allocator that aligns memory allocations to a specified
 ///        alignment
