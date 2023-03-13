@@ -114,10 +114,9 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     eval_interval_interior(dpf, from_node, to_node, memoizer);
     eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return dpf::clipped_iterable<OutputBuffer>(outbuf, from % DpfKey::outputs_per_leaf,
+    return dpf::clipped_iterable<OutputBuffer>(&outbuf, from % DpfKey::outputs_per_leaf,
         DpfKey::outputs_per_leaf - (to % DpfKey::outputs_per_leaf));
 }
-
 template <std::size_t I = 0,
           typename DpfKey,
           typename InputT,

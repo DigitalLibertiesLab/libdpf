@@ -13,6 +13,8 @@
 #define LIBDPF_INCLUDE_DPF_MODINT_HPP__
 
 #include <limits>
+#include <string>
+#include <memory>
 
 #include "hedley/hedley.h"
 

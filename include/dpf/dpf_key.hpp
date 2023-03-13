@@ -10,6 +10,7 @@
 
 #include <array>
 #include <bitset>
+#include <tuple>
 #include <functional>
 
 #include "dpf/prg_aes.hpp"
@@ -40,25 +41,27 @@ struct dpf_key
     using outputs_t = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, OutputT, OutputTs...>;
+    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t,
+        OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    static constexpr std::size_t depth = utils::bitlength_of_v<InputT> - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
-    static constexpr InputT msb_mask = InputT(1) << (utils::bitlength_of_v<InputT>-1);
+    static constexpr std::size_t depth = utils::bitlength_of_v<input_type>
+        - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
+    static constexpr input_type msb_mask = utils::msb_of_v<input_type>;
     static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node_t>;
     static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
 
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
         "all output types must be trivially copyable");
-    static_assert(std::has_unique_object_representations_v<InputT>);
+    static_assert(std::has_unique_object_representations_v<input_type>);
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node_t root_,
                       const std::array<interior_node_t, depth> & interior_cws_,
                       const std::array<uint8_t, depth> & correction_advice_,
                       const leaf_nodes_t & exterior_cw_,
-                      std::bitset<sizeof...(OutputTs)+1> & wildcards_mask_)
-      : wildcard_mask{wildcards_mask_},
+                      const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
+      : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
         root{root_},
         interior_cws{interior_cws_},
@@ -109,12 +112,13 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        return dpf::subtract<std::tuple_element_t<I, outputs_t>, exterior_node_t>(
-            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t, outputs_t>(unset_lo_2bits(node)),
+        using output_t = std::tuple_element_t<I, outputs_t>;
+        return dpf::subtract<output_t, exterior_node_t>(
+            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t,
+                outputs_t>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
-
 };  // struct dpf_key
 
 template <typename T>
@@ -186,12 +190,14 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     bool sign0 = dpf::get_lo_bit(parent[0]);
     // bool sign1 = dpf::get_lo_bit(parent[1]);
 
-    auto leaves = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]), unset_lo_2bits(parent[1]),
-        sign0, y, ys...);
+    auto leaves = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]),
+        unset_lo_2bits(parent[1]), sign0, y, ys...);
 
     return std::make_pair(
-        specialization{root[0], correction_word, correction_advice, leaves.first, wildcard_mask},
-        specialization{root[1], correction_word, correction_advice, leaves.second, wildcard_mask});
+        specialization{root[0], correction_word, correction_advice,
+            leaves.first, wildcard_mask},
+        specialization{root[1], correction_word, correction_advice,
+            leaves.second, wildcard_mask});
 }  // make_dpf
 
 }  // namespace dpf

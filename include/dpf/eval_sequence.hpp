@@ -242,7 +242,7 @@ struct sequence_memoizer_base
 
 template <typename InputT,
           typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
+          typename Allocator = aligned_allocator<NodeT>>
 struct reversing_sequence_memoizer
   : public sequence_memoizer_base<InputT, NodeT, Allocator>
 {
@@ -306,7 +306,7 @@ struct reversing_sequence_memoizer
 
 template <typename InputT,
           typename NodeT,
-          typename Allocator = detail::aligned_allocator<NodeT>>
+          typename Allocator = aligned_allocator<NodeT>>
 struct double_space_sequence_memoizer
 {
   public:
@@ -369,18 +369,14 @@ template <typename DpfKey,
           typename InputT>
 auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    using node_t = typename DpfKey::interior_node_t;
-    using allocator_t = detail::aligned_allocator<node_t, utils::max_align_v>;
-    return reversing_sequence_memoizer<InputT, node_t, allocator_t>(recipe);
+    return reversing_sequence_memoizer<InputT, typename DpfKey::interior_node_t>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT>
 auto make_double_space_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    using node_t = typename DpfKey::interior_node_t;
-    using allocator_t = detail::aligned_allocator<node_t, utils::max_align_v>;
-    return double_space_sequence_memoizer<InputT, node_t, allocator_t>(recipe);
+    return double_space_sequence_memoizer<InputT, typename DpfKey::interior_node_t>(recipe);
 }
 
 }  // namespace dpf
