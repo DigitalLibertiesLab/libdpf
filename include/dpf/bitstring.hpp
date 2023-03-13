@@ -19,7 +19,9 @@
 #ifndef LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
 #define LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
 
+#include <algorithm>
 #include <string>
+#include <bitset>
 
 #include "dpf/bit.hpp"
 #include "dpf/bit_array.hpp"
@@ -35,10 +37,10 @@ namespace dpf
 ///          `dpf::static_bit_array`.
 /// @tparam Nbits the bitlength of the string
 template <std::size_t Nbits>
-class bitstring : public dpf::static_bit_array<Nbits>
+class bitstring : public bit_array_base
 {
   private:
-    using base = dpf::static_bit_array<Nbits>;
+    //using base = std::bitset<Nbits>;
 
   public:
     /// @name C'tors
@@ -51,7 +53,7 @@ class bitstring : public dpf::static_bit_array<Nbits>
     ///          to `0`.
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring() noexcept = default;
+    constexpr bitstring() : bit_array_base{Nbits, &arr[0]}, arr{} { }
 
     /// @brief Copy c'tor
     /// @details Constructs an instance of `dpf::bitstring` from another
@@ -59,7 +61,7 @@ class bitstring : public dpf::static_bit_array<Nbits>
     /// @param other another `dpf::bitstring` to construct with
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring(const bitstring & other) noexcept = default;
+    constexpr bitstring(const bitstring & other) = default;
 
     /// @brief Move c'tor
     /// @details Constructs an instance of `dpf::bitstring` from another
@@ -67,7 +69,7 @@ class bitstring : public dpf::static_bit_array<Nbits>
     /// @param other another `dpf::bitstring` to construct with
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring(bitstring &&) noexcept = default;
+    constexpr bitstring(bitstring &&) = default;
 
     /// @brief Value c'tor
     /// @details Constructs an instance of `dpf::bitstring` while initializing
@@ -77,45 +79,46 @@ class bitstring : public dpf::static_bit_array<Nbits>
     /// @param val the number used to initialize the `dpf::bitstring`
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr explicit bitstring(uint64_t val) noexcept : base{val} { }
+    constexpr explicit bitstring(uint64_t val) noexcept
+      : bit_array_base{Nbits, &arr[0]}, arr{val} { }
 
-    /// @brief Constructs a `dpf::bitstring` using the characters in the
-    ///        `std::basic_string` `str`. An optional starting position `pos`
-    ///        and length `len` can be provided, as well as characters
-    ///        denoting alternate values for set (`one`) and unset (`zero`)
-    ///        bits.
-    /// @param str `string` used to initialize the `dpf::bitstring`
-    /// @param pos a starting offset into `str`
-    /// @param len number of characters to use from `str`
-    /// @param zero character used to represent `0` (default: `CharT{'0'}`)
-    /// @param one character used to represent `1` (default: `CharT{'1'}`)
-    template <class CharT,
-              class Traits,
-              class Alloc>
-    explicit bitstring(
-        const std::basic_string<CharT, Traits, Alloc> & str,
-        typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
-        typename std::basic_string<CharT, Traits, Alloc>::size_type len
-            = std::basic_string<CharT, Traits, Alloc>::npos,
-        CharT zero = CharT('0'),
-        CharT one = CharT('1'))
-      : base(str, pos, len, zero, one) { }
+    // /// @brief Constructs a `dpf::bitstring` using the characters in the
+    // ///        `std::basic_string` `str`. An optional starting position `pos`
+    // ///        and length `len` can be provided, as well as characters
+    // ///        denoting alternate values for set (`one`) and unset (`zero`)
+    // ///        bits.
+    // /// @param str `string` used to initialize the `dpf::bitstring`
+    // /// @param pos a starting offset into `str`
+    // /// @param len number of characters to use from `str`
+    // /// @param zero character used to represent `0` (default: `CharT{'0'}`)
+    // /// @param one character used to represent `1` (default: `CharT{'1'}`)
+    // template <class CharT,
+    //           class Traits,
+    //           class Alloc>
+    // explicit bitstring(
+    //     const std::basic_string<CharT, Traits, Alloc> & str,
+    //     typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
+    //     typename std::basic_string<CharT, Traits, Alloc>::size_type len
+    //         = std::basic_string<CharT, Traits, Alloc>::npos,
+    //     CharT zero = CharT('0'),
+    //     CharT one = CharT('1'))
+    //   : bit_array_base(str, pos, len, zero, one) { }
 
-    /// @brief Constructs a `dpf::bitstring` using the characters in the
-    ///        `CharT *` `str`. An optional starting position `pos` and length
-    ///        `len` can be provided, as well as characters denoting alternate
-    ///        values for set (`one`) and unset (`zero`) bits.
-    /// @param str string used to initialize the `dpf::bitstring`
-    /// @param len number of characters to use from `str`
-    /// @param zero character used to represent `0` (default: `CharT{'0'}`)
-    /// @param one character used to represent `1` (default: `CharT{'1'}`)
-    template <class CharT>
-    explicit bitstring(const CharT * str,
-        typename std::basic_string<CharT>::size_type len
-            = std::basic_string<CharT>::npos,
-        CharT zero = CharT('0'),
-        CharT one = CharT('1'))
-      : base(str, len, zero, one) { }
+    // /// @brief Constructs a `dpf::bitstring` using the characters in the
+    // ///        `CharT *` `str`. An optional starting position `pos` and length
+    // ///        `len` can be provided, as well as characters denoting alternate
+    // ///        values for set (`one`) and unset (`zero`) bits.
+    // /// @param str string used to initialize the `dpf::bitstring`
+    // /// @param len number of characters to use from `str`
+    // /// @param zero character used to represent `0` (default: `CharT{'0'}`)
+    // /// @param one character used to represent `1` (default: `CharT{'1'}`)
+    // template <class CharT>
+    // explicit bitstring(const CharT * str,
+    //     typename std::basic_string<CharT>::size_type len
+    //         = std::basic_string<CharT>::npos,
+    //     CharT zero = CharT('0'),
+    //     CharT one = CharT('1'))
+    //   : base(str, len, zero, one) { }
 
     /// @}
 
@@ -139,6 +142,7 @@ class bitstring : public dpf::static_bit_array<Nbits>
         ///        the bit at the given position
         /// @param which_bit the ordinal position of the bit to mask
         HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
         constexpr explicit bit_mask(std::size_t which_bit) noexcept
           : which_bit_{which_bit} { }
 
@@ -147,6 +151,7 @@ class bitstring : public dpf::static_bit_array<Nbits>
         /// @param shift_by number of bits to shift the mask to the right
         /// @return a reference to the modified `dpf::bitstring::bit_mask`
         HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
         constexpr bit_mask & operator>>=(int shift_by) noexcept
         {
             which_bit_ -= shift_by;
@@ -177,9 +182,8 @@ class bitstring : public dpf::static_bit_array<Nbits>
 
       private:
         std::size_t which_bit_;  // ordinal position of the referenced bit
-    };
+    };  // struct dpf::bitstring::bit_mask
 
-    
     /// @brief extract the bit of `dpf::bitstring` that using a
     ///        `dpf::bitstring::bit_mask`
     /// @param rhs the `dpf::bitstring::bit_mask` indicating which bit to
@@ -189,50 +193,108 @@ class bitstring : public dpf::static_bit_array<Nbits>
     HEDLEY_CONST
     bool operator&(const bitstring::bit_mask & rhs) const
     {
-        return base::operator[](rhs.which_bit());
+        return this->operator[](rhs.which_bit());
     }
-};
 
-template <std::size_t Nbits>
-constexpr bool
-operator<(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
-{
-    auto lhs_iter = std::rbegin(lhs), rhs_iter = std::rbegin(rhs);
-    while (*lhs-- == *rhs--)
+    /// @brief lexicographically compares two `dpf::bitstring`s
+    /// @{
+
+    /// @brief Equality
+    /// @details Checks if `this` and `rhs` are equal; that is, checks if each
+    ///          bit of `this` is equal to the bit at the same position within
+    ///          `rhs`.
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if the `bitstring`s are equal, `false` otherwise
+    /// @complexity `O(Nbits)`
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator==(const bitstring & rhs) const
     {
-        if (lhs_iter == std::rend(lhs)) return false;
+        return arr == rhs.arr;
     }
-    return *lhs < *rhs;
-}
 
-template <std::size_t Nbits>
-constexpr bool
-operator<=(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
-{
-    return (lhs < rhs) || lhs == rhs;
-}
+    /// @brief Inequality
+    /// @details Checks if `this` and `rhs` are unequal; that is, checks if
+    ///          one or more bits of `this` are opposite to the bits in `rhs`
+    ///          at the same positions.
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if the `bitstring`s are unequal, `false` otherwise
+    /// @complexity `O(Nbits)`
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator!=(const bitstring<Nbits> & rhs) const
+    {
+        return arr != rhs.arr;
+    }
 
-template <std::size_t Nbits>
-constexpr bool
-operator>(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
-{
-    return rhs < lhs;
-}
+    /// @brief Less than
+    /// @details Checks if `this` is lexicographically less than `rhs`.
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if `this` comes before `rhs` lexiographically, `false`
+    ///          otherwise
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator<(const bitstring<Nbits> & rhs) const
+    {
+        return std::lexicographical_compare(rbegin(arr), rend(arr),
+            rbegin(rhs.arr), rend(rhs.arr), std::less{});
+    }
 
-template <std::size_t Nbits>
-constexpr bool
-operator>=(const bitstring<Nbits> & lhs, const bitstring<Nbits> & rhs)
-{
-    return rhs <= lhs;
-}
+    /// @brief Less than or equal
+    /// @details Checks if `this` is lexicographically less than or equal to
+    ///          `rhs`.
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if `this` comes at or before `rhs` lexiographically,
+    ///         `false` otherwise
+    /// @complexity `O(Nbits)`
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator<=(const bitstring<Nbits> & rhs) const
+    {
+        return std::lexicographical_compare(rbegin(arr), rend(arr),
+            rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
+    }
+
+    /// @brief Greater than
+    /// @details Checks if `lhs` is lexicographically greater than `rhs`.
+    /// @param lhs left-hand side of the comparison
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if `lhs` comes at or before `rhs` lexiographically, `false`
+    ///          otherwise
+    /// @complexity `O(Nbits)`
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator>(const bitstring<Nbits> & rhs) const
+    {
+        return std::lexicographical_compare(rbegin(arr), rend(arr),
+            rbegin(rhs.arr), rend(rhs.arr), std::greater{});
+    }
+
+    /// @brief Greater than or equal
+    /// @details Checks if `lhs` is lexicographically greater than or equal to
+    ///          `rhs`.
+    /// @param lhs left-hand side of the comparison
+    /// @param rhs right-hand side of the comparison
+    /// @return `true` if `lhs` comes at or before `rhs` lexiographically, `false`
+    ///          otherwise
+    /// @complexity `O(Nbits)`
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator>=(const bitstring<Nbits> & rhs) const
+    {
+        return std::lexicographical_compare(rbegin(arr), rend(arr),
+            rbegin(rhs.arr), rend(rhs.arr), std::greater_equal{});
+    }
+
+    /// @}
+
+  private:
+    std::array<word_type, 1+(Nbits-1)/bits_per_word> arr;
+};  // class dpf::bitstring
 
 namespace utils
 {
 
+/// @brief specializes `dpf::bitlength_of` for `dpf::bitstring`
 template <std::size_t Nbits>
 struct bitlength_of<dpf::bitstring<Nbits>>
   : public std::integral_constant<std::size_t, Nbits> { };
 
+/// @brief specializes `dpf::msb_of` for `dpf::bitstring`
 template <std::size_t Nbits>
 struct msb_of<dpf::bitstring<Nbits>>
 {
@@ -241,6 +303,8 @@ struct msb_of<dpf::bitstring<Nbits>>
             bitlength_of_v<dpf::bitstring<Nbits>>-1ul);
 };
 
+/// @brief specializes `dpf::countl_zero_symmmetric_difference` for
+///        `dpf::bitstring`
 template <std::size_t Nbits>
 struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
 {
@@ -270,15 +334,18 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
 
 }  // namespace utils
 
-
 }  // namespace dpf
 
+/// @brief 
+/// @tparam ...bits 
+/// @return 
 template <char... bits>
 constexpr static auto operator "" _bits()
 {
     dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = bs.size()-1;
-    (bs.unchecked_set(i--, dpf::to_bit(bits)), ...);
+    std::size_t i = 0;//bs.size()-1;
+    (bs.set(i++, dpf::to_bit(bits)), ...);
+    std::cout << bs.to_string() << "\n";
     return bs;
 }
 
