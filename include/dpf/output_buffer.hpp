@@ -116,17 +116,12 @@ template <typename DpfKey,
           typename InputT>
 auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using exterior_node_t = typename DpfKey::exterior_node_t;
     using output_t = std::tuple_element_t<0, typename DpfKey::outputs_t>;
 
-    static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t, exterior_node_t>;
-    std::size_t from_node = utils::quotient_floor(from, (InputT)outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)outputs_per_leaf);
-    std::size_t nodes_in_interval = std::max(std::size_t(0), std::size_t(to_node - from_node));
-HEDLEY_PRAGMA(GCC diagnostic pop)
+    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
+    std::size_t nodes_in_interval = to_node - from_node;
 
-    return dpf::output_buffer<output_t>(nodes_in_interval*outputs_per_leaf);
+    return dpf::output_buffer<output_t>(nodes_in_interval*DpfKey::outputs_per_leaf);
 }
 
 }  // namespace dpf

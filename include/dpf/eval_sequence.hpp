@@ -351,16 +351,11 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe)
 {
-    using exterior_node_t = typename DpfKey::exterior_node_t;
     using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
 
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    static constexpr auto outputs_per_leaf = outputs_per_leaf_v<output_t, exterior_node_t>;
-HEDLEY_PRAGMA(GCC diagnostic pop)
-    dpf::output_buffer<output_t> outbuf(recipe.num_leaf_nodes*outputs_per_leaf);
+    dpf::output_buffer<output_t> outbuf(recipe.num_leaf_nodes*DpfKey::outputs_per_leaf);
 
     return eval_sequence(dpf, recipe, outbuf, memoizer);
 }

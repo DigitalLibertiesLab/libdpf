@@ -69,7 +69,6 @@ void assert_not_wildcard(const DpfKey & dpf)
     }
 }
 
-
 }  // namespace dpf
 
 #include "eval_point.hpp"
