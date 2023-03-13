@@ -32,16 +32,9 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
     using node_t = typename DpfKey::interior_node_t;
     auto nodes_in_interval = to_node - from_node;
 
+    memoizer.assign_interval(dpf, from_node, to_node);
     typename DpfKey::input_type mask = dpf.msb_mask >> (memoizer.level_index + DpfKey::lg_outputs_per_leaf);
-    std::size_t nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.depth, memoizer.level_index-1, from_node, to_node);
-    // TODO: should this be level_index-1 instead of level_index?
-
-    if (memoizer.level_index == 0)
-    {
-        memoizer[-1][0] = dpf.root;
-        // TODO: is this fixed by level_index-1 above?
-        // nodes_at_level = 1;
-    }
+    std::size_t nodes_at_level = IntervalMemoizer::get_nodes_at_level(memoizer.level_index-1, from_node, to_node);
 
     for (; memoizer.level_index < to_level; ++memoizer.level_index, mask>>=1)
     {
@@ -60,7 +53,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
             memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[1], 1);
         }
-        nodes_at_level = IntervalMemoizer::get_nodes_at_level(dpf.depth, memoizer.level_index, from_node, to_node);
+        nodes_at_level = IntervalMemoizer::get_nodes_at_level(memoizer.level_index, from_node, to_node);
         memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
         if (i < nodes_at_level)
         {

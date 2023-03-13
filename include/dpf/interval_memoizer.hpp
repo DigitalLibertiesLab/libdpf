@@ -13,24 +13,50 @@
 namespace dpf
 {
 
-template <typename NodeT>
+template <typename DpfKey>
 struct interval_memoizer
 {
   public:
-    explicit interval_memoizer()
-      : level_index{0}
-    { }
+    using dpf_type = DpfKey;
+    using node_type = typename DpfKey::interior_node_t;
+    static constexpr auto depth = dpf_type::depth;
 
-    virtual void reset()
-    {
-        level_index = 0;
-    }
+    explicit interval_memoizer(const dpf_type & dpf, std::size_t output_len)
+      : dpf_{std::cref(dpf)},
+        output_length{output_len},
+        level_index{0}
+    { }
 
     // level -1 should access the root
     // level goes up to (but not including) depth
-    virtual NodeT* operator[](std::size_t) const noexcept = 0;
+    virtual node_type * operator[](std::size_t) const noexcept = 0;
 
-    static std::size_t get_nodes_at_level(std::size_t depth, std::size_t level, std::size_t from_node, std::size_t to_node)
+    virtual std::size_t assign_interval(const dpf_type & dpf, std::size_t new_from, std::size_t new_to)
+    {
+        static constexpr auto complement_of = std::bit_not{};
+        if (std::addressof(dpf_.get()) == std::addressof(dpf)
+            && from_.value_or(complement_of(new_from)) == new_from
+            && to_.value_or(complement_of(new_to)) == new_to)
+        {
+            return level_index;
+        }
+        else
+        {
+            if (new_to - new_from > output_length)
+            {
+                throw std::length_error("size of new interval is too large for memoizer");
+            }
+
+            this->operator[](-1)[0] = dpf.root;
+            dpf_ = std::cref(dpf);
+            from_ = new_from;
+            to_ = new_to;
+            level_index = 0;
+            return 0;
+        }
+    }
+
+    static std::size_t get_nodes_at_level(std::size_t level, std::size_t from_node, std::size_t to_node)
     {
         // Algorithm explanation:
         //   Input:
@@ -58,20 +84,32 @@ struct interval_memoizer
     }
 
     std::size_t level_index;
+
+  protected:
+    const std::size_t output_length;
+
+  private:
+    std::reference_wrapper<const dpf_type> dpf_;
+    std::optional<std::size_t> from_;
+    std::optional<std::size_t> to_;
 };
 
-template <typename NodeT,
-          typename Allocator = aligned_allocator<NodeT>>
-struct basic_interval_memoizer : public interval_memoizer<NodeT>
+template <typename DpfKey,
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+struct basic_interval_memoizer : public interval_memoizer<DpfKey>
 {
   public:
+    using dpf_type = DpfKey;
+    using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
+    using interval_memoizer<dpf_type>::depth;
+    using interval_memoizer<dpf_type>::output_length;
 
-    explicit basic_interval_memoizer(std::size_t output_len, std::size_t depth, Allocator alloc = Allocator{})
-      : pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
-        depth{depth},
+    explicit basic_interval_memoizer(const dpf_type & dpf, std::size_t output_len, Allocator alloc = Allocator{})
+      : interval_memoizer<DpfKey>(dpf, output_len),
+        pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
         length{std::max(3*pivot, output_len)},
-        buf{alloc.allocate_unique_ptr(length * sizeof(NodeT))}
+        buf{alloc.allocate_unique_ptr(length * sizeof(node_type))}
     {
         // TODO: is this needed / correct
         // if (pivot < 32)  // check alignment (pivot is 0 or some power of 2)
@@ -82,7 +120,7 @@ struct basic_interval_memoizer : public interval_memoizer<NodeT>
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    NodeT* operator[](std::size_t level) const noexcept override
+    node_type * operator[](std::size_t level) const noexcept override
     {
         auto b = !((depth ^ level) & 1);
         return Allocator::assume_aligned(&buf[b*pivot]);
@@ -91,22 +129,24 @@ struct basic_interval_memoizer : public interval_memoizer<NodeT>
   private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
     const std::size_t pivot;
-    const std::size_t depth;
   public:
     const std::size_t length;
     unique_ptr buf;
 };
 
-template <typename NodeT,
-          typename Allocator = aligned_allocator<NodeT>>
-struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
+template <typename DpfKey,
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+struct full_tree_interval_memoizer : public interval_memoizer<DpfKey>
 {
   public:
+    using dpf_type = DpfKey;
+    using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
+    using interval_memoizer<dpf_type>::depth;
+    using interval_memoizer<dpf_type>::output_length;
 
-    explicit full_tree_interval_memoizer(std::size_t output_len, std::size_t depth, Allocator alloc = Allocator{})
-      : depth{depth},
-        output_length{output_len},
+    explicit full_tree_interval_memoizer(const dpf_type & dpf, std::size_t output_len, Allocator alloc = Allocator{})
+      : interval_memoizer<DpfKey>(dpf, output_len),
         idxs{new std::size_t[depth+1]},
         length{calc_length()},
         buf{alloc.allocate_unique_ptr(length)}
@@ -114,7 +154,7 @@ struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    NodeT* operator[](std::size_t level) const noexcept override
+    node_type * operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[idxs[level+1]]);
     }
@@ -142,8 +182,6 @@ struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
         return ret;
     }
 
-    const std::size_t depth;
-    const std::size_t output_length;
     std::unique_ptr<std::size_t[]> idxs;
   public:
     const std::size_t length;
@@ -151,20 +189,21 @@ struct full_tree_interval_memoizer : public interval_memoizer<NodeT>
 };
 
 // TODO: find better way to specify which memoizer is being used
-template <typename MemoizerT = basic_interval_memoizer<dpf::prg::aes128::block_t>,
-          typename DpfKey,
+template <typename DpfKey,
+        //   typename MemoizerT = full_tree_interval_memoizer<DpfKey>,
+          typename MemoizerT = basic_interval_memoizer<DpfKey>,
           typename InputT>
-auto make_interval_memoizer(const DpfKey &, InputT from = 0,
+auto make_interval_memoizer(const DpfKey & dpf, InputT from = 0,
     InputT to = std::numeric_limits<InputT>::max())
 {
     // TODO: throw exceptions when based on following checks:
     // check from <= to
     // check if 0
 
-    auto from_node = from/DpfKey::outputs_per_leaf, to_node = 1+to/DpfKey::outputs_per_leaf;
+    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
     auto nodes_in_interval = to_node - from_node;
 
-    return MemoizerT(nodes_in_interval, DpfKey::depth);
+    return MemoizerT(dpf, nodes_in_interval);
 }
 
 }  // namespace dpf
