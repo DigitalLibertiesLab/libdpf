@@ -57,12 +57,6 @@ using output_buffer<dpf::bit> = dpf::dynamic_bit_array;
 //     output_buffer(const output_buffer &) = delete;
 // };
 
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-using output_buffer128 = output_buffer<simde__m128i>;
-using output_buffer256 = output_buffer<simde__m256i>;
-HEDLEY_PRAGMA(GCC diagnostic pop)
-
 template <class Container>
 class clipped_iterable
 {

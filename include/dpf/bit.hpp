@@ -7,7 +7,7 @@
 ///          ways as in an `std::bitset` or `std::vector<bool>`.
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see <a href="LICENSE">`LICENSE`</a> for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_BIT_HPP__
 #define LIBDPF_INCLUDE_DPF_BIT_HPP__
@@ -66,12 +66,13 @@ static constexpr dpf::bit to_bit(bool value) noexcept
 ///          equal to `dpf::bit::one` if `value==one` and `dpf::bit::zero`
 ///          otherwise.
 /// @param value the character to convert
-/// @param zero character used to represent `0` (default: `CharT{'0'}`)
-/// @param one character used to represent `1` (default: `CharT{'1'}`)
+/// @param zero character used to represent `0` (default: ``CharT{'0'}``)
+/// @param one character used to represent `1` (default: ``CharT{'1'}``)
 /// @returns `static_cast<dpf::bit>(0)` if `value==0` or
 ///          `static_cast<dpf::bit>(1)` if `value==1`
 /// @throws `std::domain_error` if `value != zero && value != one`
-template <class CharT>
+template <typename CharT,
+          class Traits = std::char_traits<CharT>>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr dpf::bit to_bit(
@@ -79,7 +80,7 @@ static constexpr dpf::bit to_bit(
     CharT zero = CharT{'0'},
     CharT one = CharT{'1'})
 {
-    if ((value != zero) && (value != one))
+    if (!Traits::eq(value, zero) && !Traits::eq(value, one))
     {
         throw std::domain_error("Unrecognized character");
     }
@@ -93,8 +94,8 @@ static constexpr dpf::bit to_bit(
 ///          human-friendly printing. Uses `zero` to represent the value
 ///          `0` and `one` to the value `1`.
 /// @param value the `dpf::bit` to convert
-/// @param zero character to use to represent `0` (default: `CharT{'0'}`)
-/// @param one character to use to represent `1` (default: `CharT{'1'}`)
+/// @param zero character to use to represent `false`/`0` (default: ``CharT{'0'}``)
+/// @param one character to use to represent `true`/`1` (default: ``CharT{'1'}``)
 /// @return `(value == 0) ? zero : one`
 template <class CharT = char,
           class Traits = std::char_traits<CharT>,
@@ -114,7 +115,7 @@ static constexpr std::basic_string<CharT, Traits, Allocator> to_string(
 /// @brief performs stream output on a `dpf::bit`
 /// @details Writes a `dpf::bit` to the character stream `os` as if by first
 ///          converting it to a `std::basic_string<CharT, Traits>` using
-///          `to_string()`, and then writing it into `os` using `operator<<`
+///          `dpf::to_string()`, and then writing it into `os` using `operator<<`
 ///          (which is a `FormattedOutputFunction` for strings). The
 ///          characters to use for zero and one are obtained from the
 ///          currently-imbued locale by calling `os.widen()` with `0` and `1`
@@ -133,7 +134,7 @@ operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 
 /// @brief performs stream input on a `dpf::bit`
 /// @details Extracts one character from `is` and attempts to convert it to
-///          a `dpf::bit` using `to_bit()`. If successful, the result is
+///          a `dpf::bit` using `dpf::to_bit()`. If successful, the result is
 ///          stored in `value`. The characters to use for zero and one are
 ///          obtained from the currently-imbued locale by calling `is.widen()`
 ///          with `0` and `1` as the arguments.

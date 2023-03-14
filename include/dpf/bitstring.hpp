@@ -110,8 +110,8 @@ class bitstring : public bit_array_base
     // ///        values for set (`one`) and unset (`zero`) bits.
     // /// @param str string used to initialize the `dpf::bitstring`
     // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `0` (default: `CharT{'0'}`)
-    // /// @param one character used to represent `1` (default: `CharT{'1'}`)
+    // /// @param zero character used to represent `false`/`0` (default: ``CharT{'0'}``)
+    // /// @param one character used to represent `true`/`1` (default: ``CharT{'1'}``)
     // template <class CharT>
     // explicit bitstring(const CharT * str,
     //     typename std::basic_string<CharT>::size_type len

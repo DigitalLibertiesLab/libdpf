@@ -1,7 +1,6 @@
 /// @file dpf/aligned_allocator.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief An allocator that aligns memory allocations to a specified
-///        alignment
+/// @brief An allocator that aligns memory allocations to a specified alignment
 /// @details The dpf::aligned_allocator class template is used to allocate
 ///          uninitialized memory with a specified alignment for all libdpf++
 ///          buffers and memoizers, if no user-specified allocator is

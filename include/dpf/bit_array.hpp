@@ -468,8 +468,8 @@ class bit_array_base
     ///          contains `size()` characters with the first character
     ///          corresponding to the last `(size()-1th)` bit and the last
     ///          character corresponding tot he first `(0th)` bit.
-    /// @param zero character to use to represent `false`
-    /// @param one character to use to represent `true`
+    /// @param zero character to use to represent `false`/`0` (default: ``CharT{'0'}``)
+    /// @param one character to use to represent `true`/`1` (default: ``CharT{'1'}``)
     /// @returns the converted string
     /// @throws May throw `std::bad_alloc` from the `std::string` constructor.
     /// @complexity `O(size())`
