@@ -36,7 +36,8 @@ struct interval_memoizer
     virtual std::size_t assign_interval(const dpf_type & dpf, std::size_t new_from, std::size_t new_to)
     {
         static constexpr auto complement_of = std::bit_not{};
-        if (std::addressof(dpf_->get()) != std::addressof(dpf)
+        if (dpf_.has_value() == false
+            || std::addressof(dpf_->get()) != std::addressof(dpf)
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
@@ -157,7 +158,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer<DpfKey>
         Allocator alloc = Allocator{})
       : interval_memoizer<DpfKey>(output_len),
         level_endpoints{initialize_endpoints()},
-        buf{alloc.allocate_unique_ptr(3*output_len/2+depth+1)}
+        buf{alloc.allocate_unique_ptr(level_endpoints[depth] + output_len)}
     { }
 
     HEDLEY_ALWAYS_INLINE
@@ -171,12 +172,15 @@ struct full_tree_interval_memoizer final : public interval_memoizer<DpfKey>
     constexpr auto initialize_endpoints()
     {
         std::array<std::size_t, depth+1> level_endpoints{0,1};
-
         for (std::size_t level=depth, len=output_length; level > 0; --level)
         {
             len = std::min(len/2 + 1, std::size_t(1) << level);
             level_endpoints[level] = len;
-            if (level < depth) level_endpoints[level+1] += len;
+        }
+
+        for (std::size_t level = 0; level < depth; ++level)
+        {
+            level_endpoints[level+1] = level_endpoints[level] + level_endpoints[level+1];
         }
 
         return level_endpoints;
@@ -217,7 +221,7 @@ template <typename DpfKey,
 auto make_basic_interval_memoizer(const DpfKey &, InputT from = 0,
     InputT to = std::numeric_limits<InputT>::max())
 {
-    return detail::make_interval_memoizer<basic_interval_memoizer<DpfKey>, DpfKey, InputT>>(from, to);
+    return detail::make_interval_memoizer<DpfKey, basic_interval_memoizer<DpfKey>, InputT>(from, to);
 }
 
 template <typename DpfKey,
@@ -225,7 +229,7 @@ template <typename DpfKey,
 auto make_full_tree_interval_memoizer(const DpfKey &, InputT from = 0,
     InputT to = std::numeric_limits<InputT>::max())
 {
-    return detail::make_interval_memoizer<full_tree_interval_memoizer<DpfKey>, DpfKey, InputT>>(from, to);
+    return detail::make_interval_memoizer<DpfKey, full_tree_interval_memoizer<DpfKey>, InputT>(from, to);
 }
 
 }  // namespace dpf
