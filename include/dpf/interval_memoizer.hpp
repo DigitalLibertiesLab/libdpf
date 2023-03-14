@@ -222,22 +222,46 @@ struct full_tree_interval_memoizer : public interval_memoizer<DpfKey>
     unique_ptr buf;
 };
 
-// TODO: find better way to specify which memoizer is being used
 template <typename DpfKey,
-        //   typename MemoizerT = full_tree_interval_memoizer<DpfKey>,
-          typename MemoizerT = basic_interval_memoizer<DpfKey>,
           typename InputT>
-auto make_interval_memoizer(const DpfKey & dpf, InputT from = 0,
+auto make_basic_interval_memoizer(const DpfKey & dpf, InputT from = 0,
     InputT to = std::numeric_limits<InputT>::max())
 {
-    // TODO: throw exceptions when based on following checks:
-    // check from <= to
-    // check if 0
+    if (from > to)
+    {
+        throw std::domain_error("from cannot be greater than to");
+    }
 
     std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
     auto nodes_in_interval = to_node - from_node;
 
-    return MemoizerT(dpf, nodes_in_interval);
+    if (nodes_in_interval == 0)
+    {
+        throw std::out_of_range("attempting to evaluate 0 nodes, possibly caused by overflow");
+    }
+
+    return basic_interval_memoizer<DpfKey>(dpf, nodes_in_interval);
+}
+
+template <typename DpfKey,
+          typename InputT>
+auto make_full_tree_interval_memoizer(const DpfKey & dpf, InputT from = 0,
+    InputT to = std::numeric_limits<InputT>::max())
+{
+    if (from > to)
+    {
+        throw std::domain_error("from cannot be greater than to");
+    }
+
+    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
+    auto nodes_in_interval = to_node - from_node;
+
+    if (nodes_in_interval == 0)
+    {
+        throw std::domain_error("attempting to evaluate 0 nodes, possibly caused by overflow");
+    }
+
+    return full_tree_interval_memoizer<DpfKey>(dpf, nodes_in_interval);
 }
 
 }  // namespace dpf
