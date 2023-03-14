@@ -1,10 +1,18 @@
 /// @file dpf/bit.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief defines the `dpf::bit` class and associated helpers
+/// @brief defines `dpf::bit` and associated helpers
 /// @details A `dpf::bit` is a binary type whose representation can be packed
-///          into one bit. This type is inteded to be used as an output value
-///          of a DPF, in which case leaf nodes will be packed in much the
-///          ways as in an `std::bitset` or `std::vector<bool>`.
+///          into one bit. It is implemented as an `enum` with two values:
+///          `zero` and `one`. This type is inteded to be used as an output
+///          value of a DPF, in which case leaf nodes will be packed in much
+///          the ways as in an `std::bitset` or `std::vector<bool>`.
+///
+///          In addition `dpf::bit`, this file defines three overloaded
+///          variants of a `dpf::to_bit` function that respectively convert
+///          a `bool, a `char`, or (the least significant bit of) an `int` to
+///          a `dpf::bit`. Likewise, it defines `dpf::to_string` to convert
+///          a `dpf::bit` into an `std::string`. Finally, it overloads stream
+///          input and output operators (`<<` and `>>`) for `dpf::bit`.
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see <a href="LICENSE">`LICENSE`</a> for details.

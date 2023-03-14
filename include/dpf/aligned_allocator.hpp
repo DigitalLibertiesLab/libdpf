@@ -1,18 +1,19 @@
 /// @file dpf/aligned_allocator.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief An allocator that aligns memory allocations to a specified alignment
-/// @details The dpf::aligned_allocator class template is used to allocate
-///          uninitialized memory with a specified alignment for all libdpf++
+/// @brief defines an allocator that aligns memory allocations to a specified alignment
+/// @details The `dpf::aligned_allocator` class template is used to allocate
+///          uninitialized memory with a specified alignment for all `libdpf++`
 ///          buffers and memoizers, if no user-specified allocator is
 ///          provided. It is stateless, so all instances of the allocator are
 ///          interchangeable. The alignment is specified by the Alignment
-///          parameter, which must be a power of two.
+///          parameter, which must be a power of two (default:
+///          `dpf::utils::max_align`).
 ///
-///          The allocator supports the `allocate()` function for allocating
-///          aligned, yet uninitialized memory and the `deallocate()` function
+///          The allocator supports the `dpf::aligned_allocator::allocate()` function for allocating
+///          aligned, yet uninitialized memory and the `dpf::aligned_allocator::deallocate()` function
 ///          for freeing the same. It also includes a convenient
-///          `allocate_unique_ptr()` function that returns a `std::unique_ptr`
-///          to the output of `allocate()`.
+///          `dpf::aligned_allocator::allocate_unique_ptr()` function that returns a `std::unique_ptr`
+///          to the output of a call to `dpf::aligned_allocator::allocate()`.
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
@@ -66,6 +67,9 @@ class aligned_allocator
     using const_reference = std::add_const_t<reference>;
     static constexpr size_type alignment = Alignment;
 
+    /// @brief class whose member `other` is a typedef of `dpf::aligned_allocator` for type `U` with alignment `A`.
+    /// @tparam U the type to rebind to
+    /// @tparam A the alignment of the rebound allocator
     template <class U, size_type A = alignment> struct rebind
     {
         using other = aligned_allocator<U, A>;

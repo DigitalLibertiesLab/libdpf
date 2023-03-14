@@ -1,6 +1,7 @@
 /// @file dpf/twiddle.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief
+/// @details
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.

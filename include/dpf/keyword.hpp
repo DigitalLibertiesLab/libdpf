@@ -1,10 +1,27 @@
 /// @file dpf/keyword.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines `dpf::keyword` and associated helpers
 /// @details A `dpf::keyword` is an integer representation of a fixed-length
 ///          string over a given alphabet. The integer representation uses
 ///          the fewest bits possible for the given string length and alphabet
-///          size.
+///          size and uses an encoding that preserves the lexicographic
+///          ordering of the underlying strings. This type is inteded to be
+///          used as an input type for a DPF and, as such, specializes
+///          `dpf::utils::bitlength_of`, `dpf::utils::msb_of`, and
+///          `dpf::utils::countl_zero_symmmetric_difference`. When used as a
+///          DPF input type, the aforementioned properties of the encoding
+///          equate to minimizing the DPF tree depth and maximizing the
+///          potential for effective memoization in the context of
+///          `eval_point`- and `eval_sequence`-based evaluation. As a discreet
+///          (non-numeric) type, `dpf::keyword`s are not optimized for use in
+///          `eval_interval`-based evaluation.
+///
+///          This file also defines the `dpf::alphabets` namespace, which
+///          defines various alphabets of interest, including the printable
+///          ASCII characters (`dpf::alphabets::printable_ascii`), lowercase
+///          Roman letters (`dpf::alphabets::lowercase_alpha`), lowercase
+///          hexademical digits (`dpf::alpbabets::lowercase_hex`), among
+///          others.
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
@@ -25,6 +42,7 @@
 namespace dpf
 {
 
+/// @brief defines common alphabets for convenient use with `dpf::keyword`
 namespace alphabets
 {
     /// @brief the printable ASCII chars
@@ -75,15 +93,18 @@ class basic_fixed_length_string
     /// @brief the (maximum) length of a string
     static constexpr std::size_t max_length = N;
 
+    /// @brief the empty string
+    static constexpr auto empty_string = basic_fixed_length_string{.};
+
     /// @brief the number of bits needed to uniquely represent any string
     ///        of length at most `max_length` over `alphabet`
     static constexpr std::size_t bits
         = std::ceil(max_length*std::log2(radix));
 
     static_assert(!alphabet.empty(), "alphabet must be non-empty");
-    static_assert(N != 0, "maximum string lenght must be positive");
+    static_assert(N != 0, "maximum string length must be positive");
 
-    /// @brief the primitive integral type used to represent the `modint`
+    /// @brief the primitive integral type used to represent the string
     static_assert(bits && bits <= 128, "representation must fit in 128 bits");
     using integral_type = dpf::utils::integral_type_from_bitlength_t<bits>;
 
@@ -278,6 +299,7 @@ to_string(basic_fixed_length_string<N, CharT, Alphabet, Traits, Allocator>
 namespace utils
 {
 
+/// @brief specializes `dpf::bitlength_of` for `dpf::basic_fixed_length_string`
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
@@ -288,6 +310,7 @@ struct bitlength_of<
   : public std::integral_constant<std::size_t,
     dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>::bits> { };
 
+/// @brief specializes `dpf::msb_of` for `dpf::basic_fixed_length_string`
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
@@ -301,6 +324,8 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
         = U{1} << bitlength_of_v<T> - 1ul;
 };
 
+/// @brief specializes `dpf::countl_zero_symmmetric_difference` for
+///        `dpf::basic_fixed_length_string`
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,

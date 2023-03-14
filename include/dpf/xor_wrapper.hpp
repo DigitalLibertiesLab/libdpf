@@ -1,10 +1,10 @@
 /// @file dpf/xor_wrapper.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines the `dpf::xor_wrapper` class and associated helpers
 /// @details A `dpf::xor_wrapper` is a struct template that adapts integral
 ///          types to use bitwise arithmetic; that is, it makes an `N`-bit
 ///          integer type behave as it it were an element of `GF(2)^N`.
 ///          Specifically, 
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.

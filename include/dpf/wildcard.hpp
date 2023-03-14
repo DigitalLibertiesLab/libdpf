@@ -1,11 +1,11 @@
 /// @file dpf/wildcard.hpp
-/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines the `dpf::wildcard_t` template and associated helpers
 /// @details A `dpf::wildcard` is a struct template with a single parameter
 ///          `T`, which must be a trivially copyable type (as indicated by
 ///          `std::is_trivially_copyable<T>`). It is used as a placeholder
 ///          for an instance of type `T`, which can be assigned later. Its
 ///          intended for use as an output of a DPF.
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see `LICENSE` for details.
