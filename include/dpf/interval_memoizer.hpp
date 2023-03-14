@@ -14,14 +14,14 @@ namespace dpf
 {
 
 template <typename DpfKey>
-struct interval_memoizer
+struct interval_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
     using node_type = typename DpfKey::interior_node_t;
     static constexpr auto depth = dpf_type::depth;
 
-    explicit interval_memoizer(std::size_t output_len)
+    explicit interval_memoizer_base(std::size_t output_len)
       : dpf_{std::nullopt},
         from_{std::nullopt},
         to_{std::nullopt},
@@ -105,17 +105,17 @@ struct interval_memoizer
 
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
-struct basic_interval_memoizer final : public interval_memoizer<DpfKey>
+struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   public:
     using dpf_type = DpfKey;
     using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
-    using interval_memoizer<dpf_type>::depth;
-    using interval_memoizer<dpf_type>::output_length;
+    using interval_memoizer_base<dpf_type>::depth;
+    using interval_memoizer_base<dpf_type>::output_length;
 
     explicit basic_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
-      : interval_memoizer<DpfKey>(output_len),
+      : interval_memoizer_base<DpfKey>(output_len),
         pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
         length{std::max(3*pivot, output_len)},
         buf{alloc.allocate_unique_ptr(length)}
@@ -145,18 +145,18 @@ struct basic_interval_memoizer final : public interval_memoizer<DpfKey>
 
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
-struct full_tree_interval_memoizer final : public interval_memoizer<DpfKey>
+struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   public:
     using dpf_type = DpfKey;
     using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
-    using interval_memoizer<dpf_type>::depth;
-    using interval_memoizer<dpf_type>::output_length;
+    using interval_memoizer_base<dpf_type>::depth;
+    using interval_memoizer_base<dpf_type>::output_length;
 
     explicit full_tree_interval_memoizer(std::size_t output_len,
         Allocator alloc = Allocator{})
-      : interval_memoizer<DpfKey>(output_len),
+      : interval_memoizer_base<DpfKey>(output_len),
         level_endpoints{initialize_endpoints()},
         buf{alloc.allocate_unique_ptr(level_endpoints[depth] + output_len)}
     { }
