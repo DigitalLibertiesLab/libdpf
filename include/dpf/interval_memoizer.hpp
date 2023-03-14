@@ -23,6 +23,16 @@ struct interval_memoizer
 
     explicit interval_memoizer(const dpf_type & dpf, std::size_t output_len)
       : dpf_{std::cref(dpf)},
+        from_{std::nullopt},
+        to_{std::nullopt},
+        output_length{output_len},
+        level_index{0}
+    { }
+
+    explicit interval_memoizer(std::size_t output_len)
+      : dpf_{std::nullopt},
+        from_{std::nullopt},
+        to_{std::nullopt},
         output_length{output_len},
         level_index{0}
     { }
@@ -34,13 +44,9 @@ struct interval_memoizer
     virtual std::size_t assign_interval(const dpf_type & dpf, std::size_t new_from, std::size_t new_to)
     {
         static constexpr auto complement_of = std::bit_not{};
-        if (std::addressof(dpf_.get()) == std::addressof(dpf)
-            && from_.value_or(complement_of(new_from)) == new_from
-            && to_.value_or(complement_of(new_to)) == new_to)
-        {
-            return level_index;
-        }
-        else
+        if (std::addressof(dpf_->get()) != std::addressof(dpf)
+            || from_.value_or(complement_of(new_from)) != new_from
+            || to_.value_or(complement_of(new_to)) != new_to)
         {
             if (new_to - new_from > output_length)
             {
@@ -52,8 +58,23 @@ struct interval_memoizer
             from_ = new_from;
             to_ = new_to;
             level_index = 0;
-            return 0;
         }
+
+        return level_index;
+    }
+
+    std::size_t advance_level()
+    {
+        return ++level_index;
+    }
+
+    std::size_t get_nodes_at_level(std::size_t level)
+    {
+        // if (from_.has_value() == false || to_.has_value() == false)
+        // {
+        //     throw std::runtime_error("from_node or to_node not properly set");
+        // }
+        return get_nodes_at_level(level, from_.value(), to_.value());
     }
 
     static std::size_t get_nodes_at_level(std::size_t level, std::size_t from_node, std::size_t to_node)
@@ -83,15 +104,14 @@ struct interval_memoizer
         return (to_node - 1 >> offset) - (from_node >> offset) + 1;
     }
 
-    std::size_t level_index;
-
   protected:
     const std::size_t output_length;
 
   private:
-    std::reference_wrapper<const dpf_type> dpf_;
+    std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     std::optional<std::size_t> from_;
     std::optional<std::size_t> to_;
+    std::size_t level_index;
 };
 
 template <typename DpfKey,
@@ -117,6 +137,13 @@ struct basic_interval_memoizer : public interval_memoizer<DpfKey>
         //     throw std::domain_error("output_len must be at least 64");
         // }
     }
+
+    explicit basic_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
+      : interval_memoizer<DpfKey>(output_len),
+        pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
+        length{std::max(3*pivot, output_len)},
+        buf{alloc.allocate_unique_ptr(length * sizeof(node_type))}
+    { }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -147,6 +174,13 @@ struct full_tree_interval_memoizer : public interval_memoizer<DpfKey>
 
     explicit full_tree_interval_memoizer(const dpf_type & dpf, std::size_t output_len, Allocator alloc = Allocator{})
       : interval_memoizer<DpfKey>(dpf, output_len),
+        idxs{new std::size_t[depth+1]},
+        length{calc_length()},
+        buf{alloc.allocate_unique_ptr(length)}
+    { }
+
+    explicit full_tree_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
+      : interval_memoizer<DpfKey>(output_len),
         idxs{new std::size_t[depth+1]},
         length{calc_length()},
         buf{alloc.allocate_unique_ptr(length)}

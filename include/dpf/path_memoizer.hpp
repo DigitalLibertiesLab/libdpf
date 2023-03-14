@@ -24,6 +24,8 @@ struct alignas(alignof(typename DpfKey::interior_node_t)) basic_path_memoizer
     HEDLEY_ALWAYS_INLINE
     explicit basic_path_memoizer(const dpf_type & dpf)
       : std::array<node_type, depth+1>{dpf.root}, dpf_{std::cref(dpf)}, x_{std::nullopt} { }
+    basic_path_memoizer()
+      : dpf_{std::nullopt}, x_{std::nullopt} { }
     basic_path_memoizer(basic_path_memoizer &&) = default;
     basic_path_memoizer(const basic_path_memoizer &) = default;
 
@@ -62,6 +64,8 @@ struct nonmemoizing_path_memoizer
     HEDLEY_ALWAYS_INLINE
     explicit nonmemoizing_path_memoizer(const dpf_type & dpf)
       : dpf_{std::cref(dpf)}, v{dpf.root} { }
+    nonmemoizing_path_memoizer()
+      : dpf_{std::nullopt} { }
     nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) = default;
     nonmemoizing_path_memoizer(const nonmemoizing_path_memoizer &) = default;
 

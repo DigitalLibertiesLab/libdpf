@@ -32,32 +32,32 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
     using node_t = typename DpfKey::interior_node_t;
     auto nodes_in_interval = to_node - from_node;
 
-    memoizer.assign_interval(dpf, from_node, to_node);
-    typename DpfKey::input_type mask = dpf.msb_mask >> (memoizer.level_index + DpfKey::lg_outputs_per_leaf);
-    std::size_t nodes_at_level = IntervalMemoizer::get_nodes_at_level(memoizer.level_index-1, from_node, to_node);
+    std::size_t level = memoizer.assign_interval(dpf, from_node, to_node);
+    typename DpfKey::input_type mask = dpf.msb_mask >> (level + DpfKey::lg_outputs_per_leaf);
+    std::size_t nodes_at_level = memoizer.get_nodes_at_level(level-1);
 
-    for (; memoizer.level_index < to_level; ++memoizer.level_index, mask>>=1)
+    for (; level < to_level; level = memoizer.advance_level(), mask>>=1)
     {
         std::size_t i = !!(mask & from_node), j = i;
         const node_t cw[2] = {
-            set_lo_bit(dpf.interior_cws[memoizer.level_index], dpf.correction_advice[memoizer.level_index]&1),
-            set_lo_bit(dpf.interior_cws[memoizer.level_index], (dpf.correction_advice[memoizer.level_index]>>1)&1)
+            set_lo_bit(dpf.interior_cws[level], dpf.correction_advice[level]&1),
+            set_lo_bit(dpf.interior_cws[level], (dpf.correction_advice[level]>>1)&1)
         };
 
         if (i == 1)
         {
-            memoizer[memoizer.level_index][0] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][0], cw[1], 1);
+            memoizer[level][0] = DpfKey::traverse_interior(memoizer[level-1][0], cw[1], 1);
         }
         for (; j < nodes_at_level-1; ++j)
         {
-            memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
-            memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[1], 1);
+            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[0], 0);
+            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[1], 1);
         }
-        nodes_at_level = IntervalMemoizer::get_nodes_at_level(memoizer.level_index, from_node, to_node);
-        memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[0], 0);
+        nodes_at_level = memoizer.get_nodes_at_level(level);
+        memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[0], 0);
         if (i < nodes_at_level)
         {
-            memoizer[memoizer.level_index][i++] = DpfKey::traverse_interior(memoizer[memoizer.level_index-1][j], cw[1], 1);
+            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[1], 1);
         }
     }
 }
