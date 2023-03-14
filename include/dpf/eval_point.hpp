@@ -57,7 +57,7 @@ inline auto eval_point_exterior(const DpfKey & dpf, InputT x, const PathMemoizer
 
     auto interior = path[dpf.depth];
     auto ext = dpf.template exterior_cw<I>();
-    return dpf::make_dpf_output<output_t>(
+    return make_dpf_output<output_t>(
         DpfKey::template traverse_exterior<I>(interior, ext), x);
 }
 
@@ -79,7 +79,7 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_point(const DpfKey & dpf, InputT x)
 {
-    auto memoizer = nonmemoizing_path_memoizer(dpf);
+    auto memoizer = make_nonmemoizing_path_memoizer(dpf);
     return eval_point<I>(dpf, x, memoizer);
 }
 

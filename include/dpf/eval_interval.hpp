@@ -82,10 +82,10 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
     auto rawbuf = reinterpret_cast<exterior_node_t *>(std::data(outbuf));
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
-        k += dpf::block_length_of_leaf_v<output_t, exterior_node_t>)
+        k += block_length_of_leaf_v<output_t, exterior_node_t>)
     {
         auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::depth-1][j],
-            dpf::get_if_lo_bit(cw, memoizer[DpfKey::depth-1][j]));
+            get_if_lo_bit(cw, memoizer[DpfKey::depth-1][j]));
         std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -107,7 +107,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     eval_interval_interior(dpf, from_node, to_node, memoizer);
     eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return dpf::clipped_iterable<OutputBuffer>(&outbuf, from % DpfKey::outputs_per_leaf,
+    return clipped_iterable<OutputBuffer>(&outbuf, from % DpfKey::outputs_per_leaf,
         DpfKey::outputs_per_leaf - (to % DpfKey::outputs_per_leaf));
 }
 
@@ -117,7 +117,7 @@ template <std::size_t I = 0,
           typename OutputBuffer>
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to, OutputBuffer & outbuf)
 {
-    auto memoizer = make_interval_memoizer(dpf, from, to);
+    auto memoizer = make_basic_interval_memoizer(dpf, from, to);
     return eval_interval<I>(dpf, from, to, outbuf, memoizer);
 }
 
@@ -126,7 +126,7 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to)
 {
-    auto memoizer = make_interval_memoizer(dpf, from, to);
+    auto memoizer = make_basic_interval_memoizer(dpf, from, to);
     auto outbuf = make_output_buffer_for_interval(dpf, from, to);
     auto clipped_iterable = eval_interval<I>(dpf, from, to, outbuf, memoizer);
     return std::make_tuple(std::move(outbuf), std::move(clipped_iterable));
@@ -148,7 +148,7 @@ template <std::size_t I = 0,
 auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf)
 {
     using input_t = typename DpfKey::input_type;
-    auto memoizer = make_interval_memoizer(dpf, input_t(0), std::numeric_limits<input_t>::max());
+    auto memoizer = make_basic_interval_memoizer(dpf, input_t(0), std::numeric_limits<input_t>::max());
     return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max(), outbuf, memoizer);
 }
 

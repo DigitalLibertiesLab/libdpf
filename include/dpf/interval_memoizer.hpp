@@ -196,6 +196,7 @@ namespace detail
 template <typename DpfKey,
           typename MemoizerT,
           typename InputT>
+HEDLEY_ALWAYS_INLINE
 auto make_interval_memoizer(InputT from, InputT to)
 {
     if (from > to)

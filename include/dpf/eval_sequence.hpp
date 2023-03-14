@@ -34,7 +34,7 @@ template <std::size_t I = 0,
 DPF_UNROLL_LOOPS
 inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
-    auto path = dpf::make_path_memoizer(dpf);
+    auto path = make_basic_path_memoizer(dpf);
     std::size_t i = 0;
     for (auto it = begin; it != end; ++it)
     {
@@ -48,7 +48,7 @@ template <std::size_t I = 0,
 auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
 {
     using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    dpf::output_buffer<output_t> outbuf(std::distance(begin, end));
+    output_buffer<output_t> outbuf(std::distance(begin, end));
     eval_sequence<I>(dpf, begin, end, outbuf);
     return std::move(outbuf);
 }
@@ -112,7 +112,6 @@ DPF_UNROLL_LOOPS
 inline auto eval_sequence_exterior(const DpfKey & dpf, const list_recipe<InputT> & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
 {
-    // eval_interval_exterior<I>(dpf, std::size_t(0), recipe.num_leaf_nodes, outbuf, memoizer.buf);
     assert_not_wildcard<I>(dpf);
 
     using exterior_node_t = typename DpfKey::exterior_node_t;
@@ -127,7 +126,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     for (std::size_t j = 0; j < nodes_in_interval; ++j)
     {
         auto leaf = DpfKey::template traverse_exterior<I>(memoizer.buf[j],
-            dpf::get_if_lo_bit(cw, memoizer.buf[j]));
+            get_if_lo_bit(cw, memoizer.buf[j]));
         std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -167,7 +166,7 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe)
 
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
 
-    dpf::output_buffer<output_t> outbuf(recipe.num_leaf_nodes*DpfKey::outputs_per_leaf);
+    output_buffer<output_t> outbuf(recipe.num_leaf_nodes*DpfKey::outputs_per_leaf);
 
     return eval_sequence(dpf, recipe, outbuf, memoizer);
 }

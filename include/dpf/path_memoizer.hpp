@@ -12,7 +12,8 @@ namespace dpf
 {
 
 template <typename DpfKey>
-struct alignas(alignof(typename DpfKey::interior_node_t)) basic_path_memoizer
+struct alignas(alignof(typename DpfKey::interior_node_t))
+basic_path_memoizer final
     : public std::array<typename DpfKey::interior_node_t, DpfKey::depth+1>
 {
   public:
@@ -21,9 +22,6 @@ struct alignas(alignof(typename DpfKey::interior_node_t)) basic_path_memoizer
     using node_type = typename dpf_type::interior_node_t;
     static constexpr auto depth = dpf_type::depth;
     
-    HEDLEY_ALWAYS_INLINE
-    explicit basic_path_memoizer(const dpf_type & dpf)
-      : std::array<node_type, depth+1>{dpf.root}, dpf_{std::cref(dpf)}, x_{std::nullopt} { }
     basic_path_memoizer()
       : dpf_{std::nullopt}, x_{std::nullopt} { }
     basic_path_memoizer(basic_path_memoizer &&) = default;
@@ -54,16 +52,13 @@ struct alignas(alignof(typename DpfKey::interior_node_t)) basic_path_memoizer
 };
 
 template <typename DpfKey>
-struct nonmemoizing_path_memoizer
+struct nonmemoizing_path_memoizer final
 {
   public:
     using dpf_type = DpfKey;
     using input_type = typename dpf_type::input_type;
     using node_type = typename dpf_type::interior_node_t;
 
-    HEDLEY_ALWAYS_INLINE
-    explicit nonmemoizing_path_memoizer(const dpf_type & dpf)
-      : dpf_{std::cref(dpf)}, v{dpf.root} { }
     nonmemoizing_path_memoizer()
       : dpf_{std::nullopt} { }
     nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) = default;
@@ -80,10 +75,6 @@ struct nonmemoizing_path_memoizer
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    const node_type & operator[](std::size_t) const noexcept { return v; }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
     node_type & operator[](std::size_t) noexcept { return v; }
 
   private:
@@ -91,10 +82,28 @@ struct nonmemoizing_path_memoizer
     node_type v;
 };
 
-template <typename DpfKey>
-auto make_path_memoizer(const DpfKey & dpf)
+namespace detail
 {
-    return basic_path_memoizer(dpf);
+
+template <typename MemoizerT>
+HEDLEY_ALWAYS_INLINE
+auto make_path_memoizer()
+{
+    return MemoizerT();
+}
+
+}  // namespace dpf::detail
+
+template <typename DpfKey>
+auto make_basic_path_memoizer(const DpfKey &)
+{
+    return detail::make_interval_memoizer<basic_path_memoizer<DpfKey>>();
+}
+
+template <typename DpfKey>
+auto make_nonmemoizing_path_memoizer(const DpfKey &)
+{
+    return detail::make_interval_memoizer<nonmemoizing_path_memoizer<DpfKey>>();
 }
 
 }  // namespace dpf
