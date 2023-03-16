@@ -71,17 +71,11 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const list_recipe<InputT>
     // level_index represents the current level being built
     // level_index = 0 => root
     // level_index = depth => last layer of interior nodes
-    std::size_t level_index = memoizer.get_level();
+    std::size_t level_index = memoizer.assign_dpf(dpf);
+    std::size_t recipe_index = recipe.level_endpoints[level_index-1];
     std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
 
-    if (level_index == 0)
-    {
-        memoizer[level_index][0] = dpf.root;
-        level_index = memoizer.advance_level();
-        nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
-    }
-
-    for (std::size_t recipe_index=0; level_index <= to_level; level_index = memoizer.advance_level())
+    for (; level_index <= to_level; level_index = memoizer.advance_level())
     {
         const node_type cw[2] = {
             set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
