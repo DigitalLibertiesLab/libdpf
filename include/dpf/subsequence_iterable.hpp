@@ -15,13 +15,13 @@
 namespace dpf
 {
 
-template <typename output_t, typename input_t>
-class iterable_subsequence
+template <typename OutputBuffer>
+class subsequence_iterable
 {
   public:
     class const_iterator;  // forward declaration
 
-    iterable_subsequence(const void * buf, const std::vector<std::size_t> & subseq)
+    subsequence_iterable(const void * buf, const std::vector<std::size_t> & subseq)
         : sequence{static_cast<const output_t *>(buf)}, subsequence_indices{subseq} { }
 
     HEDLEY_NO_THROW
@@ -114,24 +114,24 @@ class iterable_subsequence
             return tmp;
         }
 
-        const_iterator & operator+=(input_t n) noexcept
+        const_iterator & operator+=(std::size_t n) noexcept
         {
             it_ += n;
             return *this;
         }
 
-        const_iterator operator+(input_t n) const noexcept
+        const_iterator operator+(std::size_t n) const noexcept
         {
             return const_iterator(it_ + n);
         }
 
-        const_iterator & operator-=(input_t n) noexcept
+        const_iterator & operator-=(std::size_t n) noexcept
         {
             it_ -= n;
             return *this;
         }
 
-        const_iterator operator-(input_t n) const noexcept
+        const_iterator operator-(std::size_t n) const noexcept
         {
             return const_iterator(it_ - n);
         }
@@ -141,7 +141,7 @@ class iterable_subsequence
             return it_ - rhs.it_;
         }
 
-        reference operator[](input_t i) const noexcept
+        reference operator[](std::size_t i) const noexcept
         {
             return sequence_[it_[i]];
         }
