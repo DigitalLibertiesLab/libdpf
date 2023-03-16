@@ -1136,7 +1136,7 @@ class dynamic_bit_array final : public bit_array_base
     }
     constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
-    /// @throws `std::bad_alloc` if allocating storage fails
+    /// @throws std::bad_alloc if allocating storage fails
     inline explicit dynamic_bit_array(std::size_t nbits)
       : bit_array_base{nbits, static_cast<word_pointer>(
             std::aligned_alloc(utils::max_align_v, sizeof(word_type) *

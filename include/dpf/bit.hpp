@@ -28,6 +28,7 @@
 
 #include "dpf/utils.hpp"
 
+/// @brief the dpf namespace
 namespace dpf
 {
 
@@ -78,7 +79,7 @@ static constexpr dpf::bit to_bit(bool value) noexcept
 /// @param one character used to represent `1` (default: ``CharT{'1'}``)
 /// @returns `static_cast<dpf::bit>(0)` if `value==0` or
 ///          `static_cast<dpf::bit>(1)` if `value==1`
-/// @throws `std::domain_error` if `value != zero && value != one`
+/// @throws std::domain_error if `value != zero && value != one`
 template <typename CharT,
           class Traits = std::char_traits<CharT>>
 HEDLEY_CONST
@@ -149,7 +150,7 @@ operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 /// @param is a character input stream
 /// @param value the `dpf::bit` to extract from the input stream
 /// @return `is`
-/// @throws `std::domain_error` if `value != zero && value != one`
+/// @throws std::domain_error if `value != zero && value != one`
 template <class CharT,
           class Traits>
 std::basic_istream<CharT, Traits> &
@@ -164,7 +165,7 @@ operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 namespace utils
 {
 
-/// @brief specializes `dpf::bitlength_of` for `dpf::bit`
+/// @brief specializes `dpf::utils::bitlength_of` for `dpf::bit`
 template <>
 struct bitlength_of<dpf::bit>
   : public std::integral_constant<std::size_t, 1> { };
@@ -176,19 +177,21 @@ struct bitlength_of<dpf::bit>
 namespace std
 {
 
-/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::bit`s
 /// @{
 
-/// @details specializes `std::numeric_limits` for `dpf::bit`
+/// @brief specializes `std::numeric_limits` for `dpf::bit`
 template<> class numeric_limits<dpf::bit>
     : public numeric_limits<bool> { };
-/// @details specializes `std::numeric_limits` for `dpf::bit const`
+
+/// @brief specializes `std::numeric_limits` for `dpf::bit const`
 template<> class numeric_limits<dpf::bit const>
     : public numeric_limits<dpf::bit> {};
-/// @details specializes `std::numeric_limits` for `dpf::bit volatile`
+
+/// @brief specializes `std::numeric_limits` for `dpf::bit volatile`
 template<> class numeric_limits<dpf::bit volatile>
     : public numeric_limits<dpf::bit> {};
-/// @details specializes `std::numeric_limits` for `dpf::bit const volatile`
+
+/// @brief specializes `std::numeric_limits` for `dpf::bit const volatile`
 template<> class numeric_limits<dpf::bit const volatile>
     : public numeric_limits<dpf::bit> {};
 

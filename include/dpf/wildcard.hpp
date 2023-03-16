@@ -1,5 +1,5 @@
 /// @file dpf/wildcard.hpp
-/// @brief defines the `dpf::wildcard_t` template and associated helpers
+/// @brief defines the `dpf::wildcard_value` template and associated helpers
 /// @details A `dpf::wildcard` is a struct template with a single parameter
 ///          `T`, which must be a trivially copyable type (as indicated by
 ///          `std::is_trivially_copyable<T>`). It is used as a placeholder
@@ -31,33 +31,33 @@ namespace dpf
 /// @brief represents a placeholder value of a given type, to assigned later
 /// @tparam T the underlying type
 template <typename T>
-struct wildcard_t
+struct wildcard_value
 {
     static_assert(std::is_trivially_copyable_v<T>,
         "T must be a trivially copyable type");
     static_assert(std::numeric_limits<T>::is_iec559 ||
         !(std::is_same_v<T, float> || std::is_same_v<T, double>),
         "floating point types only supported for iec559");
-    inline constexpr wildcard_t() noexcept = default;
+    inline constexpr wildcard_value() noexcept = default;
 };
 
 // }  // namespace
 
-template <typename T> static constexpr wildcard_t<T> wildcard{};
+template <typename T> static constexpr wildcard_value<T> wildcard{};
 
 /// @brief Checks whether `T` is a wildcard type.
 /// @details A trait class that provides the member constant `value` which is
-///          equal to `true`, if `T` is a specialization of the `wildcard_t`
+///          equal to `true`, if `T` is a specialization of the `wildcard_value`
 ///          template and `false` otherwise.
 /// @see dpf::is_wildcard_v
 template <typename T> struct is_wildcard : std::false_type { };
-template <typename T> struct is_wildcard<wildcard_t<T>> : std::true_type { };
+template <typename T> struct is_wildcard<wildcard_value<T>> : std::true_type { };
 
 /// @brief Checks whether `T` is a wildcard type.
 template <typename T> constexpr bool is_wildcard_v = is_wildcard<T>::value;
 
 template <typename T> struct concrete_type { using type = T; };
-template <typename T> struct concrete_type<wildcard_t<T>>
+template <typename T> struct concrete_type<wildcard_value<T>>
     : public concrete_type<T> { };
 template <typename T> using actual_type_t = typename concrete_type<T>::type;
 
@@ -70,11 +70,11 @@ template <typename T> struct wildcard_value
         return y;
     }
 };
-template <typename T> struct wildcard_value<wildcard_t<T>>
+template <typename T> struct wildcard_value<wildcard_value<T>>
 {
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
-    constexpr std::optional<T> operator()(wildcard_t<T>) const noexcept
+    constexpr std::optional<T> operator()(wildcard_value<T>) const noexcept
     {
         return std::nullopt;
     }
