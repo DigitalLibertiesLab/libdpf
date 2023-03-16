@@ -109,8 +109,13 @@ struct sequence_memoizer_base
     // level goes up to (and including) depth
     virtual return_type operator[](std::size_t) const noexcept = 0;
 
-    virtual std::size_t assign_dpf(const dpf_type & dpf)
+    virtual std::size_t assign_dpf(const dpf_type & dpf, const list_recipe<input_type> & r)
     {
+        if (&recipe != &r)
+        {
+            throw std::logic_error("memoizer cannot be used with different recipe");
+        }
+
         if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
         {
             this->operator[](0)[0] = dpf.root;
