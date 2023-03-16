@@ -71,7 +71,7 @@ auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
     assert_not_wildcard<I>(dpf);
     internal::eval_point_interior(dpf, x, path);
-    return internal::eval_point_exterior<I>(dpf, x, path);
+    return internal::eval_point_exterior<I>(dpf, path);
 }
 
 }  // namespace internal
@@ -83,7 +83,7 @@ template <std::size_t I = 0,
 auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    return make_dpf_output<output_type>(internal::eval_point<I>(dpf, path), x);
+    return make_dpf_output<output_type>(internal::eval_point<I>(dpf, x, path), x);
 }
 
 template <std::size_t I = 0,

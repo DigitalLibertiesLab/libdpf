@@ -92,12 +92,14 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
     return list_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};
 }
 
-template <typename InputT,
+template <typename DpfKey,
+          typename InputT,
           typename NodeT,
           typename ReturnT = NodeT *>
 struct sequence_memoizer_base
 {
   public:
+    using dpf_type = DpfKey;
     using input_type = InputT;
     using node_type = NodeT;
     using return_type = ReturnT;
@@ -107,15 +109,16 @@ struct sequence_memoizer_base
     // level goes up to (and including) depth
     virtual return_type operator[](std::size_t) const noexcept = 0;
 
-    // TODO: should get_level() and reset() be replaced with something like assign_recipe?
-    std::size_t get_level()
+    virtual std::size_t assign_dpf(const dpf_type & dpf)
     {
-        return level_index;
-    }
+        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
+        {
+            this->operator[](0)[0] = dpf.root;
+            dpf_ = std::cref(dpf);
+            level_index = 1;
+        }
 
-    void reset()
-    {
-        level_index = 0;
+        return level_index;
     }
 
     std::size_t advance_level()
@@ -168,10 +171,14 @@ struct sequence_memoizer_base
     std::size_t level_index;
 
     explicit sequence_memoizer_base(const list_recipe<input_type> & r)
-      : recipe{r},
+      : dpf_{std::nullopt},
+        recipe{r},
         depth{recipe.level_endpoints.size()-1},
         level_index{0}
     { }
+
+  private:
+    std::optional<std::reference_wrapper<const dpf_type>> dpf_;
 };
 
 namespace detail
@@ -214,11 +221,12 @@ struct pointer_facade
 
 }  // namespace dpf::detail
 
-template <typename InputT,
+template <typename DpfKey,
+          typename InputT,
           typename NodeT,
           typename Allocator = aligned_allocator<NodeT>>
 struct inplace_reversing_sequence_memoizer final
-  : public sequence_memoizer_base<InputT, NodeT, detail::pointer_facade<NodeT *, std::reverse_iterator<NodeT *>>>
+  : public sequence_memoizer_base<DpfKey, InputT, NodeT, detail::pointer_facade<NodeT *, std::reverse_iterator<NodeT *>>>
 {
   public:
     using input_type = InputT;
@@ -227,7 +235,7 @@ struct inplace_reversing_sequence_memoizer final
     using forward_iter = node_type *;
     using reverse_iter = std::reverse_iterator<forward_iter>;
   private:
-    using parent = sequence_memoizer_base<InputT, NodeT, detail::pointer_facade<forward_iter, reverse_iter>>;
+    using parent = sequence_memoizer_base<DpfKey, InputT, NodeT, detail::pointer_facade<forward_iter, reverse_iter>>;
   public:
     using parent::recipe;
     using parent::depth;
@@ -287,14 +295,15 @@ struct inplace_reversing_sequence_memoizer final
     const unique_ptr buf;
 };
 
-template <typename InputT,
+template <typename DpfKey,
+          typename InputT,
           typename NodeT,
           typename Allocator = aligned_allocator<NodeT>>
 struct double_space_sequence_memoizer final
-  : public sequence_memoizer_base<InputT, NodeT>
+  : public sequence_memoizer_base<DpfKey, InputT, NodeT>
 {
   private:
-    using parent = sequence_memoizer_base<InputT, NodeT>;
+    using parent = sequence_memoizer_base<DpfKey, InputT, NodeT>;
   public:
     using input_type = InputT;
     using node_type = NodeT;
@@ -319,14 +328,15 @@ struct double_space_sequence_memoizer final
     const unique_ptr buf;
 };
 
-template <typename InputT,
+template <typename DpfKey,
+          typename InputT,
           typename NodeT,
           typename Allocator = aligned_allocator<NodeT>>
 struct full_tree_sequence_memoizer final
-  : public sequence_memoizer_base<InputT, NodeT>
+  : public sequence_memoizer_base<DpfKey, InputT, NodeT>
 {
   private:
-    using parent = sequence_memoizer_base<InputT, NodeT>;
+    using parent = sequence_memoizer_base<DpfKey, InputT, NodeT>;
   public:
     using input_type = InputT;
     using node_type = NodeT;
@@ -367,21 +377,21 @@ template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, inplace_reversing_sequence_memoizer<InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<DpfKey, inplace_reversing_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_double_space_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, double_space_sequence_memoizer<InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<DpfKey, double_space_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT>
 auto make_full_tree_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, full_tree_sequence_memoizer<InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<DpfKey, full_tree_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 }  // namespace dpf
