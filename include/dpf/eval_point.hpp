@@ -36,14 +36,17 @@ template <typename DpfKey,
 DPF_UNROLL_LOOPS
 inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
+    using dpf_type = DpfKey;
+    using input_type = InputT;
+
     std::size_t level_index = path.assign_x(dpf, x);
-    for (InputT mask = dpf.msb_mask>>level_index;
-        level_index < dpf.depth; ++level_index, mask>>=1)
+    for (input_type mask = dpf.msb_mask>>level_index-1;
+        level_index <= dpf.depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
-        auto cw = set_lo_bit(dpf.interior_cws[level_index],
-            dpf.correction_advice[level_index]>>bit);
-        path[level_index+1] = DpfKey::traverse_interior(path[level_index], cw, bit);
+        auto cw = set_lo_bit(dpf.interior_cws[level_index-1],
+            dpf.correction_advice[level_index-1]>>bit);
+        path[level_index] = dpf_type::traverse_interior(path[level_index-1], cw, bit);
     }
 }
 
@@ -55,12 +58,13 @@ inline auto eval_point_exterior(const DpfKey & dpf, InputT x, const PathMemoizer
 {
     assert_not_wildcard<I>(dpf);
 
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using dpf_type = DpfKey;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     auto interior = path[dpf.depth];
     auto ext = dpf.template exterior_cw<I>();
-    return make_dpf_output<output_t>(
-        DpfKey::template traverse_exterior<I>(interior, ext), x);
+    return make_dpf_output<output_type>(
+        dpf_type::template traverse_exterior<I>(interior, ext), x);
 }
 
 }  // namespace internal

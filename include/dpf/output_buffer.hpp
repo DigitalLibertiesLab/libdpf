@@ -111,12 +111,15 @@ template <typename DpfKey,
           typename InputT>
 auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
-    using output_t = std::tuple_element_t<0, typename DpfKey::outputs_t>;
+    using dpf_type = DpfKey;
+    using input_type = InputT;
+    using output_type = std::tuple_element_t<0, typename DpfKey::outputs_t>;
 
-    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
+    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
+        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
     std::size_t nodes_in_interval = to_node - from_node;
 
-    return dpf::output_buffer<output_t>(nodes_in_interval*DpfKey::outputs_per_leaf);
+    return dpf::output_buffer<output_type>(nodes_in_interval*dpf_type::outputs_per_leaf);
 }
 
 }  // namespace dpf

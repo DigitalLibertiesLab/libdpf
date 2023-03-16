@@ -25,41 +25,50 @@
 namespace dpf
 {
 
+namespace internal
+{
+
 template <typename DpfKey,
           class IntervalMemoizer>
 DPF_UNROLL_LOOPS
 inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, std::size_t to_node,
     IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
-    using node_t = typename DpfKey::interior_node_t;
+    using dpf_type = DpfKey;
+    using input_type = typename DpfKey::input_type;
+    using node_type = typename DpfKey::interior_node_t;
+
     auto nodes_in_interval = to_node - from_node;
 
-    std::size_t level = memoizer.assign_interval(dpf, from_node, to_node);
-    typename DpfKey::input_type mask = dpf.msb_mask >> (level + DpfKey::lg_outputs_per_leaf);
-    std::size_t nodes_at_level = memoizer.get_nodes_at_level(level-1);
+    // level_index represents the current level being built
+    // level_index = 0 => root
+    // level_index = depth => last layer of interior nodes
+    std::size_t level_index = memoizer.assign_interval(dpf, from_node, to_node);
+    input_type mask = dpf.msb_mask >> (level_index-1 + dpf_type::lg_outputs_per_leaf);
+    std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
 
-    for (; level < to_level; level = memoizer.advance_level(), mask>>=1)
+    for (; level_index <= to_level; level_index = memoizer.advance_level(), mask>>=1)
     {
         std::size_t i = !!(mask & from_node), j = i;
-        const node_t cw[2] = {
-            set_lo_bit(dpf.interior_cws[level], dpf.correction_advice[level]&1),
-            set_lo_bit(dpf.interior_cws[level], (dpf.correction_advice[level]>>1)&1)
+        const node_type cw[2] = {
+            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
         if (i == 1)
         {
-            memoizer[level][0] = DpfKey::traverse_interior(memoizer[level-1][0], cw[1], 1);
+            memoizer[level_index][0] = dpf_type::traverse_interior(memoizer[level_index-1][0], cw[1], 1);
         }
         for (; j < nodes_at_level-1; ++j)
         {
-            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[0], 0);
-            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[1], 1);
+            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[0], 0);
+            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[1], 1);
         }
-        nodes_at_level = memoizer.get_nodes_at_level(level);
-        memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[0], 0);
+        nodes_at_level = memoizer.get_nodes_at_level(level_index);
+        memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[0], 0);
         if (i < nodes_at_level)
         {
-            memoizer[level][i++] = DpfKey::traverse_interior(memoizer[level-1][j], cw[1], 1);
+            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[1], 1);
         }
     }
 }
@@ -74,24 +83,27 @@ inline auto eval_interval_exterior(const DpfKey & dpf, std::size_t from_node, st
 {
     assert_not_wildcard<I>(dpf);
 
-    using exterior_node_t = typename DpfKey::exterior_node_t;
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using dpf_type = DpfKey;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using exterior_node_type = typename DpfKey::exterior_node_t;
 
     auto nodes_in_interval = to_node - from_node;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
-    auto rawbuf = reinterpret_cast<exterior_node_t *>(std::data(outbuf));
+    auto rawbuf = reinterpret_cast<exterior_node_type *>(std::data(outbuf));
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
-        k += block_length_of_leaf_v<output_t, exterior_node_t>)
+        k += block_length_of_leaf_v<output_type, exterior_node_type>)
     {
-        auto leaf = DpfKey::template traverse_exterior<I>(memoizer[DpfKey::depth-1][j],
-            get_if_lo_bit(cw, memoizer[DpfKey::depth-1][j]));
+        auto leaf = dpf_type::template traverse_exterior<I>(memoizer[dpf_type::depth][j],
+            get_if_lo_bit(cw, memoizer[dpf_type::depth][j]));
         std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
+
+}  // namespace internal
 
 template <std::size_t I = 0,
           typename DpfKey,
@@ -104,13 +116,17 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 {
     assert_not_wildcard<I>(dpf);
 
-    std::size_t from_node = utils::quotient_floor(from, (InputT)DpfKey::outputs_per_leaf), to_node = utils::quotient_ceiling(to, (InputT)DpfKey::outputs_per_leaf);
+    using dpf_type = DpfKey;
+    using input_type = InputT;
 
-    eval_interval_interior(dpf, from_node, to_node, memoizer);
-    eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
+    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
+        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
 
-    return clipped_iterable<OutputBuffer>(&outbuf, from % DpfKey::outputs_per_leaf,
-        DpfKey::outputs_per_leaf - (to % DpfKey::outputs_per_leaf));
+    internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
+    internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
+
+    return clipped_iterable<OutputBuffer>(&outbuf, from % dpf_type::outputs_per_leaf,
+        dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 
 template <std::size_t I = 0,
@@ -140,8 +156,8 @@ template <std::size_t I = 0,
           class IntervalMemoizer>
 auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf, IntervalMemoizer & memoizer)
 {
-    using input_t = typename DpfKey::input_type;
-    return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max(), outbuf, memoizer);
+    using input_type = typename DpfKey::input_type;
+    return eval_interval<I>(dpf, input_type(0), std::numeric_limits<input_type>::max(), outbuf, memoizer);
 }
 
 template <std::size_t I = 0,
@@ -149,17 +165,17 @@ template <std::size_t I = 0,
           class OutputBuffer>
 auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf)
 {
-    using input_t = typename DpfKey::input_type;
-    auto memoizer = make_basic_interval_memoizer(dpf, input_t(0), std::numeric_limits<input_t>::max());
-    return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max(), outbuf, memoizer);
+    using input_type = typename DpfKey::input_type;
+    auto memoizer = make_basic_interval_memoizer(dpf, input_type(0), std::numeric_limits<input_type>::max());
+    return eval_interval<I>(dpf, input_type(0), std::numeric_limits<input_type>::max(), outbuf, memoizer);
 }
 
 template <std::size_t I = 0,
           typename DpfKey>
 auto eval_full(const DpfKey & dpf)
 {
-    using input_t = typename DpfKey::input_type;
-    return eval_interval<I>(dpf, input_t(0), std::numeric_limits<input_t>::max());
+    using input_type = typename DpfKey::input_type;
+    return eval_interval<I>(dpf, input_type(0), std::numeric_limits<input_type>::max());
 }
 
 }  // namespace dpf

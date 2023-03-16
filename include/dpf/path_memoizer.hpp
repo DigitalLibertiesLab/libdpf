@@ -20,10 +20,10 @@ basic_path_memoizer final
 {
   public:
     using dpf_type = DpfKey;
-    using input_type = typename dpf_type::input_type;
-    using node_type = typename dpf_type::interior_node_t;
-    static constexpr auto depth = dpf_type::depth;
-    
+    using input_type = typename DpfKey::input_type;
+    using node_type = typename DpfKey::interior_node_t;
+    static constexpr auto depth = DpfKey::depth;
+
     basic_path_memoizer()
       : dpf_{std::nullopt}, x_{std::nullopt} { }
     basic_path_memoizer(basic_path_memoizer &&) = default;
@@ -32,19 +32,19 @@ basic_path_memoizer final
     inline std::size_t assign_x(const dpf_type & dpf, input_type new_x)
     {
         static constexpr auto clz_xor = utils::countl_zero_symmmetric_difference<input_type>{};
-        if (std::addressof(dpf_->get()) == std::addressof(dpf))
+        if (dpf_.has_value() == true && std::addressof(dpf_->get()) == std::addressof(dpf))
         {
             static constexpr auto complement_of = std::bit_not{};
             input_type old_x = x_.value_or(complement_of(new_x));
             x_ = new_x;
-            return clz_xor(old_x, new_x);
+            return clz_xor(old_x, new_x)+1;
         }
         else
         {
             this->operator[](0) = dpf.root;
             dpf_ = std::cref(dpf);
             x_ = new_x;
-            return 0;
+            return 1;
         }
     }
 
@@ -58,8 +58,8 @@ struct nonmemoizing_path_memoizer final
 {
   public:
     using dpf_type = DpfKey;
-    using input_type = typename dpf_type::input_type;
-    using node_type = typename dpf_type::interior_node_t;
+    using input_type = typename DpfKey::input_type;
+    using node_type = typename DpfKey::interior_node_t;
 
     nonmemoizing_path_memoizer()
       : dpf_{std::nullopt} { }
@@ -72,7 +72,7 @@ struct nonmemoizing_path_memoizer final
     std::size_t assign_x(const dpf_type & dpf, input_type) noexcept
     {
         if (std::addressof(dpf_->get()) != std::addressof(dpf)) v = dpf.root;
-        return 0;
+        return 1;
     }
 
     HEDLEY_NO_THROW
@@ -99,13 +99,13 @@ auto make_path_memoizer()
 template <typename DpfKey>
 auto make_basic_path_memoizer(const DpfKey &)
 {
-    return detail::make_interval_memoizer<basic_path_memoizer<DpfKey>>();
+    return detail::make_path_memoizer<basic_path_memoizer<DpfKey>>();
 }
 
 template <typename DpfKey>
 auto make_nonmemoizing_path_memoizer(const DpfKey &)
 {
-    return detail::make_interval_memoizer<nonmemoizing_path_memoizer<DpfKey>>();
+    return detail::make_path_memoizer<nonmemoizing_path_memoizer<DpfKey>>();
 }
 
 }  // namespace dpf

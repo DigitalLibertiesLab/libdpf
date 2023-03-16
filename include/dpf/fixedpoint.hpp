@@ -398,14 +398,14 @@ HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
 static auto make_fixed_safe(double d)
 {
-    using fixed_t = fixedpoint<FractionalBits, IntegralType>;
+    using fixed_type = fixedpoint<FractionalBits, IntegralType>;
 
-    if (HEDLEY_UNLIKELY(d < std::numeric_limits<fixed_t>::lowest()))
+    if (HEDLEY_UNLIKELY(d < std::numeric_limits<fixed_type>::lowest()))
     {
         throw std::range_error("value is too small (underflows integral representation)");
     }
 
-    if (HEDLEY_UNLIKELY(std::numeric_limits<fixed_t>::max() < d))
+    if (HEDLEY_UNLIKELY(std::numeric_limits<fixed_type>::max() < d))
     {
         throw std::range_error("value is too large (overflows integral representation)");
     }
@@ -643,14 +643,14 @@ template <typename FixedPointType,
           std::size_t Degree>
 struct fixedpoint_polynomial : public std::array<FixedPointType, Degree>
 {
-    using coefficient_t = FixedPointType;
+    using coefficient_type = FixedPointType;
     static constexpr std::size_t degree = Degree;
-    auto operator()(coefficient_t x)
+    auto operator()(coefficient_type x)
     {
         constexpr auto product_of = multiplies<use_arg_sum>{};
-        constexpr auto sum_of = binary_operator_precast_wrapper<std::plus<coefficient_t>, use_max_arg>{};
+        constexpr auto sum_of = binary_operator_precast_wrapper<std::plus<coefficient_type>, use_max_arg>{};
         auto coeff = this->rbegin();
-        coefficient_t y{*coeff};
+        coefficient_type y{*coeff};
         while (++coeff != this->rend())
         {
             y = sum_of(product_of(y, x), *coeff);

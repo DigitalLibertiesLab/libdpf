@@ -22,7 +22,6 @@
 
 #include "dpf/dpf_key.hpp"
 #include "dpf/eval_point.hpp"
-// #include "dpf/eval_interval.hpp"
 #include "dpf/path_memoizer.hpp"
 #include "dpf/sequence_memoizer.hpp"
 
@@ -49,11 +48,15 @@ template <std::size_t I = 0,
           typename Iterator>
 auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
 {
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    output_buffer<output_t> outbuf(std::distance(begin, end));
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
+    output_buffer<output_type> outbuf(std::distance(begin, end));
     eval_sequence<I>(dpf, begin, end, outbuf);
     return std::move(outbuf);
 }
+
+namespace internal
+{
 
 template <typename DpfKey,
           typename InputT,
@@ -62,46 +65,46 @@ DPF_UNROLL_LOOPS
 inline auto eval_sequence_interior(const DpfKey & dpf, const list_recipe<InputT> & recipe,
     SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
-    using node_t = typename DpfKey::interior_node_t;
-    bool currhalf = !(dpf.depth & 1);
-    std::size_t nodes_at_level = 1;
+    using dpf_type = DpfKey;
+    using node_type = typename DpfKey::interior_node_t;
 
-    for (std::size_t level_index=0, recipe_index=0; level_index < to_level; ++level_index, currhalf = !currhalf)
+    // level_index represents the current level being built
+    // level_index = 0 => root
+    // level_index = depth => last layer of interior nodes
+    std::size_t level_index = memoizer.get_level();
+    std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
+
+    if (level_index == 0)
     {
-        const node_t cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index], dpf.correction_advice[level_index]&1),
-            set_lo_bit(dpf.interior_cws[level_index], (dpf.correction_advice[level_index]>>1)&1)
+        memoizer[level_index][0] = dpf.root;
+        level_index = memoizer.advance_level();
+        nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
+    }
+
+    for (std::size_t recipe_index=0; level_index <= to_level; level_index = memoizer.advance_level())
+    {
+        const node_type cw[2] = {
+            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
-        auto [prevbuf, currbuf] = memoizer.get_iterators(currhalf, nodes_at_level);
-        if (!level_index) prevbuf[0] = dpf.root;
-        std::size_t output_index = 0;
-        for (std::size_t input_index = 0; input_index < nodes_at_level; ++input_index, ++recipe_index)
+        auto prevbuf = memoizer[level_index-1];
+        auto currbuf = memoizer[level_index];
+
+        for (std::size_t input_index = 0, output_index = 0; input_index < nodes_at_level; ++input_index, ++recipe_index)
         {
-            if (true || currhalf)
+            if (memoizer.traverse_first(recipe_index) == true)
             {
-                if (memoizer.get_step(currhalf, level_index, recipe_index) > int8_t(-1))
-                {
-                    currbuf[output_index++] = DpfKey::traverse_interior(prevbuf[input_index], cw[0], 0);
-                }
-                if (memoizer.get_step(currhalf, level_index, recipe_index) < int8_t(1))
-                {
-                    currbuf[output_index++] = DpfKey::traverse_interior(prevbuf[input_index], cw[1], 1);
-                }
+                bool dir = memoizer.get_direction(0);
+                currbuf[output_index++] = dpf_type::traverse_interior(prevbuf[input_index], cw[dir], dir);
             }
-            else
+            if (memoizer.traverse_second(recipe_index) == true)
             {
-                if (memoizer.get_step(currhalf, level_index, recipe_index) < int8_t(1))
-                {
-                    currbuf[output_index++] = DpfKey::traverse_interior(prevbuf[input_index], cw[1], 1);
-                }
-                if (memoizer.get_step(currhalf, level_index, recipe_index) > int8_t(-1))
-                {
-                    currbuf[output_index++] = DpfKey::traverse_interior(prevbuf[input_index], cw[0], 0);
-                }
+                bool dir = memoizer.get_direction(1);
+                currbuf[output_index++] = dpf_type::traverse_interior(prevbuf[input_index], cw[dir], dir);
             }
         }
-        nodes_at_level = output_index;
+        nodes_at_level = memoizer.get_nodes_at_level(level_index);
     }
 }
 
@@ -116,8 +119,7 @@ inline auto eval_sequence_exterior(const DpfKey & dpf, const list_recipe<InputT>
 {
     assert_not_wildcard<I>(dpf);
 
-    using exterior_node_t = typename DpfKey::exterior_node_t;
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using dpf_type = DpfKey;
 
     auto nodes_in_interval = std::max(std::size_t(0), recipe.num_leaf_nodes);
 
@@ -125,14 +127,17 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
     auto rawbuf = reinterpret_cast<decltype(cw)*>(std::data(outbuf));
+    auto buf = memoizer[dpf.depth];
     for (std::size_t j = 0; j < nodes_in_interval; ++j)
     {
-        auto leaf = DpfKey::template traverse_exterior<I>(memoizer.buf[j],
-            get_if_lo_bit(cw, memoizer.buf[j]));
+        auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
+            get_if_lo_bit(cw, buf[j]));
         std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
+
+}  // namespace internal
 
 template <std::size_t I = 0,
           typename DpfKey,
@@ -144,8 +149,8 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
 {
     assert_not_wildcard<I>(dpf);
 
-    eval_sequence_interior(dpf, recipe, memoizer);
-    eval_sequence_exterior<I>(dpf, recipe, outbuf, memoizer);
+    internal::eval_sequence_interior(dpf, recipe, memoizer);
+    internal::eval_sequence_exterior<I>(dpf, recipe, outbuf, memoizer);
 }
 
 template <std::size_t I = 0,
@@ -164,11 +169,12 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe)
 {
-    using output_t = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using dpf_type = DpfKey;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
 
-    output_buffer<output_t> outbuf(recipe.num_leaf_nodes*DpfKey::outputs_per_leaf);
+    output_buffer<output_type> outbuf(recipe.num_leaf_nodes*dpf_type::outputs_per_leaf);
 
     return eval_sequence(dpf, recipe, outbuf, memoizer);
 }
