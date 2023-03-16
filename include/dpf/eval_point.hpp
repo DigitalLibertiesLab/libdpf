@@ -52,19 +52,26 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & pat
 
 template <std::size_t I = 0,
           typename DpfKey,
-          typename InputT,
           class PathMemoizer>
-inline auto eval_point_exterior(const DpfKey & dpf, InputT x, const PathMemoizer & path)
+inline auto eval_point_exterior(const DpfKey & dpf, const PathMemoizer & path)
 {
     assert_not_wildcard<I>(dpf);
 
-    using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-
     auto interior = path[dpf.depth];
     auto ext = dpf.template exterior_cw<I>();
-    return make_dpf_output<output_type>(
-        dpf_type::template traverse_exterior<I>(interior, ext), x);
+    return DpfKey::template traverse_exterior<I>(interior, ext);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename InputT,
+          class PathMemoizer>
+HEDLEY_ALWAYS_INLINE
+auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
+{
+    assert_not_wildcard<I>(dpf);
+    internal::eval_point_interior(dpf, x, path);
+    return internal::eval_point_exterior<I>(dpf, x, path);
 }
 
 }  // namespace internal
@@ -75,9 +82,8 @@ template <std::size_t I = 0,
           class PathMemoizer>
 auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
-    assert_not_wildcard<I>(dpf);
-    internal::eval_point_interior(dpf, x, path);
-    return internal::eval_point_exterior<I>(dpf, x, path);
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    return make_dpf_output<output_type>(internal::eval_point<I>(dpf, path), x);
 }
 
 template <std::size_t I = 0,
@@ -85,8 +91,8 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_point(const DpfKey & dpf, InputT x)
 {
-    auto memoizer = make_nonmemoizing_path_memoizer(dpf);
-    return eval_point<I>(dpf, x, memoizer);
+    auto path = make_nonmemoizing_path_memoizer(dpf);
+    return eval_point<I>(dpf, x, path);
 }
 
 }  // namespace dpf
