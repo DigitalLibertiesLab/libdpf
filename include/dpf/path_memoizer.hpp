@@ -39,13 +39,11 @@ basic_path_memoizer final
             x_ = new_x;
             return clz_xor(old_x, new_x)+1;
         }
-        else
-        {
-            this->operator[](0) = dpf.root;
-            dpf_ = std::cref(dpf);
-            x_ = new_x;
-            return 1;
-        }
+
+        this->operator[](0) = dpf.root;
+        dpf_ = std::cref(dpf);
+        x_ = new_x;
+        return 1;
     }
 
   private:

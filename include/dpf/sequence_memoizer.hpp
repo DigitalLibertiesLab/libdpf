@@ -93,18 +93,19 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
 }
 
 template <typename InputT,
-          typename NodeT>
+          typename NodeT,
+          typename ReturnT = NodeT *>
 struct sequence_memoizer_base
 {
   public:
     using input_type = InputT;
     using node_type = NodeT;
+    using return_type = ReturnT;
     const list_recipe<InputT> & recipe;
 
     // level 0 should access the root
     // level goes up to (and including) depth
-    // TODO: how should this be fixed?
-    // virtual node_type * operator[](std::size_t) const noexcept = 0;
+    virtual return_type operator[](std::size_t) const noexcept = 0;
 
     // TODO: should get_level() and reset() be replaced with something like assign_recipe?
     std::size_t get_level()
@@ -173,20 +174,61 @@ struct sequence_memoizer_base
     { }
 };
 
+namespace detail
+{
+
+template <typename ForwardIterT,
+          typename ReverseIterT>
+struct pointer_facade
+{
+  public:
+    using forward_iter = ForwardIterT;
+    using reverse_iter = ReverseIterT;
+
+    HEDLEY_ALWAYS_INLINE
+    pointer_facade(bool flip, forward_iter it, reverse_iter rit)
+        : flip_{flip}, it_{it}, rit_{rit}
+    { }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    auto & operator[](std::size_t i)
+    {
+        return flip_ ? rit_[i] : it_[i];
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    const auto & operator[](std::size_t i) const
+    {
+        return flip_ ? rit_[i] : it_[i];
+    }
+
+  private:
+    const bool flip_;
+    forward_iter it_;
+    reverse_iter rit_;
+};
+
+}  // namespace dpf::detail
+
 template <typename InputT,
           typename NodeT,
           typename Allocator = aligned_allocator<NodeT>>
 struct inplace_reversing_sequence_memoizer final
-  : public sequence_memoizer_base<InputT, NodeT>
+  : public sequence_memoizer_base<InputT, NodeT, detail::pointer_facade<NodeT *, std::reverse_iterator<NodeT *>>>
 {
-  private:
-    using parent = sequence_memoizer_base<InputT, NodeT>;
   public:
     using input_type = InputT;
     using node_type = NodeT;
     using unique_ptr = typename Allocator::unique_ptr;
     using forward_iter = node_type *;
     using reverse_iter = std::reverse_iterator<forward_iter>;
+  private:
+    using parent = sequence_memoizer_base<InputT, NodeT, detail::pointer_facade<forward_iter, reverse_iter>>;
+  public:
     using parent::recipe;
     using parent::depth;
     using parent::level_index;
@@ -198,39 +240,9 @@ struct inplace_reversing_sequence_memoizer final
         buf{alloc.allocate_unique_ptr(r.num_leaf_nodes)}
     { }
 
-    struct pointer_facade
-    {
-      public:
-        HEDLEY_ALWAYS_INLINE
-        pointer_facade(bool flip, forward_iter it, reverse_iter rit)
-          : flip_{flip}, it_{it}, rit_{rit}
-        { }
-
-        HEDLEY_ALWAYS_INLINE
-        HEDLEY_NO_THROW
-        HEDLEY_PURE
-        auto & operator[](std::size_t i)
-        {
-            return flip_ ? rit_[i] : it_[i];
-        }
-
-        HEDLEY_ALWAYS_INLINE
-        HEDLEY_NO_THROW
-        HEDLEY_PURE
-        const auto & operator[](std::size_t i) const
-        {
-            return flip_ ? rit_[i] : it_[i];
-        }
-
-      private:
-        const bool flip_;
-        forward_iter it_;
-        reverse_iter rit_;
-    };
-
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    pointer_facade operator[](std::size_t level) const noexcept
+    detail::pointer_facade<forward_iter, reverse_iter> operator[](std::size_t level) const noexcept override
     {
         // flip false => forward traversal
         bool flip = (depth ^ level) & 1;
@@ -240,11 +252,11 @@ struct inplace_reversing_sequence_memoizer final
         if (level == level_index-1 && level != depth)
         {
             std::size_t nodes_at_level = get_nodes_at_level(level);
-            return pointer_facade(!flip, &buf[recipe.num_leaf_nodes-nodes_at_level],
+            return detail::pointer_facade<forward_iter, reverse_iter>(!flip, &buf[recipe.num_leaf_nodes-nodes_at_level],
                 std::make_reverse_iterator(&buf[nodes_at_level]));
         }
 
-        return pointer_facade(flip, &buf[0],
+        return detail::pointer_facade<forward_iter, reverse_iter>(flip, &buf[0],
             std::make_reverse_iterator(&buf[recipe.num_leaf_nodes]));
     }
 
@@ -297,7 +309,7 @@ struct double_space_sequence_memoizer final
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept
+    node_type * operator[](std::size_t level) const noexcept override
     {
         auto b = (depth ^ level) & 1;
         return Allocator::assume_aligned(&buf[recipe.num_leaf_nodes*b]);
@@ -328,7 +340,7 @@ struct full_tree_sequence_memoizer final
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept
+    node_type * operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[recipe.level_endpoints[level]]);
     }
