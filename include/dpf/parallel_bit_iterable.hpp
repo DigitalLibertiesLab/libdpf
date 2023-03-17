@@ -26,7 +26,7 @@ template <std::size_t BatchSize>
 class parallel_bit_iterable
 {
   public:
-    using word_pointer = bit_array::word_pointer;
+    using word_pointer = bit_array_base::word_pointer;
     static constexpr auto batch_size = BatchSize;
     using const_iterator = parallel_const_bit_iterator<batch_size>;
 
@@ -38,8 +38,8 @@ class parallel_bit_iterable
             [](Iter it){ return it->data() + it->data_length(); })}
     { }
 
-    template <typename ...Ts>
-    explicit parallel_bit_iterable(const bit_array & t, const Ts & ...ts)
+    template <typename T, typename ...Ts>
+    explicit parallel_bit_iterable(const T & t, const Ts & ...ts)
       : begin_{t.data(), ts.data()...},
         end_{t.data()+t.data_length(), ts.data()+ts.data_length()...}
     { }
@@ -101,16 +101,16 @@ template <std::size_t N>
 class parallel_const_bit_iterator
 {
   private:
-    using word_type = bit_array::word_type;
+    using word_type = bit_array_base::word_type;
     using word_array = std::array<word_type, N>;
-    using word_pointer = bit_array::word_pointer;
+    using word_pointer = bit_array_base::word_pointer;
     using word_pointer_array = std::array<word_pointer, N>;
     static constexpr std::size_t lg_batch_size = (N <= 2)
                                      ? 2 : std::ceil(std::log2(N));
     using helper = dpf::parallel_bit_iterable_helper<lg_batch_size>;
     using element_type = typename helper::element_type;
     using simde_type = typename helper::type;
-    static constexpr auto bits_per_word = bit_array::bits_per_word;
+    static constexpr auto bits_per_word = bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = helper::bits_per_element;
     static constexpr auto bytes_per_batch = N * (bits_per_element/8);
     static constexpr auto elements_per_word = helper::elements_per_word;
@@ -294,7 +294,7 @@ auto batch_of(Iter it) noexcept
 template <typename... Ts>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-auto batch_of(const dpf::bit_array & t, const Ts & ... ts) noexcept
+auto batch_of(const dpf::bit_array_base & t, const Ts & ... ts) noexcept
 {
     return dpf::parallel_bit_iterable<1+sizeof...(Ts)>{t, ts...};
 }
@@ -302,7 +302,7 @@ auto batch_of(const dpf::bit_array & t, const Ts & ... ts) noexcept
 template <std::size_t N, typename Iter, class UnaryFunction>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-void for_each_batch(Iter it, UnaryFunction f)
+void for_each_bit_parallel(Iter it, UnaryFunction f)
 {
     for (auto i : batch_of<N>(it)) f(i);
 }
@@ -310,7 +310,7 @@ void for_each_batch(Iter it, UnaryFunction f)
 template <class UnaryFunction, typename... Ts>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-void for_each_batch(const dpf::bit_array & t, const Ts & ... ts, UnaryFunction f)
+void for_each_bit_parallel(const dpf::bit_array_base & t, const Ts & ... ts, UnaryFunction f)
 {
     for (auto i : batch_of<1+sizeof...(Ts)>(t, ts...)) f(i);
 }

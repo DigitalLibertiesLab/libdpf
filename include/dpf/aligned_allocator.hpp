@@ -6,7 +6,7 @@
 ///          provided. It is stateless, so all instances of the allocator are
 ///          interchangeable. The alignment is specified by the Alignment
 ///          parameter, which must be a power of two (default:
-///          `dpf::utils::max_align`).
+///          `dpf::utils::max_align_v`).
 ///
 ///          The allocator supports the `dpf::aligned_allocator::allocate()` function for allocating
 ///          aligned, yet uninitialized memory and the `dpf::aligned_allocator::deallocate()` function

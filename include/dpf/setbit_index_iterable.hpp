@@ -252,7 +252,7 @@ dpf::setbit_index_iterable indices_set_in(bit_array_base && b,
 
 template <class UnaryFunction>
 HEDLEY_ALWAYS_INLINE
-void for_each_index(const bit_array_base & arr, UnaryFunction f)
+void for_each_set_index(const bit_array_base & arr, UnaryFunction f)
 {
     for (auto i : indices_set_in(arr)) f(i);
 }
