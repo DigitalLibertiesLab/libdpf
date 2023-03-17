@@ -106,6 +106,7 @@ struct fixedpoint
     constexpr fixedpoint & operator=(const double & desired) noexcept
     {
         value = static_cast<integral_type>(std::nearbyint(std::ldexp(desired, fractional_bits)));
+        return *this;
     }
 
     /// @}
@@ -141,7 +142,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator-() const noexcept
+    constexpr fixedpoint operator-() const noexcept
     {
         return fixedpoint(-this->integral_representation());
     }
@@ -151,7 +152,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator+(fixedpoint rhs) const noexcept
+    constexpr fixedpoint operator+(fixedpoint rhs) const noexcept
     {
         return fixedpoint(this->integral_representation() + rhs.integral_representation());
     }
@@ -169,7 +170,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator-(fixedpoint rhs) const noexcept
+    constexpr fixedpoint operator-(fixedpoint rhs) const noexcept
     {
         return fixedpoint(this->integral_representation() - rhs.integral_representation());
     }

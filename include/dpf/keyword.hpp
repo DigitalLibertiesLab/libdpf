@@ -160,6 +160,7 @@ class basic_fixed_length_string
     constexpr auto & operator=(string_view str) noexcept
     {
         val = encode_(str);
+        return *this;
     }
 
     /// @brief copy assignment
