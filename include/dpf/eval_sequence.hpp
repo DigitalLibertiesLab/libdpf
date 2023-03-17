@@ -24,6 +24,7 @@
 #include "dpf/eval_point.hpp"
 #include "dpf/path_memoizer.hpp"
 #include "dpf/sequence_memoizer.hpp"
+#include "dpf/subsequence_iterable.hpp"
 
 namespace dpf
 {

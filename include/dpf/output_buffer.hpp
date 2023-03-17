@@ -50,62 +50,6 @@ class output_buffer final
 
 template <>
 using output_buffer<dpf::bit> = dpf::dynamic_bit_array;
-// class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
-// {
-//   public:
-//     explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
-//     output_buffer(output_buffer &&) = default;
-//     output_buffer(const output_buffer &) = delete;
-// };
-
-template <class Container>
-class clipped_iterable
-{
-  public:
-    using iterator = typename Container::iterator;
-    using const_iterator = typename Container::const_iterator;
-    using size_type = typename Container::size_type;
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    explicit clipped_iterable(Container * c, std::size_t preclip, std::size_t postclip)
-      : cont_{c}, preclip_{preclip}, postclip_{postclip} { }
-
-    HEDLEY_ALWAYS_INLINE
-    iterator begin() noexcept
-    {
-        return std::begin(*cont_)+preclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    const_iterator begin() const noexcept
-    {
-        return std::begin(*cont_)+preclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    const_iterator cbegin() const noexcept
-    {
-        return std::cbegin(*cont_)+preclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    iterator end() noexcept
-    {
-        return std::end(*cont_)-postclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    const_iterator end() const noexcept
-    {
-        return std::end(*cont_)-postclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    const_iterator cend() const noexcept
-    {
-        return std::cend(*cont_)-postclip_;
-    }
-
-  private:
-    Container * cont_;
-    std::size_t preclip_, postclip_;
-};  // class dpf::clipped_iterable
 
 template <typename DpfKey,
           typename InputT>
