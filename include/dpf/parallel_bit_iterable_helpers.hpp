@@ -1,4 +1,4 @@
-/// @file dpf/parallel_bit_iterator_helpers.hpp
+/// @file dpf/parallel_bit_iterable_helpers.hpp
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @brief
 /// @details

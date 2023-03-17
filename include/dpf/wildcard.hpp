@@ -4,7 +4,7 @@
 ///          `T`, which must be a trivially copyable type (as indicated by
 ///          `std::is_trivially_copyable<T>`). It is used as a placeholder
 ///          for an instance of type `T`, which can be assigned later. Its
-///          intended for use as an output of a DPF.
+///          intended to wrap an [output type](@ref output_types) of a DPF.
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
@@ -28,7 +28,7 @@ namespace dpf
 // namespace
 // {
 
-/// @brief represents a placeholder value of a given type, to assigned later
+/// @brief represents a placeholder value of a given type, with a concrete value to be assigned later
 /// @tparam T the underlying type
 template <typename T>
 struct wildcard_value

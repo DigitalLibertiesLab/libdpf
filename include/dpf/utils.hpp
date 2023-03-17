@@ -42,10 +42,11 @@ static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
 template <std::size_t Nbits>
 struct integral_type_from_bitlength
 {
-    using type = std::conditional_t<std::less_equal{}(Nbits, 64),
-        std::conditional_t<std::less_equal{}(Nbits, 32),
-            std::conditional_t<std::less_equal{}(Nbits, 16),
-                std::conditional_t<std::less_equal{}(Nbits, 8), psnip_uint8_t,
+    static constexpr auto less_equal = std::less_equal<void>{};
+    using type = std::conditional_t<less_equal(Nbits, 64),
+        std::conditional_t<less_equal(Nbits, 32),
+            std::conditional_t<less_equal(Nbits, 16),
+                std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
                 psnip_uint16_t>,
             psnip_uint32_t>,
         psnip_uint64_t>,
@@ -206,7 +207,7 @@ struct countl_zero<simde__m128i>
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
-    constexpr std::size_t operator()(const T & val) const noexcept
+    std::size_t operator()(const T & val) const noexcept
     {
         auto limb1 = static_cast<uint64_t>(val[1]);
         auto limb0 = static_cast<uint64_t>(val[0]);

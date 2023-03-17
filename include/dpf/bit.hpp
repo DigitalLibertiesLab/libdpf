@@ -2,8 +2,8 @@
 /// @brief defines `dpf::bit` and associated helpers
 /// @details A `dpf::bit` is a binary type whose representation can be packed
 ///          into one bit. It is implemented as an `enum` with two values:
-///          `zero` and `one`. This type is inteded to be used as an output
-///          value of a DPF, in which case leaf nodes will be packed in much
+///          `zero` and `one`. This type is intended for us as an [output type](@ref output_types)
+///          for a DPF, in which case leaf nodes will be packed in much
 ///          the ways as in an `std::bitset` or `std::vector<bool>`.
 ///
 ///          In addition `dpf::bit`, this file defines three overloaded

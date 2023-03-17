@@ -5,7 +5,7 @@
 ///          as a simple subclass of a `dpf::bit_array_base`, but contains
 ///          helper functions for common tasks like performing lexicographic
 ///          comparisons or converting to and from regular C-strings. This type
-///          is intended for use as an input type for a DPF and, as such,
+///          is intended for use as an [input type](@ref input_types) for a DPF and, as such,
 ///          specializes `dpf::utils::bitlength_of`, `dpf::utils::msb_of`, and
 ///          `dpf::utils::countl_zero_symmmetric_difference`. It also defines an
 ///          efficient `dpf::bitstring::bit_mask` facade to simulate the behavior that the
