@@ -17,6 +17,7 @@
 #include "dpf/utils.hpp"
 #include "dpf/bit.hpp"
 #include "dpf/bit_array.hpp"
+#include "dpf/recipe.hpp"
 
 namespace dpf
 {
@@ -51,19 +52,48 @@ class output_buffer final
 template <>
 using output_buffer<dpf::bit> = dpf::dynamic_bit_array;
 
-template <typename DpfKey,
+template <std::size_t I = 0,
+          typename DpfKey,
           typename InputT>
 auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
     using dpf_type = DpfKey;
     using input_type = InputT;
-    using output_type = std::tuple_element_t<0, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
         to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
     std::size_t nodes_in_interval = to_node - from_node;
 
     return dpf::output_buffer<output_type>(nodes_in_interval*dpf_type::outputs_per_leaf);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename Iterator>
+auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
+{
+    using dpf_type = DpfKey;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    // using node_type = typename DpfKey::exterior_node_t;
+
+    std::size_t nodes_in_sequence = std::distance(begin, end);
+
+    return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
+    // return output_buffer<node_type>(nodes_in_sequence);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename InputT>
+auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const list_recipe<InputT> & recipe)
+{
+    using dpf_type = DpfKey;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
+    std::size_t nodes_in_sequence = recipe.num_leaf_nodes;
+
+    return dpf::output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
 }
 
 }  // namespace dpf

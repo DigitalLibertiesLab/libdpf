@@ -119,6 +119,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     using dpf_type = DpfKey;
     using input_type = InputT;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
         to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
@@ -126,7 +127,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<OutputBuffer>(&outbuf, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<output_type>(std::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 
@@ -146,7 +147,7 @@ template <std::size_t I = 0,
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to)
 {
     auto memoizer = make_basic_interval_memoizer(dpf, from, to);
-    auto outbuf = make_output_buffer_for_interval(dpf, from, to);
+    auto outbuf = make_output_buffer_for_interval<I>(dpf, from, to);
     auto subinterval_iterable = eval_interval<I>(dpf, from, to, outbuf, memoizer);
     return std::make_tuple(std::move(outbuf), std::move(subinterval_iterable));
 }

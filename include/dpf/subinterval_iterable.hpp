@@ -8,53 +8,47 @@
 #ifndef LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 
-template <class Container>
+template <typename OutputT>
 class subinterval_iterable
 {
   public:
-    using iterator = typename Container::iterator;
-    using const_iterator = typename Container::const_iterator;
-    using size_type = typename Container::size_type;
+    using output_type = OutputT;
+    using iterator = output_type *;
+    using const_iterator = const output_type *;
+    using size_type = std::size_t;
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    explicit subinterval_iterable(Container * c, std::size_t preclip, std::size_t postclip)
-      : cont_{c}, preclip_{preclip}, postclip_{postclip} { }
+    explicit subinterval_iterable(const output_type * cont, std::size_t length, std::size_t preclip, std::size_t postclip)
+      : cont_{cont}, length_{length}, preclip_{preclip}, postclip_{postclip}
+    { }
 
-    HEDLEY_ALWAYS_INLINE
-    iterator begin() noexcept
-    {
-        return std::begin(*cont_)+preclip_;
-    }
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return std::begin(*cont_)+preclip_;
+        return cont_+preclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator cbegin() const noexcept
     {
-        return std::cbegin(*cont_)+preclip_;
-    }
-    HEDLEY_ALWAYS_INLINE
-    iterator end() noexcept
-    {
-        return std::end(*cont_)-postclip_;
+        return cont_+preclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return std::end(*cont_)-postclip_;
+        return cont_+length_-postclip_;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator cend() const noexcept
     {
-        return std::cend(*cont_)-postclip_;
+        return cont_+length_-postclip_;
     }
 
   private:
-    Container * cont_;
-    std::size_t preclip_, postclip_;
+    const output_type * cont_;
+    const std::size_t length_;
+    const std::size_t preclip_;
+    const std::size_t postclip_;
 };  // class dpf::subinterval_iterable
 
 #endif  // LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__

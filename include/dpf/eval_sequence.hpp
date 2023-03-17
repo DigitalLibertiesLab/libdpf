@@ -36,12 +36,20 @@ template <std::size_t I = 0,
 DPF_UNROLL_LOOPS
 inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
+    assert_not_wildcard<I>(dpf);
+
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
     auto path = make_basic_path_memoizer(dpf);
     std::size_t i = 0;
+    auto cw = dpf.template exterior_cw<I>();
+    auto rawbuf = reinterpret_cast<decltype(cw)*>(std::data(outbuf));
     for (auto it = begin; it != end; ++it)
     {
-        outbuf[i++] = eval_point<I>(dpf, *it, path);
+        rawbuf[i++] = eval_point<I>(dpf, *it, path).node;
     }
+
+    return subsequence_iterable<DpfKey, output_type, Iterator>(dpf, std::data(outbuf), begin, end);
 }
 
 template <std::size_t I = 0,
@@ -49,11 +57,9 @@ template <std::size_t I = 0,
           typename Iterator>
 auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
 {
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-
-    output_buffer<output_type> outbuf(std::distance(begin, end));
-    eval_sequence<I>(dpf, begin, end, outbuf);
-    return std::move(outbuf);
+    auto outbuf = make_output_buffer_for_subsequence<I>(dpf, begin, end);
+    auto subsequence_iterable = eval_sequence<I>(dpf, begin, end, outbuf);
+    return std::make_tuple(std::move(outbuf), std::move(subsequence_iterable));
 }
 
 namespace internal
@@ -144,8 +150,12 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
 {
     assert_not_wildcard<I>(dpf);
 
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
     internal::eval_sequence_interior(dpf, recipe, memoizer);
     internal::eval_sequence_exterior<I>(dpf, recipe, outbuf, memoizer);
+
+    return recipe_subsequence_iterable<output_type>(std::data(outbuf), recipe.output_indices);
 }
 
 template <std::size_t I = 0,
@@ -156,7 +166,7 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
     OutputBuffer & outbuf)
 {
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
-    return eval_sequence(dpf, recipe, outbuf, memoizer);
+    return eval_sequence<I>(dpf, recipe, outbuf, memoizer);
 }
 
 template <std::size_t I = 0,
@@ -164,14 +174,10 @@ template <std::size_t I = 0,
           typename InputT>
 auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe)
 {
-    using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
-
-    output_buffer<output_type> outbuf(recipe.num_leaf_nodes*dpf_type::outputs_per_leaf);
-
-    return eval_sequence(dpf, recipe, outbuf, memoizer);
+    auto outbuf = make_output_buffer_for_recipe_subsequence<I>(dpf, recipe);
+    auto subsequence_iterable = eval_sequence<I>(dpf, recipe, outbuf, memoizer);
+    return std::make_tuple(std::move(outbuf), std::move(subsequence_iterable));
 }
 
 }  // namespace dpf

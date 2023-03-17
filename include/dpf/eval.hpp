@@ -29,7 +29,7 @@ struct alignas(utils::max_align_v) dpf_output
     HEDLEY_CONST
     constexpr operator OutputT() const
     {
-        return extract_leaf<NodeT, OutputT>(node, offset);;
+        return extract_leaf<NodeT, OutputT>(node, offset);
     }
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
