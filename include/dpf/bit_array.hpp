@@ -568,7 +568,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator&=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(!b)) *word_ptr_ &= ~this->mask_;
+            if (b == false) *word_ptr_ &= ~this->mask_;
             return *this;
         }
 
@@ -580,7 +580,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator|=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(b)) *word_ptr_ |= this->mask_;
+            if (b == true) *word_ptr_ |= this->mask_;
             return *this;
         }
 
@@ -592,7 +592,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator^=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(b)) *word_ptr_ ^= this->mask_;
+            if (b == true) *word_ptr_ ^= this->mask_;
             return *this;
         }
 
@@ -680,15 +680,15 @@ class bit_array_base
             assert(psnip_builtin_popcount64(mask_) == 1);
         }
 
-        friend class bit_array_base;            //< access to c'tor
-        friend struct bit_iterator_base;   //< access to c'tor
-        friend struct bit_iterator;        //< access to c'tor
-        friend struct const_bit_iterator;  //< access to c'tor
+        friend class bit_array_base;       //< access to c'tor
+        friend class bit_iterator_base;   //< access to c'tor
+        friend class bit_iterator;        //< access to c'tor
+        friend class const_bit_iterator;  //< access to c'tor
     };  // class bit_array_base::bit_reference
 
     /// @brief a base class provided to simplify the definition of
     ///        `bit_iterator` and `const_bit_iterator`
-    struct bit_iterator_base
+    class bit_iterator_base
     {
       public:
         using difference_type = std::ptrdiff_t;
@@ -940,7 +940,7 @@ class bit_array_base
         friend class bit_array_base::const_bit_iterator;
     };  // class bit_array_base::bit_iterator
 
-    struct const_bit_iterator : public bit_iterator_base
+    class const_bit_iterator : public bit_iterator_base
     {
       public:
         using value_type = bit_array_base::value_type;

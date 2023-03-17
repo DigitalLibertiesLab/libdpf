@@ -1,4 +1,4 @@
-## Input types
+## Input types {#input_types}
 
   - `T` such that `std::numeric_limits<T>::is_integer`
 

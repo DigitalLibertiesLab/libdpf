@@ -1,4 +1,4 @@
-## Output types
+## Output types {#output_types}
 
   - `T` such that `std::numeric_limits<T>::is_integer`
 
@@ -14,7 +14,7 @@
 
     This is a special class that represents a single bit. It is functionally
     equivalent to `bool` except, unlike with bool, if you use `dpf::bit` as an
-    output type, you get access to some fancy iterators. [TODO: make this a link to a page on iterators!]
+    output type, you get access to some fancy [iterators](@ref iterables).
 
   - `dpf::fixedpoint`
 

@@ -1,4 +1,4 @@
-## Iterators
+## Iterables {#iterables}
 
 Iterables are wrappers that provide access to some means of iteration over the
 object the wrap.
