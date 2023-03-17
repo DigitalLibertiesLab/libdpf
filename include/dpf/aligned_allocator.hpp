@@ -41,7 +41,7 @@ namespace dpf
 ///          interchangeable and can deallocate memory allocated by any other
 ///          instance of the same allocator type.
 /// @tparam T the type to allocate
-/// @tparam Alignment specifies the alignment (default: `utils::max_align_v`).'
+/// @tparam Alignment specifies the alignment (default: `dpf::utils::max_align`).'
 ///         The program is ill-formed if `Alignment` is not a power of 2.
 template <class T,
           std::size_t Alignment = utils::max_align_v>
@@ -49,7 +49,7 @@ class aligned_allocator
 {
   private:
     /// @brief a `deleter` functor for use by `std::unique_ptr<T[]>` to free
-    ///        memory allocated by when the `std::unique_ptr<T[]>` was
+    ///        memory allocated when the `std::unique_ptr<T[]>` was 
     ///        constructed
     template <typename Pointer>
     struct deleter
@@ -67,7 +67,8 @@ class aligned_allocator
     using const_reference = std::add_const_t<reference>;
     static constexpr size_type alignment = Alignment;
 
-    /// @brief class whose member `other` is a typedef of `dpf::aligned_allocator` for type `U` with alignment `A`.
+    /// @brief class whose member `other` is a typedef of
+    ///        `dpf::aligned_allocator` for some type `U` with alignment `A`.
     /// @tparam U the type to rebind to
     /// @tparam A the alignment of the rebound allocator
     template <class U, size_type A = alignment> struct rebind
@@ -75,18 +76,18 @@ class aligned_allocator
         using other = aligned_allocator<U, A>;
     };
 
-    /// @name C'tors
+    /// @name Constructors
     /// @brief Constructs the default allocator. Since the default allocator
     ///        is stateless, the constructors have no visible effect.
     /// @{
 
-    /// @brief Default c'tor
+    /// @brief Default constructor
     /// @details Constructs an instance of `dpf::aligned_allocator`.
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr aligned_allocator() noexcept = default;
 
-    /// @brief Copy c'tor
+    /// @brief Copy constructor
     /// @details Constructs an instance of `dpf::aligned_allocator` from another
     ///          using copy semantics.
     /// @param other another `dpf::aligned_allocator` to construct with
@@ -95,7 +96,7 @@ class aligned_allocator
     constexpr aligned_allocator(const aligned_allocator & other) noexcept
         = default;
 
-    /// @brief Move c'tor
+    /// @brief Move constructor
     /// @details Constructs an instance of `dpf::aligned_allocator` from another
     ///          using move semantics.
     /// @param other another `dpf::aligned_allocator` to construct with
