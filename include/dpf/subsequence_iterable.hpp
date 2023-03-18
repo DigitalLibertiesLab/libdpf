@@ -27,7 +27,7 @@ class subsequence_iterable
     class const_iterator;  // forward declaration
 
     subsequence_iterable(const DpfKey &, const output_type * seq, Iterator begin, Iterator end)
-      : seq_{seq}, begin_{begin}, end_{end}
+      : seq_{seq}, begin_{begin}, end_{end}, count_{std::distance(begin_, end_)}
     { }
 
     HEDLEY_NO_THROW
@@ -48,7 +48,7 @@ class subsequence_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator(seq_ + std::distance(begin_, end_), end_);
+        return const_iterator(seq_ + count_ * outputs_per_leaf, end_);
     }
 
     HEDLEY_NO_THROW
@@ -208,6 +208,7 @@ class subsequence_iterable
     const output_type * seq_;
     const Iterator begin_;
     const Iterator end_;
+    const std::size_t count_;
 };  // class dpf::subsequence_iterable
 
 template <typename OutputT>

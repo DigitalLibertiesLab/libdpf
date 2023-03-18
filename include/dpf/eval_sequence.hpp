@@ -44,7 +44,7 @@ inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, Outp
     auto rawbuf = reinterpret_cast<decltype(cw)*>(std::data(outbuf));
     for (auto it = begin; it != end; ++it)
     {
-        rawbuf[i++] = eval_point<I>(dpf, *it, path).node;
+        rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
     }
 
     return subsequence_iterable<DpfKey, output_type, Iterator>(dpf, std::data(outbuf), begin, end);
