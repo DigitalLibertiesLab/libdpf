@@ -41,13 +41,13 @@ inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, Outp
     auto path = make_basic_path_memoizer(dpf);
     std::size_t i = 0;
     using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
-    auto rawbuf = reinterpret_cast<raw_type*>(std::data(outbuf));
+    auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     for (auto it = begin; it != end; ++it)
     {
         rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
     }
 
-    return subsequence_iterable<DpfKey, output_type, Iterator>(std::data(outbuf), begin, end);
+    return subsequence_iterable<DpfKey, output_type, Iterator>(utils::data(outbuf), begin, end);
 }
 
 template <std::size_t I = 0,
@@ -125,7 +125,7 @@ inline auto eval_sequence_exterior(const DpfKey & dpf, const list_recipe<InputT>
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
-    auto rawbuf = reinterpret_cast<raw_type*>(std::data(outbuf));
+    auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
     auto buf = memoizer[dpf.depth];
     for (std::size_t j = 0; j < nodes_in_interval; ++j)
@@ -152,7 +152,7 @@ auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
     internal::eval_sequence_interior(dpf, recipe, memoizer);
     internal::eval_sequence_exterior<I>(dpf, recipe, outbuf, memoizer);
 
-    return recipe_subsequence_iterable<output_type>(std::data(outbuf), recipe.output_indices);
+    return recipe_subsequence_iterable<output_type>(utils::data(outbuf), recipe.output_indices);
 }
 
 template <std::size_t I = 0,

@@ -93,7 +93,7 @@ inline auto eval_interval_exterior(const DpfKey & dpf, std::size_t from_node, st
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
-    auto rawbuf = reinterpret_cast<exterior_node_type *>(std::data(outbuf));
+    auto rawbuf = reinterpret_cast<exterior_node_type *>(utils::data(outbuf));
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
         k += block_length_of_leaf_v<output_type, exterior_node_type>)
     {
@@ -127,7 +127,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<dpf_type, output_type>(std::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<dpf_type, output_type>(utils::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 

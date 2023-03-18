@@ -238,6 +238,18 @@ struct countl_zero<simde__m256i>
     }
 };
 
+template <typename T>
+auto data(T & bar)
+{
+    return std::data(bar);
+}
+
+template <typename T>
+auto data(T * bar)
+{
+    return bar;
+}
+
 // template <>
 // struct countl_zero<simde__m512i>
 // {
