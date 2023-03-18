@@ -59,9 +59,9 @@ template <typename T> constexpr bool is_wildcard_v = is_wildcard<T>::value;
 template <typename T> struct concrete_type { using type = T; };
 template <typename T> struct concrete_type<wildcard_value<T>>
     : public concrete_type<T> { };
-template <typename T> using actual_type_t = typename concrete_type<T>::type;
+template <typename T> using concrete_type_t = typename concrete_type<T>::type;
 
-template <typename T> struct wildcard_value
+template <typename T> struct concrete_value
 {
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
@@ -70,7 +70,7 @@ template <typename T> struct wildcard_value
         return y;
     }
 };
-template <typename T> struct wildcard_value<wildcard_value<T>>
+template <typename T> struct concrete_value<wildcard_value<T>>
 {
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
@@ -79,7 +79,7 @@ template <typename T> struct wildcard_value<wildcard_value<T>>
         return std::nullopt;
     }
 };
-template <typename T> auto wildcard_value_v = wildcard_value<T>{};
+template <typename T> auto concrete_value_v = concrete_value<T>{};
 
 namespace wildcards
 {
@@ -110,7 +110,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     static constexpr auto int128 = wildcard<simde_int128>;
     static constexpr auto uint128 = wildcard<simde_uint128>;
-    static constexpr auto xint128 = wildcard<dpf::xor_wrapper<simde_uint128>>;
+    // static constexpr auto xint128 = wildcard<dpf::xor_wrapper<simde_uint128>>;
 
     static constexpr auto m128 = wildcard<simde__m128>;
     static constexpr auto m128i = wildcard<simde__m128i>;

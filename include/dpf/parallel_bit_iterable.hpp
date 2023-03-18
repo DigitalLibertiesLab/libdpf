@@ -14,7 +14,7 @@
 #include <utility>
 
 #include "dpf/bit_array.hpp"
-#include "dpf/parallel_bit_iterable_helper.hpp"
+#include "dpf/parallel_bit_iterable_helpers.hpp"
 
 namespace dpf
 {
@@ -140,7 +140,7 @@ class parallel_const_bit_iterator
     value_type operator*() const noexcept
     {
         value_type ret;
-        simde_type temp = helper::and(all_vecs_[element_cnt_], vec_mask_);
+        simde_type temp = helper::bit_and(all_vecs_[element_cnt_], vec_mask_);
         std::memcpy(ret.data(), &temp, bytes_per_batch);
         return ret;
     }
@@ -300,7 +300,6 @@ auto batch_of(const dpf::bit_array_base & t, const Ts & ... ts) noexcept
 }
 
 template <std::size_t N, typename Iter, class UnaryFunction>
-HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 void for_each_bit_parallel(Iter it, UnaryFunction f)
 {
@@ -308,7 +307,6 @@ void for_each_bit_parallel(Iter it, UnaryFunction f)
 }
 
 template <class UnaryFunction, typename... Ts>
-HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 void for_each_bit_parallel(const dpf::bit_array_base & t, const Ts & ... ts, UnaryFunction f)
 {

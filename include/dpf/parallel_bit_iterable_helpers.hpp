@@ -29,17 +29,17 @@ template <>
 struct parallel_bit_iterable_helper<2>
 {
   public:
-    using word_pointer = dpf::bit_array::word_pointer;
+    using word_pointer = dpf::bit_array_base::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint64_t;
-    static constexpr auto bits_per_word = dpf::bit_array::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
     using simde_array = std::array<simde_type, elements_per_word>;
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
-    static constexpr auto and = simde_mm256_and_si256;
+    static constexpr auto bit_and = simde_mm256_and_si256;
     static auto get_mask() noexcept
     {
         return simde_mm256_set1_epi64x(1);
@@ -55,17 +55,17 @@ template <>
 struct parallel_bit_iterable_helper<3>
 {
   public:
-    using word_pointer = dpf::bit_array::word_pointer;
+    using word_pointer = dpf::bit_array_base::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint32_t;
-    static constexpr auto bits_per_word = dpf::bit_array::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
     using simde_array = std::array<simde_type, elements_per_word>;
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
-    static constexpr auto and = simde_mm256_and_si256;
+    static constexpr auto bit_and = simde_mm256_and_si256;
     static auto get_mask() noexcept
     {
         return simde_mm256_set1_epi32(1);
@@ -95,17 +95,17 @@ template <>
 struct parallel_bit_iterable_helper<4>
 {
   public:
-    using word_pointer = dpf::bit_array::word_pointer;
+    using word_pointer = dpf::bit_array_base::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint16_t;
-    static constexpr auto bits_per_word = dpf::bit_array::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
     using simde_array = std::array<simde_type, elements_per_word>;
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
-    static constexpr auto and = simde_mm256_and_si256;
+    static constexpr auto bit_and = simde_mm256_and_si256;
     static auto get_mask() noexcept
     {
         return simde_mm256_set1_epi16(1);
@@ -156,17 +156,17 @@ template <>
 struct parallel_bit_iterable_helper<5>
 {
   public:
-    using word_pointer = dpf::bit_array::word_pointer;
+    using word_pointer = dpf::bit_array_base::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint8_t;
-    static constexpr auto bits_per_word = dpf::bit_array::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
     using simde_array = std::array<simde_type, elements_per_word>;
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
-    static constexpr auto and = simde_mm256_and_si256;
+    static constexpr auto bit_and = simde_mm256_and_si256;
     static auto get_mask() noexcept
     {
         return simde_mm256_set1_epi8(1);

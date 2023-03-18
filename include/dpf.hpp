@@ -8,16 +8,33 @@
 #ifndef LIBDPF_INCLUDE_DPF_HPP__
 #define LIBDPF_INCLUDE_DPF_HPP__
 
-#include "dpf/utils.hpp"
 #include "dpf/bit.hpp"
-#include "dpf/bitstring.hpp"
-#include "dpf/modint.hpp"
-#include "dpf/keyword.hpp"
-#include "dpf/fixedpoint.hpp"
+
 #include "dpf/bit_array.hpp"
+
+#include "dpf/bitstring.hpp"
+
+#include "dpf/modint.hpp"
+
+#include "dpf/keyword.hpp"
+
+#include "dpf/fixedpoint.hpp"
+
 #include "dpf/setbit_index_iterable.hpp"
+
+#include "dpf/parallel_bit_iterable.hpp"
+
 #include "dpf/output_buffer.hpp"
+
 #include "dpf/prg_aes.hpp"
+
 #include "dpf/eval.hpp"
+  // #include "dpf/eval_point.hpp"
+  // #include "dpf/eval_interval.hpp"
+  // #include "dpf/eval_sequence.hpp"
+
+#include "dpf/wildcard.hpp"
+
+#include "dpf/xor_wrapper.hpp"
 
 #endif  // LIBDPF_INCLUDE_DPF_HPP__

@@ -27,7 +27,7 @@ template <typename OutputT, typename NodeT>
 static constexpr auto add = add_t<OutputT, NodeT>{};
 
 template <typename OutputT, typename NodeT>
-static constexpr auto subtract = subtract_t<dpf::actual_type_t<OutputT>, NodeT>{};
+static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, NodeT>{};
 
 namespace detail
 {

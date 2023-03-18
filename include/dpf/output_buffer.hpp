@@ -50,7 +50,13 @@ class output_buffer final
 };
 
 template <>
-using output_buffer<dpf::bit> = dpf::dynamic_bit_array;
+class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
+{
+  public:
+    explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
+    output_buffer(output_buffer &&) = default;
+    output_buffer(const output_buffer &) = delete;
+};
 
 template <std::size_t I = 0,
           typename DpfKey,
@@ -75,12 +81,9 @@ auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator
 {
     using dpf_type = DpfKey;
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    // using node_type = typename DpfKey::exterior_node_t;
-
     std::size_t nodes_in_sequence = std::distance(begin, end);
 
     return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
-    // return output_buffer<node_type>(nodes_in_sequence);
 }
 
 template <std::size_t I = 0,

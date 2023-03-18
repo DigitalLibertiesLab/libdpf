@@ -283,7 +283,7 @@ auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & se
                     if constexpr (dpf::is_wildcard_v<auto_type>)
                     {
                         dpf::uniform_fill(arg1);
-                        arg2 = dpf::subtract<actual_type_t<auto_type>, node_t>(arg0, arg1);
+                        arg2 = dpf::subtract<concrete_type_t<auto_type>, node_t>(arg0, arg1);
                     }
                     else
                     {
