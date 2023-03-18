@@ -36,8 +36,6 @@ template <std::size_t I = 0,
 DPF_UNROLL_LOOPS
 inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
-    assert_not_wildcard<I>(dpf);
-
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     auto path = make_basic_path_memoizer(dpf);
@@ -148,8 +146,6 @@ template <std::size_t I = 0,
 auto eval_sequence(const DpfKey & dpf, const list_recipe<InputT> & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
 {
-    assert_not_wildcard<I>(dpf);
-
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
     internal::eval_sequence_interior(dpf, recipe, memoizer);
