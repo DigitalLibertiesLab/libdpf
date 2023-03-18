@@ -40,7 +40,7 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & pat
     using input_type = InputT;
 
     std::size_t level_index = path.assign_x(dpf, x);
-    for (input_type mask = dpf.msb_mask>>level_index-1;
+    for (input_type mask = dpf.msb_mask>>(level_index-1);
         level_index <= dpf.depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
