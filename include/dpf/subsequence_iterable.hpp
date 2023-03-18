@@ -208,7 +208,7 @@ class subsequence_iterable
     const output_type * seq_;
     const Iterator begin_;
     const Iterator end_;
-    const std::size_t count_;
+    const typename std::iterator_traits<Iterator>::difference_type count_;
 };  // class dpf::subsequence_iterable
 
 template <typename OutputT>
