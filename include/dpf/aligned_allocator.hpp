@@ -199,7 +199,7 @@ class aligned_allocator
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_NON_NULL(1)
-        constexpr static auto assume_aligned(pointer ptr) noexcept
+    constexpr static auto assume_aligned(pointer ptr) noexcept
     {
         return static_cast<pointer>(
             __builtin_assume_aligned(ptr, alignment));

@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <optional>
 
 #include "dpf/bit.hpp"
 #include "dpf/xor_wrapper.hpp"
