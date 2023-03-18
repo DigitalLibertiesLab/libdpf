@@ -130,8 +130,8 @@ class aligned_allocator
     ///         of type `T` whose elements have not been constructed yet.
     /// @throws std::bad_array_new_length if `max_size() < num`
     /// @throws std::bad_alloc if allocation fails.
-    HEDLEY_ALWAYS_INLINE
     [[nodiscard]]
+    HEDLEY_ALWAYS_INLINE
     constexpr
     pointer allocate(size_type num, const void * /*hint*/ = nullptr) const
     {
@@ -194,12 +194,12 @@ class aligned_allocator
     ///       compiler to verify or enforce this.
     /// @param ptr the pointer
     /// @return `ptr`
+    [[nodiscard]]
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_NON_NULL(1)
-    [[nodiscard]]
-    constexpr static auto assume_aligned(pointer ptr) noexcept
+        constexpr static auto assume_aligned(pointer ptr) noexcept
     {
         return static_cast<pointer>(
             __builtin_assume_aligned(ptr, alignment));
