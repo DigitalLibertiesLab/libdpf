@@ -36,7 +36,10 @@ struct parallel_bit_iterable_helper<2>
     static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using simde_array = std::array<simde_type, elements_per_word>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
     static constexpr auto bit_and = simde_mm256_and_si256;
@@ -62,7 +65,10 @@ struct parallel_bit_iterable_helper<3>
     static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using simde_array = std::array<simde_type, elements_per_word>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
     static constexpr auto bit_and = simde_mm256_and_si256;
@@ -102,7 +108,10 @@ struct parallel_bit_iterable_helper<4>
     static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using simde_array = std::array<simde_type, elements_per_word>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
     static constexpr auto bit_and = simde_mm256_and_si256;
@@ -163,7 +172,10 @@ struct parallel_bit_iterable_helper<5>
     static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using simde_array = std::array<simde_type, elements_per_word>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto left_shift = simde_mm256_slli_epi64;
     static constexpr auto right_shift = simde_mm256_srli_epi64;
     static constexpr auto bit_and = simde_mm256_and_si256;

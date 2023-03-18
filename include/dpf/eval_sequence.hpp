@@ -40,8 +40,8 @@ inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, Outp
 
     auto path = make_basic_path_memoizer(dpf);
     std::size_t i = 0;
-    auto cw = dpf.template exterior_cw<I>();
-    auto rawbuf = reinterpret_cast<decltype(cw)*>(std::data(outbuf));
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    auto rawbuf = reinterpret_cast<raw_type*>(std::data(outbuf));
     for (auto it = begin; it != end; ++it)
     {
         rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
@@ -124,8 +124,9 @@ inline auto eval_sequence_exterior(const DpfKey & dpf, const list_recipe<InputT>
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    auto rawbuf = reinterpret_cast<raw_type*>(std::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
-    auto rawbuf = reinterpret_cast<decltype(cw)*>(std::data(outbuf));
     auto buf = memoizer[dpf.depth];
     for (std::size_t j = 0; j < nodes_in_interval; ++j)
     {
