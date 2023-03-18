@@ -127,7 +127,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<output_type>(std::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<dpf_type, output_type>(std::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 

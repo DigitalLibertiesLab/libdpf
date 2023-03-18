@@ -26,7 +26,7 @@ class subsequence_iterable
     static constexpr std::size_t mask = (1 << DpfKey::lg_outputs_per_leaf) - 1;
     class const_iterator;  // forward declaration
 
-    subsequence_iterable(const DpfKey &, const output_type * seq, Iterator begin, Iterator end)
+    subsequence_iterable(const output_type * seq, Iterator begin, Iterator end)
       : seq_{seq}, begin_{begin}, end_{end}, count_{std::distance(begin_, end_)}
     { }
 

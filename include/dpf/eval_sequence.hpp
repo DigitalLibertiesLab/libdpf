@@ -47,7 +47,7 @@ inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, Outp
         rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
     }
 
-    return subsequence_iterable<DpfKey, output_type, Iterator>(dpf, std::data(outbuf), begin, end);
+    return subsequence_iterable<DpfKey, output_type, Iterator>(std::data(outbuf), begin, end);
 }
 
 template <std::size_t I = 0,
