@@ -34,9 +34,16 @@ struct list_recipe
     const std::vector<std::size_t> level_endpoints;  // level_endpoints.size() = depth+1
 };
 
-template <typename RandomAccessIterator>
-auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, RandomAccessIterator end)
+namespace detail
 {
+
+template <typename DpfKey,
+          typename RandomAccessIterator>
+auto make_recipe(RandomAccessIterator begin, RandomAccessIterator end)
+{
+    static_assert(std::is_same_v<typename DpfKey::input_type, std::remove_reference_t<decltype(*begin)>>);
+
+    using dpf_type = DpfKey;
     using input_type = std::remove_reference_t<decltype(*begin)>;
 
     struct IteratorComp
@@ -53,8 +60,7 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
         throw std::runtime_error("list must be sorted");
     }
 
-    auto depth = dpf::utils::bitlength_of_v<input_type> - std::log2(outputs_per_leaf);
-    auto mask = input_type(1) << (dpf::utils::bitlength_of_v<input_type>-1);
+    auto mask = dpf_type::msb_mask;
 
     std::set<RandomAccessIterator, IteratorComp> splits;
     splits.insert(begin);
@@ -62,7 +68,7 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
     std::vector<std::size_t> level_endpoints;
     level_endpoints.push_back(0);
     std::vector<int8_t> recipe_steps;
-    for (std::size_t level_index = 0; level_index < depth; ++level_index, mask>>=1)
+    for (std::size_t level_index = 0; level_index < dpf_type::depth; ++level_index, mask>>=1)
     {
         for (auto upper = std::begin(splits), lower = upper++; ; lower = upper++)
         {
@@ -87,11 +93,20 @@ auto make_recipe(std::size_t outputs_per_leaf, RandomAccessIterator begin, Rando
     std::size_t leaf_index = 0;//*begin/outputs_per_leaf < *(begin+1)/outs_per_leaf;
     for (auto curr = begin, prev = curr; curr != end; prev = curr++)
     {
-        leaf_index += *prev/outputs_per_leaf < *curr/outputs_per_leaf;
-        output_indices.push_back(leaf_index * outputs_per_leaf + (*curr % outputs_per_leaf));
+        leaf_index += *prev/dpf_type::outputs_per_leaf < *curr/dpf_type::outputs_per_leaf;
+        output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + (*curr % dpf_type::outputs_per_leaf));
     }
 
     return list_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};
+}
+
+}  // namespace detail
+
+template <typename DpfKey,
+          typename RandomAccessIterator>
+auto make_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
+{
+    return detail::make_recipe<DpfKey>(begin, end);
 }
 
 }  // namespace dpf

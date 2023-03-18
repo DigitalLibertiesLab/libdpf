@@ -290,8 +290,7 @@ struct full_tree_sequence_memoizer final
 namespace detail
 {
 
-template <typename DpfKey,
-          typename MemoizerT,
+template <typename MemoizerT,
           typename InputT>
 HEDLEY_ALWAYS_INLINE
 auto make_sequence_memoizer(const list_recipe<InputT> & recipe)
@@ -305,21 +304,21 @@ template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, inplace_reversing_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_double_space_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, double_space_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 template <typename DpfKey,
-          typename InputT>
+          typename InputT = typename DpfKey::input_type>
 auto make_full_tree_sequence_memoizer(const DpfKey &, const list_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<DpfKey, full_tree_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
 }
 
 }  // namespace dpf
