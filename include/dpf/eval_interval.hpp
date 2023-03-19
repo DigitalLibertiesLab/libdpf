@@ -127,7 +127,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<dpf_type, output_type>(utils::data(outbuf), to_node-from_node, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<output_type>(utils::data(outbuf), (to_node-from_node)*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 
@@ -148,8 +148,8 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to)
 {
     auto memoizer = make_basic_interval_memoizer(dpf, from, to);
     auto outbuf = make_output_buffer_for_interval<I>(dpf, from, to);
-    auto subinterval_iterable = eval_interval<I>(dpf, from, to, outbuf, memoizer);
-    return std::make_tuple(std::move(outbuf), std::move(subinterval_iterable));
+    auto iterable = eval_interval<I>(dpf, from, to, outbuf, memoizer);
+    return std::make_tuple(std::move(outbuf), std::move(iterable));
 }
 
 template <std::size_t I = 0,

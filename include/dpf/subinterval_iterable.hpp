@@ -8,17 +8,17 @@
 #ifndef LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 
-template <typename DpfKey,
-          typename OutputT>
+namespace dpf
+{
+
+template <typename OutputT>
 class subinterval_iterable
 {
   public:
-    using dpf_type = DpfKey;
     using output_type = OutputT;
     using iterator = output_type *;
     using const_iterator = const output_type *;
     using size_type = std::size_t;
-    static constexpr std::size_t outputs_per_leaf = DpfKey::outputs_per_leaf;
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
@@ -39,12 +39,12 @@ class subinterval_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return cont_ + length_*outputs_per_leaf - postclip_ + 1;
+        return cont_ + length_ - postclip_ + 1;
     }
     HEDLEY_ALWAYS_INLINE
     const_iterator cend() const noexcept
     {
-        return cont_ + length_*outputs_per_leaf - postclip_ + 1;
+        return cont_ + length_ - postclip_ + 1;
     }
 
   private:
@@ -53,5 +53,7 @@ class subinterval_iterable
     const std::size_t preclip_;
     const std::size_t postclip_;
 };  // class dpf::subinterval_iterable
+
+}  // namespace dpf
 
 #endif  // LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__

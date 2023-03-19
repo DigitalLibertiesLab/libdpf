@@ -1,4 +1,4 @@
-/// @file dpf/recipe.hpp
+/// @file dpf/sequence_recipe.hpp
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
