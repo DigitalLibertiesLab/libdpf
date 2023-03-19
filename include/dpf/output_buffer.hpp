@@ -17,7 +17,7 @@
 #include "dpf/utils.hpp"
 #include "dpf/bit.hpp"
 #include "dpf/bit_array.hpp"
-#include "dpf/recipe.hpp"
+#include "dpf/sequence_recipe.hpp"
 
 namespace dpf
 {
@@ -89,7 +89,7 @@ auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator
 template <std::size_t I = 0,
           typename DpfKey,
           typename InputT>
-auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const list_recipe<InputT> & recipe)
+auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
     using dpf_type = DpfKey;
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;

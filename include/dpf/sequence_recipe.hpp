@@ -16,9 +16,9 @@ namespace dpf
 {
 
 template <typename InputT>
-struct list_recipe
+struct sequence_recipe
 {
-    list_recipe(const std::vector<int8_t> & steps_,
+    sequence_recipe(const std::vector<int8_t> & steps_,
                 const std::vector<std::size_t> subsequence_indexes_,
                 std::size_t leaf_index_,
                 std::vector<std::size_t> level_endpoints_)
@@ -39,7 +39,7 @@ namespace detail
 
 template <typename DpfKey,
           typename RandomAccessIterator>
-auto make_recipe(RandomAccessIterator begin, RandomAccessIterator end)
+auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 {
     static_assert(std::is_same_v<typename DpfKey::input_type, std::remove_reference_t<decltype(*begin)>>);
 
@@ -97,16 +97,16 @@ auto make_recipe(RandomAccessIterator begin, RandomAccessIterator end)
         output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + (*curr % dpf_type::outputs_per_leaf));
     }
 
-    return list_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};
+    return sequence_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};
 }
 
 }  // namespace detail
 
 template <typename DpfKey,
           typename RandomAccessIterator>
-auto make_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
+auto make_sequence_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
 {
-    return detail::make_recipe<DpfKey>(begin, end);
+    return detail::make_sequence_recipe<DpfKey>(begin, end);
 }
 
 }  // namespace dpf
