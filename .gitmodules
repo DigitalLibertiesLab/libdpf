@@ -3,7 +3,7 @@
 	url = https://github.com/DigitalLibertiesLab/hedley.git
 [submodule "thirdparty/simde"]
 	path = thirdparty/simde
-	url = https://github.com/simd-everywhere/simde.git
+	url = https://github.com/DigitalLibertiesLab/simde.git
 [submodule "thirdparty/portable-snippets"]
 	path = thirdparty/portable-snippets
 	url = https://github.com/DigitalLibertiesLab/portable-snippets.git
