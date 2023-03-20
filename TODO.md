@@ -10,11 +10,8 @@
   - "linear sketch" for verifying DPF well-formedness
   - Sabre 2- and 3-verifier SNIPs for verifying DPF well-formedness
   - bitmore-style splicing for `dpf::bit`s
-  - migrate `dpf::bit_array_batch_iterable` from old repo
-  - `dpf::subsequence_iteratable` and `dpf::dpf_output`-based buffers
 
 # Gen and eval:
-  - "full-tree" memoizer for `eval_sequence`
   - Doerner-shelat distributed generation (`eval_full` style)
   - Doerner-shelat distributed generation (`eval_sequence` style)
   - Sabre-like 2- and (2+1)-PC DPF generation
@@ -42,7 +39,6 @@
   - full big-endian support
   - full ARM support
   - AVX512 support
-  - clang support
   - msvcc support
 
 # Meta
