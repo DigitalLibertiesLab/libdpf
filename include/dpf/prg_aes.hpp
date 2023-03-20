@@ -25,9 +25,9 @@ namespace prg
 #ifdef __ARM_NEON
 
 #else
-#define simde_mm_aesenc_si128(x, y) _mm_aesenc_si128(x, y);
-#define simde_mm_aesenclast_si128(x, y) _mm_aesenclast_si128(x, y);
-#define simde_mm_aeskeygenassist_si128(x, y) _mm_aeskeygenassist_si128(x, y);
+#define simde_mm_aesenc_si128(a, RoundKey) _mm_aesenc_si128(a, RoundKey);
+#define simde_mm_aesenclast_si128(a, RoundKey) _mm_aesenclast_si128(a, RoundKey);
+#define simde_mm_aeskeygenassist_si128(a, inn8) _mm_aeskeygenassist_si128(a, inn8);
 #endif
 
 template <typename AesKey>

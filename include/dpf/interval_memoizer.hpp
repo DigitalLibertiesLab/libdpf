@@ -83,7 +83,7 @@ struct interval_memoizer_base
         //     * add 1 since observation 1 is for an excluded end point whereas now both end points are included
 
         std::size_t offset = depth - level;
-        return (to_node - 1 >> offset) - (from_node >> offset) + 1;
+        return ((to_node - 1) >> offset) - (from_node >> offset) + 1;
     }
 
   protected:
@@ -183,7 +183,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
         std::array<std::size_t, depth+1> level_endpoints{0};
         for (std::size_t level=depth, len=output_length; level > 0; --level)
         {
-            len = std::min(len/2 + 1, std::size_t(1) << level-1);
+            len = std::min(len/2 + 1, std::size_t(1) << (level - 1));
             level_endpoints[level] = len;
         }
 

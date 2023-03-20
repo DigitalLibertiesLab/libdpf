@@ -111,6 +111,8 @@ struct fixedpoint
 
     /// @}
 
+    ~fixedpoint() = default;
+
     /// @brief Cast to `double`
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
@@ -429,7 +431,7 @@ constexpr auto precision_cast(fixedpoint<FromFractionalBits, IntegralType> f) no
 
 template <unsigned FractionalBits,
           typename IntegralType>
-static constexpr auto precision_of(fixedpoint<FractionalBits, IntegralType> f) noexcept
+static constexpr auto precision_of(fixedpoint<FractionalBits, IntegralType>) noexcept
 {
     return FractionalBits;
 }

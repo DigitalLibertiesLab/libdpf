@@ -82,6 +82,10 @@ class setbit_index_iterable
         HEDLEY_ALWAYS_INLINE
         constexpr const_iterator(const const_iterator &) noexcept = default;
 
+        ~const_iterator() noexcept = default;
+        const_iterator & operator=(const_iterator &&) noexcept = default;
+        const_iterator & operator=(const const_iterator &) = default;
+
         HEDLEY_CONST
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE

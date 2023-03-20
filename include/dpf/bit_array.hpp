@@ -89,7 +89,10 @@ class bit_array_base
     inline constexpr bit_array_base(const bit_array_base &) = default;
 
     /// @brief default move constructor
-    inline constexpr bit_array_base(bit_array_base &&) = default;
+    inline constexpr bit_array_base(bit_array_base &&) noexcept = default;
+
+    /// @brief default destructor
+    ~bit_array_base() = default;
 
     /// @brief default copy assignment
     inline constexpr
@@ -469,8 +472,8 @@ class bit_array_base
     ///          contains `size()` characters with the first character
     ///          corresponding to the last `(size()-1th)` bit and the last
     ///          character corresponding tot he first `(0th)` bit.
-    /// @param zero character to use to represent `false`/`0` (default: ``CharT{'0'}``)
-    /// @param one character to use to represent `true`/`1` (default: ``CharT{'1'}``)
+    /// @param zero character to use to represent `false`/`0` (default: ``CharT('0')``)
+    /// @param one character to use to represent `true`/`1` (default: ``CharT('1')``)
     /// @returns the converted string
     /// @throws May throw `std::bad_alloc` from the `std::string` constructor.
     /// @complexity `O(size())`
@@ -478,8 +481,8 @@ class bit_array_base
               class Traits = std::char_traits<CharT>,
               class Allocator = std::allocator<CharT>>
     std::basic_string<CharT, Traits, Allocator> to_string(
-        CharT zero = CharT{'0'},
-        CharT one = CharT{'1'}) const
+        CharT zero = CharT('0'),
+        CharT one = CharT('1')) const
     {
         std::basic_stringstream<CharT, Traits, Allocator> ss{};
         for (const_reference b : *this) ss << (b ? one : zero);
@@ -534,6 +537,8 @@ class bit_array_base
             this->assign(static_cast<bool>(b));
             return *this;
         }
+
+        ~bit_reference() = default;
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
@@ -829,7 +834,7 @@ class bit_array_base
             const bit_iterator_base &);
     };  // class bit_array_base::bit_iterator_base
 
-    class bit_iterator : public bit_iterator_base
+    class bit_iterator final : public bit_iterator_base
     {
       public:
         using value_type = bit_array_base::value_type;
@@ -853,13 +858,13 @@ class bit_array_base
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         bit_iterator & operator=(const bit_iterator &) noexcept = default;
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         bit_iterator & operator=(bit_iterator &&) noexcept = default;
+
+        ~bit_iterator() = default;
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
@@ -940,7 +945,7 @@ class bit_array_base
         friend class bit_array_base::const_bit_iterator;
     };  // class bit_array_base::bit_iterator
 
-    class const_bit_iterator : public bit_iterator_base
+    class const_bit_iterator final : public bit_iterator_base
     {
       public:
         using value_type = bit_array_base::value_type;
@@ -954,12 +959,10 @@ class bit_array_base
         inline const_bit_iterator() = delete;
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(const const_bit_iterator &) noexcept
-            = default;
+        const_bit_iterator(const const_bit_iterator &) noexcept = default;
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(const_bit_iterator &&) noexcept
-            = default;
+        const_bit_iterator(const_bit_iterator &&) noexcept = default;
 
         HEDLEY_NO_THROW
         HEDLEY_NON_NULL()
@@ -968,13 +971,11 @@ class bit_array_base
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         const_bit_iterator & operator=(const const_bit_iterator &) noexcept
             = default;
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         const_bit_iterator & operator=(const_bit_iterator &&) noexcept
             = default;
 
@@ -989,6 +990,8 @@ class bit_array_base
         constexpr
         explicit const_bit_iterator(bit_iterator && to_copy) noexcept
           : bit_iterator_base{to_copy.word_ptr_, to_copy.mask_} {}
+
+        ~const_bit_iterator() = default;
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
@@ -1110,8 +1113,11 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
     static constexpr std::size_t length_in_words
         = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
   public:
-    constexpr static_bit_array(static_bit_array &&) = default;
-    constexpr static_bit_array(const static_bit_array &) = default;
+    constexpr static_bit_array(static_bit_array &&) noexcept = default;
+    constexpr static_bit_array(const static_bit_array &) noexcept = default;
+    ~static_bit_array() = default;
+    constexpr static_bit_array & operator=(static_bit_array &&) noexcept = default;
+    constexpr static_bit_array & operator=(const static_bit_array &) noexcept = default;
     /// @brief constructs a `static_bit_array` that holds `num_bits` bits
     inline constexpr static_bit_array()
       : bit_array_base{Nbits, &arr[0]} { arr_[data_length_] = sentinel; }
@@ -1129,7 +1135,7 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
 class dynamic_bit_array : public bit_array_base
 {
   public:
-    constexpr dynamic_bit_array(dynamic_bit_array && other)
+    constexpr dynamic_bit_array(dynamic_bit_array && other) noexcept
         : bit_array_base(other)
     {
         other.arr_ = nullptr;
@@ -1146,6 +1152,9 @@ class dynamic_bit_array : public bit_array_base
         if (HEDLEY_UNLIKELY(arr_ == nullptr)) throw std::bad_alloc{};
         arr_[data_length_] = sentinel;
     }
+
+    dynamic_bit_array & operator=(dynamic_bit_array &&) noexcept = default;
+    dynamic_bit_array & operator=(const dynamic_bit_array &) noexcept = delete;
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -1164,7 +1173,7 @@ inline constexpr void swap(bit_array_base::bit_reference lhs,
     rhs = tmp;
 }
 
-std::ostream & operator<<(std::ostream & os, bit_array_base::bit_reference bit)
+inline std::ostream & operator<<(std::ostream & os, bit_array_base::bit_reference bit)
 {
     return os << dpf::to_string(bit);
 }

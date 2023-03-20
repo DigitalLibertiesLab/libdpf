@@ -60,6 +60,8 @@ struct xor_wrapper
         return *this;
     }
 
+    ~xor_wrapper() = default;
+
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_PURE

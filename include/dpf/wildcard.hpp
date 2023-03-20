@@ -80,7 +80,7 @@ template <typename T> struct concrete_value<wildcard_value<T>>
         return std::nullopt;
     }
 };
-template <typename T> auto concrete_value_v = concrete_value<T>{};
+template <typename T> constexpr auto concrete_value_v = concrete_value<T>{};
 
 namespace wildcards
 {

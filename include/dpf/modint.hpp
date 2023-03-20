@@ -88,9 +88,11 @@ class modint
     /// @details Assigns the `modint` from another `modint` using move
     ///          semantics.
     HEDLEY_ALWAYS_INLINE
-    constexpr modint & operator=(modint &&) = default;
+    constexpr modint & operator=(modint &&) noexcept = default;
 
     /// @}
+
+    ~modint() = default;
 
     /// @brief addition operator
     /// @{

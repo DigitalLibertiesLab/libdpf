@@ -26,8 +26,11 @@ basic_path_memoizer final
 
     basic_path_memoizer()
       : dpf_{std::nullopt}, x_{std::nullopt} { }
-    basic_path_memoizer(basic_path_memoizer &&) = default;
+    basic_path_memoizer(basic_path_memoizer &&) noexcept = default;
     basic_path_memoizer(const basic_path_memoizer &) = default;
+    basic_path_memoizer & operator=(basic_path_memoizer &&) noexcept = default;
+    basic_path_memoizer & operator=(const basic_path_memoizer &) = default;
+    ~basic_path_memoizer() = default;
 
     inline std::size_t assign_x(const dpf_type & dpf, input_type new_x)
     {
@@ -61,8 +64,11 @@ struct nonmemoizing_path_memoizer final
 
     nonmemoizing_path_memoizer()
       : dpf_{std::nullopt} { }
-    nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) = default;
+    nonmemoizing_path_memoizer(nonmemoizing_path_memoizer &&) noexcept = default;
     nonmemoizing_path_memoizer(const nonmemoizing_path_memoizer &) = default;
+    nonmemoizing_path_memoizer & operator=(nonmemoizing_path_memoizer &&) noexcept = default;
+    nonmemoizing_path_memoizer & operator=(const nonmemoizing_path_memoizer &) = default;
+    ~nonmemoizing_path_memoizer() = default;
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE

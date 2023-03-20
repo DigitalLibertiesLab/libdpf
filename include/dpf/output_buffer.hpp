@@ -35,8 +35,11 @@ class output_buffer final
     using size_type = typename vector::size_type;
     output_buffer() = default;
     explicit output_buffer(size_type size) : vector(size) { }
-    output_buffer(output_buffer &&) = default;
+    output_buffer(output_buffer &&) noexcept = default;
     output_buffer(const output_buffer &) = delete;
+    output_buffer & operator=(output_buffer &&) noexcept = default;
+    output_buffer & operator=(const output_buffer &) = default;
+    ~output_buffer() = default;
 
     // "selectively public" inheritance
     using vector::at;
@@ -54,8 +57,11 @@ class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
 {
   public:
     explicit output_buffer(size_type size) : dynamic_bit_array(size) { }
-    output_buffer(output_buffer &&) = default;
+    output_buffer(output_buffer &&) noexcept = default;
     output_buffer(const output_buffer &) = delete;
+    output_buffer & operator=(output_buffer &&) noexcept = default;
+    output_buffer & operator=(const output_buffer &) = delete;
+    ~output_buffer() = default;
 };
 
 template <std::size_t I = 0,

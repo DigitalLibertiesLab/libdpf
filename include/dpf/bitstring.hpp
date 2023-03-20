@@ -52,9 +52,6 @@ namespace dpf
 template <std::size_t Nbits>
 class bitstring : public bit_array_base
 {
-  private:
-    //using base = std::bitset<Nbits>;
-
   public:
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
@@ -82,7 +79,7 @@ class bitstring : public bit_array_base
     /// @param other another `dpf::bitstring` to construct with
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring(bitstring &&) = default;
+    constexpr bitstring(bitstring &&) noexcept = default;
 
     /// @brief Value c'tor
     /// @details Constructs an instance of `dpf::bitstring` while initializing
@@ -103,8 +100,8 @@ class bitstring : public bit_array_base
     // /// @param str `string` used to initialize the `dpf::bitstring`
     // /// @param pos a starting offset into `str`
     // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `0` (default: `CharT{'0'}`)
-    // /// @param one character used to represent `1` (default: `CharT{'1'}`)
+    // /// @param zero character used to represent `0` (default: `CharT('0')`)
+    // /// @param one character used to represent `1` (default: `CharT('1')`)
     // template <class CharT,
     //           class Traits,
     //           class Alloc>
@@ -123,8 +120,8 @@ class bitstring : public bit_array_base
     // ///        values for set (`one`) and unset (`zero`) bits.
     // /// @param str string used to initialize the `dpf::bitstring`
     // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `false`/`0` (default: ``CharT{'0'}``)
-    // /// @param one character used to represent `true`/`1` (default: ``CharT{'1'}``)
+    // /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
+    // /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
     // template <class CharT>
     // explicit bitstring(const CharT * str,
     //     typename std::basic_string<CharT>::size_type len
@@ -134,6 +131,10 @@ class bitstring : public bit_array_base
     //   : base(str, len, zero, one) { }
 
     /// @}
+
+    bitstring & operator=(const bitstring &) = default;
+    bitstring & operator=(bitstring &&) noexcept = default;
+    ~bitstring() = default;
 
     /// @brief facade for masking out individual bits of a `dpf::bitstring`
     /// @details A `dpf::bitstring::bit_mask` struct is a facade that simulates

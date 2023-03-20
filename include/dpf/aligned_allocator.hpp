@@ -60,7 +60,7 @@ class aligned_allocator
     using value_type = T;
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using pointer = std::add_pointer_t<value_type>;
+    using pointer = value_type *;
     using unique_ptr = std::unique_ptr<value_type[], deleter<pointer>>;
     using const_pointer = std::add_const_t<pointer>;
     using reference = value_type &;
@@ -104,6 +104,12 @@ class aligned_allocator
     HEDLEY_NO_THROW
     constexpr aligned_allocator(aligned_allocator && other) noexcept = default;
 
+    /// @}
+
+    /// {@
+    aligned_allocator & operator=(const aligned_allocator &) noexcept = default;
+
+    aligned_allocator & operator=(aligned_allocator &&) noexcept = default;
     /// @}
 
     /// @brief D'tor

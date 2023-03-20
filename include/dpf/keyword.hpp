@@ -157,7 +157,7 @@ class basic_fixed_length_string
     /// @details Sets the value of this `basic_fixed_length_string` to
     ///          the integer representation of `str`.
     /// @param str the string to assign with
-    constexpr auto & operator=(string_view str) noexcept
+    constexpr basic_fixed_length_string & operator=(string_view str) noexcept
     {
         val = encode_(str);
         return *this;
@@ -173,9 +173,11 @@ class basic_fixed_length_string
     /// @details Assigns the `basic_fixed_length_string` from another
     ///          `basic_fixed_length_string` using move semantics.
     constexpr basic_fixed_length_string &
-    operator=(basic_fixed_length_string &&) = default;
+    operator=(basic_fixed_length_string &&) noexcept = default;
 
     /// @}
+
+    ~basic_fixed_length_string() = default;
 
     /// @brief recreates the string representation of this
     ///        `basic_fixed_length_string`

@@ -39,8 +39,6 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node_t;
 
-    auto nodes_in_interval = to_node - from_node;
-
     // level_index represents the current level being built
     // level_index = 0 => root
     // level_index = depth => last layer of interior nodes

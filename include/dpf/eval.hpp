@@ -21,9 +21,10 @@ template <typename OutputT,
 struct alignas(utils::max_align_v) dpf_output
 {
     dpf_output(const dpf_output &) = default;
-    dpf_output(dpf_output &&) = default;
+    dpf_output(dpf_output &&) noexcept = default;
     dpf_output & operator=(const dpf_output &) = default;
-    dpf_output & operator=(dpf_output &&) = default;
+    dpf_output & operator=(dpf_output &&) noexcept = default;
+    ~dpf_output() = default;
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST

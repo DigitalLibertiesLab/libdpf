@@ -75,8 +75,8 @@ static constexpr dpf::bit to_bit(bool value) noexcept
 ///          equal to `dpf::bit::one` if `value==one` and `dpf::bit::zero`
 ///          otherwise.
 /// @param value the character to convert
-/// @param zero character used to represent `0` (default: ``CharT{'0'}``)
-/// @param one character used to represent `1` (default: ``CharT{'1'}``)
+/// @param zero character used to represent `0` (default: ``CharT('0')``)
+/// @param one character used to represent `1` (default: ``CharT('1')``)
 /// @returns `static_cast<dpf::bit>(0)` if `value==0` or
 ///          `static_cast<dpf::bit>(1)` if `value==1`
 /// @throws std::domain_error if `value != zero && value != one`
@@ -86,14 +86,14 @@ HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr dpf::bit to_bit(
     CharT value,
-    CharT zero = CharT{'0'},
-    CharT one = CharT{'1'})
+    CharT zero = CharT('0'),
+    CharT one = CharT('1'))
 {
     if (!Traits::eq(value, zero) && !Traits::eq(value, one))
     {
         throw std::domain_error("Unrecognized character");
     }
-    return (value == zero) ? dpf::bit::zero : dpf::bit::one;
+    return Traits::eq(value, zero) ? dpf::bit::zero : dpf::bit::one;
 }
 
 /// @}
@@ -103,19 +103,19 @@ static constexpr dpf::bit to_bit(
 ///          human-friendly printing. Uses `zero` to represent the value
 ///          `0` and `one` to the value `1`.
 /// @param value the `dpf::bit` to convert
-/// @param zero character to use to represent `false`/`0` (default: ``CharT{'0'}``)
-/// @param one character to use to represent `true`/`1` (default: ``CharT{'1'}``)
+/// @param zero character to use to represent `false`/`0` (default: ``CharT('0')``)
+/// @param one character to use to represent `true`/`1` (default: ``CharT('1')``)
 /// @return `(value == 0) ? zero : one`
 template <class CharT = char,
           class Traits = std::char_traits<CharT>,
           class Allocator = std::allocator<CharT>>
-static constexpr std::basic_string<CharT, Traits, Allocator> to_string(
+static std::basic_string<CharT, Traits, Allocator> to_string(
     dpf::bit value,
-    CharT zero = CharT{'0'},
-    CharT one = CharT{'1'}) noexcept
+    CharT zero = CharT('0'),
+    CharT one = CharT('1'))
 {
-    auto ch = (value == false) ? zero : one;
-    return std::basic_string(&ch, 1, Allocator{});
+    auto ch = (value == dpf::bit::zero) ? zero : one;
+    return std::basic_string<CharT>(1, ch, Allocator{});
 }
 
 /// @brief performs stream input and output on `dpf::bit`s
