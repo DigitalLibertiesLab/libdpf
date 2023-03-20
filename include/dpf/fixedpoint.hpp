@@ -1,11 +1,17 @@
 /// @file dpf/fixedpoint.hpp
+/// @brief
+/// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_FIXEDPOINT_HPP__
 #define LIBDPF_INCLUDE_DPF_FIXEDPOINT_HPP__
+
+#include <hedley/hedley.h>
+#include <portable-snippets/exact-int/exact-int.h>
+#include <portable-snippets/builtin/builtin.h>
 
 #include <cstdint>
 #include <limits>
@@ -16,10 +22,6 @@
 #include <cmath>
 #include <iostream>
 
-#include <hedley/hedley.h>
-#include <portable-snippets/exact-int/exact-int.h>
-#include <portable-snippets/builtin/builtin.h>
-
 #include "dpf/utils.hpp"
 
 #define LIBDPF_FIXED_DEFAULT_INTEGRAL_REPRESENTATION psnip_uint64_t
@@ -27,7 +29,7 @@
 namespace dpf
 {
 
-template <unsigned FractionalBits, 
+template <unsigned FractionalBits,
           typename IntegralType>
 auto constexpr make_fixed_from_integral_type(IntegralType value) noexcept;
 
@@ -75,7 +77,7 @@ struct fixedpoint
     /// @details Initializes the fixed-point with the value determined by `desired`, using the <a href="https://en.cppreference.com/w/cpp/numeric/fenv/FE_round">current rounding mode</a> for the least-significant bit.
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr fixedpoint(double desired) noexcept
+    constexpr fixedpoint(double desired) noexcept  // NOLINT (implicit c'tor)
       : value{static_cast<integral_type>(std::nearbyint(std::ldexp(desired, fractional_bits)))}
     { }
 
@@ -104,9 +106,12 @@ struct fixedpoint
     constexpr fixedpoint & operator=(const double & desired) noexcept
     {
         value = static_cast<integral_type>(std::nearbyint(std::ldexp(desired, fractional_bits)));
+        return *this;
     }
 
     /// @}
+
+    ~fixedpoint() = default;
 
     /// @brief Cast to `double`
     HEDLEY_ALWAYS_INLINE
@@ -116,9 +121,6 @@ struct fixedpoint
         return std::ldexp(static_cast<double>(value), -static_cast<double>(fractional_bits));
     }
 
-    /// @brief 
-    /// @param rhs 
-    /// @return 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
@@ -142,7 +144,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator-() const noexcept
+    constexpr fixedpoint operator-() const noexcept
     {
         return fixedpoint(-this->integral_representation());
     }
@@ -152,7 +154,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator+(fixedpoint rhs) const noexcept
+    constexpr fixedpoint operator+(fixedpoint rhs) const noexcept
     {
         return fixedpoint(this->integral_representation() + rhs.integral_representation());
     }
@@ -170,7 +172,7 @@ struct fixedpoint
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    constexpr fixedpoint & operator-(fixedpoint rhs) const noexcept
+    constexpr fixedpoint operator-(fixedpoint rhs) const noexcept
     {
         return fixedpoint(this->integral_representation() - rhs.integral_representation());
     }
@@ -335,8 +337,8 @@ struct fixedpoint
     template <unsigned F, typename T> friend constexpr auto nextbefore(fixedpoint<F, T>) noexcept;
     template <unsigned F0, unsigned F1, typename T> friend constexpr auto precision_cast(fixedpoint<F1, T>) noexcept;
     template <unsigned F, typename T> friend constexpr auto make_fixed_from_integral_type(T) noexcept;
-    template <unsigned F, typename T> friend constexpr auto fabs(fixedpoint<F,T>) noexcept;
-    template <unsigned F, typename T> friend constexpr auto fmod(fixedpoint<F,T>,double) noexcept;
+    template <unsigned F, typename T> friend constexpr auto fabs(fixedpoint<F, T>) noexcept;
+    template <unsigned F, typename T> friend constexpr auto fmod(fixedpoint<F, T>, double) noexcept;
 
     integral_type value;
 };
@@ -346,7 +348,7 @@ template <class CharT,
           unsigned FractionalBits,
           typename IntegralType>
 std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> & os, 
+operator<<(std::basic_ostream<CharT, Traits> & os,
     const fixedpoint<FractionalBits, IntegralType> & f) noexcept
 {
     return os << static_cast<double>(f);
@@ -366,7 +368,7 @@ operator>>(std::basic_istream<CharT, Traits> & is,
     return is;
 }
 
-template <unsigned FractionalBits, 
+template <unsigned FractionalBits,
           typename IntegralType>
 auto constexpr make_fixed_from_integral_type(IntegralType value) noexcept
 {
@@ -399,14 +401,14 @@ HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
 static auto make_fixed_safe(double d)
 {
-    using fixed_t = fixedpoint<FractionalBits, IntegralType>;
+    using fixed_type = fixedpoint<FractionalBits, IntegralType>;
 
-    if (HEDLEY_UNLIKELY(d < std::numeric_limits<fixed_t>::lowest()))
+    if (HEDLEY_UNLIKELY(d < std::numeric_limits<fixed_type>::lowest()))
     {
         throw std::range_error("value is too small (underflows integral representation)");
     }
 
-    if (HEDLEY_UNLIKELY(std::numeric_limits<fixed_t>::max() < d))
+    if (HEDLEY_UNLIKELY(std::numeric_limits<fixed_type>::max() < d))
     {
         throw std::range_error("value is too large (overflows integral representation)");
     }
@@ -429,7 +431,7 @@ constexpr auto precision_cast(fixedpoint<FromFractionalBits, IntegralType> f) no
 
 template <unsigned FractionalBits,
           typename IntegralType>
-static constexpr auto precision_of(fixedpoint<FractionalBits, IntegralType> f) noexcept
+static constexpr auto precision_of(fixedpoint<FractionalBits, IntegralType>) noexcept
 {
     return FractionalBits;
 }
@@ -479,7 +481,8 @@ enum fixed_cast_policy
     use_arg_sum  //< for multiplies only
 };
 
-template <typename BinaryOperator, fixed_cast_policy Mode = use_max_arg>
+template <typename BinaryOperator,
+          fixed_cast_policy Mode = use_max_arg>
 struct binary_operator_precast_wrapper
 {
     static_assert(Mode == use_default   ||
@@ -643,14 +646,14 @@ template <typename FixedPointType,
           std::size_t Degree>
 struct fixedpoint_polynomial : public std::array<FixedPointType, Degree>
 {
-    using coefficient_t = FixedPointType;
+    using coefficient_type = FixedPointType;
     static constexpr std::size_t degree = Degree;
-    auto operator()(coefficient_t x)
+    auto operator()(coefficient_type x)
     {
         constexpr auto product_of = multiplies<use_arg_sum>{};
-        constexpr auto sum_of = binary_operator_precast_wrapper<std::plus<coefficient_t>, use_max_arg>{};
+        constexpr auto sum_of = binary_operator_precast_wrapper<std::plus<coefficient_type>, use_max_arg>{};
         auto coeff = this->rbegin();
-        coefficient_t y{*coeff};
+        coefficient_type y{*coeff};
         while (++coeff != this->rend())
         {
             y = sum_of(product_of(y, x), *coeff);
@@ -683,16 +686,16 @@ template <unsigned FractionalBits,
           typename IntegralType>
 struct countl_zero_symmmetric_difference<dpf::fixedpoint<FractionalBits, IntegralType>>
 {
-	using T = dpf::fixedpoint<FractionalBits, IntegralType>;
+    using T = dpf::fixedpoint<FractionalBits, IntegralType>;
     static constexpr auto clz = dpf::utils::countl_zero_symmmetric_difference<typename T::integral_type>{};
 
-	HEDLEY_CONST
-	HEDLEY_ALWAYS_INLINE
-	constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
-	{
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
+    {
         constexpr auto adjust = utils::bitlength_of_v<typename T::integral_type>-T::bits;
-		return clz(static_cast<typename T::integral_type>(lhs), static_cast<typename T::integral_type>(rhs))-adjust;
-	}
+        return clz(static_cast<typename T::integral_type>(lhs), static_cast<typename T::integral_type>(rhs))-adjust;
+    }
 };
 
 }  // namespace utils

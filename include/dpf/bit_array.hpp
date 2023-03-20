@@ -1,8 +1,10 @@
 /// @file dpf/bit_array.hpp
+/// @brief
+/// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_BIT_ARRAY_HPP__
 #define LIBDPF_INCLUDE_DPF_BIT_ARRAY_HPP__
@@ -17,6 +19,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <type_traits>
+#include <ostream>
 
 #include "hedley/hedley.h"
 #include "portable-snippets/exact-int/exact-int.h"
@@ -86,13 +89,18 @@ class bit_array_base
     inline constexpr bit_array_base(const bit_array_base &) = default;
 
     /// @brief default move constructor
-    inline constexpr bit_array_base(bit_array_base &&) = default;
+    inline constexpr bit_array_base(bit_array_base &&) noexcept = default;
+
+    /// @brief default destructor
+    ~bit_array_base() = default;
 
     /// @brief default copy assignment
-    inline constexpr bit_array_base & operator=(const bit_array_base &) = default;
+    inline constexpr
+    bit_array_base & operator=(const bit_array_base &) = default;
 
     /// @brief defaulted move assignment
-    inline constexpr bit_array_base & operator=(bit_array_base &&) noexcept = default;
+    inline constexpr
+    bit_array_base & operator=(bit_array_base &&) noexcept = default;
 
     /// @brief direct access to the underlying data array
     /// @return a pointer to the start of the data array
@@ -107,7 +115,10 @@ class bit_array_base
     ///       `pos` is out of bounds
     /// @return `data()[pos]`
     HEDLEY_ALWAYS_INLINE
-    constexpr word_type & data(size_type pos) const noexcept { return arr_[pos]; }
+    constexpr word_type & data(size_type pos) const noexcept
+    {
+        return arr_[pos];
+    }
 
     /// @brief length of the underlying data array
     /// @return the number of elements in the underlying array (excluding a
@@ -122,8 +133,8 @@ class bit_array_base
     ///            significant to most significant)
     /// @note Unlike `test` and `at`, does not throw exceptions: the behavior
     ///       is undefined if `pos` is out of bounds
-    /// @returns an object of type `dpf::bit_array_base::reference`, which allows
-    ///          writing to the requested bit
+    /// @returns an object of type `dpf::bit_array_base::reference`, which
+    ///          allows writing to the requested bit
     /// @complexity `O(1)`
     HEDLEY_NO_THROW
     inline constexpr reference operator[](size_type pos) noexcept
@@ -154,8 +165,8 @@ class bit_array_base
     ///            significant to most significant)
     /// @throws std::out_of_range if `pos` does not correspond to a valid
     ///         position within the `bit_array_base`
-    /// @returns an object of type `dpf::bit_array_base::reference`, which allows
-    ///          writing to the requested bit
+    /// @returns an object of type `dpf::bit_array_base::reference`, which
+    ///          allows writing to the requested bit
     /// @complexity `O(1)`
     constexpr reference at(size_type pos)
     {
@@ -248,12 +259,12 @@ class bit_array_base
 
     /// @details checks if all bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if all of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool all(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool all(Iterator first, Iterator last) const noexcept
     {
         word_type init = (*first.word_ptr_ | ~(first.mask_-1)) &
             (*last.word_ptr_ | (last.mask_-1));
@@ -272,12 +283,12 @@ class bit_array_base
 
     /// @details checks if any bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if any of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool any(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool any(Iterator first, Iterator last) const noexcept
     {
         word_type init = (*first.word_ptr_ & ~(first.mask_-1)) |
             (*last.word_ptr_ & (last.mask_-1));
@@ -295,12 +306,12 @@ class bit_array_base
 
     /// @details checks if none bits in a range are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return `true` if none of the bits in the given range are set to
     ///         `true`, otherwise `false`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    bool none(Iter first, Iter last) const noexcept
+    template <typename Iterator>
+    bool none(Iterator first, Iterator last) const noexcept
     {
         return !any(first, last);
     }
@@ -321,11 +332,11 @@ class bit_array_base
     }
     /// @details counts the number of bits in a range that are set to `true`
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return the number of bits in the given range that are set to `true`
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    size_type count(Iter begin, Iter end) const noexcept
+    template <typename Iterator>
+    size_type count(Iterator begin, Iterator end) const noexcept
     {
         return std::accumulate(begin.word_ptr_, end.word_ptr_,
             size_type(psnip_builtin_popcount64(*end.word_ptr_ & (end.mask_-1))
@@ -351,11 +362,11 @@ class bit_array_base
 
     /// @details counts the parity of bits in a range
     /// @param first,last the range of elements under consideration
-    /// @tparam Iter an iterator type
+    /// @tparam Iterator an iterator type
     /// @return the parity of all bits in the given range
     /// @complexity `O(last-first)`
-    template <typename Iter>
-    size_type parity(Iter begin, Iter end) const noexcept
+    template <typename Iterator>
+    size_type parity(Iterator begin, Iterator end) const noexcept
     {
         auto x = std::accumulate(begin.word_ptr_, end.word_ptr_,
             word_type((*begin.word_ptr_ & (begin.mask_-1))
@@ -461,8 +472,8 @@ class bit_array_base
     ///          contains `size()` characters with the first character
     ///          corresponding to the last `(size()-1th)` bit and the last
     ///          character corresponding tot he first `(0th)` bit.
-    /// @param zero character to use to represent `false`
-    /// @param one character to use to represent `true`
+    /// @param zero character to use to represent `false`/`0` (default: ``CharT('0')``)
+    /// @param one character to use to represent `true`/`1` (default: ``CharT('1')``)
     /// @returns the converted string
     /// @throws May throw `std::bad_alloc` from the `std::string` constructor.
     /// @complexity `O(size())`
@@ -470,8 +481,8 @@ class bit_array_base
               class Traits = std::char_traits<CharT>,
               class Allocator = std::allocator<CharT>>
     std::basic_string<CharT, Traits, Allocator> to_string(
-        CharT zero = CharT{'0'},
-        CharT one = CharT{'1'}) const
+        CharT zero = CharT('0'),
+        CharT one = CharT('1')) const
     {
         std::basic_stringstream<CharT, Traits, Allocator> ss{};
         for (const_reference b : *this) ss << (b ? one : zero);
@@ -527,6 +538,8 @@ class bit_array_base
             return *this;
         }
 
+        ~bit_reference() = default;
+
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
         constexpr operator bool() const noexcept
@@ -560,7 +573,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator&=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(!b)) *word_ptr_ &= ~this->mask_;
+            if (b == false) *word_ptr_ &= ~this->mask_;
             return *this;
         }
 
@@ -572,7 +585,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator|=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(b)) *word_ptr_ |= this->mask_;
+            if (b == true) *word_ptr_ |= this->mask_;
             return *this;
         }
 
@@ -584,7 +597,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr bit_reference & operator^=(bool b) noexcept
         {
-            if (HEDLEY_UNPREDICTABLE(b)) *word_ptr_ ^= this->mask_;
+            if (b == true) *word_ptr_ ^= this->mask_;
             return *this;
         }
 
@@ -672,15 +685,15 @@ class bit_array_base
             assert(psnip_builtin_popcount64(mask_) == 1);
         }
 
-        friend class bit_array_base;            //< access to c'tor
-        friend struct bit_iterator_base;   //< access to c'tor
-        friend struct bit_iterator;        //< access to c'tor
-        friend struct const_bit_iterator;  //< access to c'tor
+        friend class bit_array_base;       //< access to c'tor
+        friend class bit_iterator_base;   //< access to c'tor
+        friend class bit_iterator;        //< access to c'tor
+        friend class const_bit_iterator;  //< access to c'tor
     };  // class bit_array_base::bit_reference
 
     /// @brief a base class provided to simplify the definition of
     ///        `bit_iterator` and `const_bit_iterator`
-    struct bit_iterator_base
+    class bit_iterator_base
     {
       public:
         using difference_type = std::ptrdiff_t;
@@ -740,7 +753,7 @@ class bit_array_base
         /// @note `word_ptr` must be dereferencable (not `nullptr`)
         HEDLEY_NO_THROW
         HEDLEY_NON_NULL()
-        inline constexpr bit_iterator_base(word_pointer word_ptr)
+        inline constexpr explicit bit_iterator_base(word_pointer word_ptr)
         : word_ptr_{word_ptr},
           mask_{lsb}
         {
@@ -821,7 +834,7 @@ class bit_array_base
             const bit_iterator_base &);
     };  // class bit_array_base::bit_iterator_base
 
-    class bit_iterator : public bit_iterator_base
+    class bit_iterator final : public bit_iterator_base
     {
       public:
         using value_type = bit_array_base::value_type;
@@ -832,23 +845,26 @@ class bit_array_base
 
         /// @brief (deleted) default c'tor
         inline bit_iterator() = delete;
-        inline constexpr bit_iterator(const bit_iterator &) noexcept = default;
+
+        inline constexpr
+        bit_iterator(const bit_iterator &) noexcept = default;
+
         inline constexpr bit_iterator(bit_iterator &&) noexcept = default;
 
         HEDLEY_NO_THROW
         HEDLEY_NON_NULL()
-        inline constexpr bit_iterator(word_pointer word_ptr) noexcept
+        inline constexpr explicit bit_iterator(word_pointer word_ptr) noexcept
           : bit_iterator_base{word_ptr} { }
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         bit_iterator & operator=(const bit_iterator &) noexcept = default;
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         bit_iterator & operator=(bit_iterator &&) noexcept = default;
+
+        ~bit_iterator() = default;
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
@@ -929,7 +945,7 @@ class bit_array_base
         friend class bit_array_base::const_bit_iterator;
     };  // class bit_array_base::bit_iterator
 
-    struct const_bit_iterator : public bit_iterator_base
+    class const_bit_iterator final : public bit_iterator_base
     {
       public:
         using value_type = bit_array_base::value_type;
@@ -943,39 +959,39 @@ class bit_array_base
         inline const_bit_iterator() = delete;
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(const const_bit_iterator &) noexcept
-            = default;
+        const_bit_iterator(const const_bit_iterator &) noexcept = default;
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(const_bit_iterator &&) noexcept
-            = default;
+        const_bit_iterator(const_bit_iterator &&) noexcept = default;
 
         HEDLEY_NO_THROW
         HEDLEY_NON_NULL()
-        inline constexpr const_bit_iterator(word_pointer word_ptr)
+        inline constexpr explicit const_bit_iterator(word_pointer word_ptr)
           : bit_iterator_base{word_ptr} { }
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         const_bit_iterator & operator=(const const_bit_iterator &) noexcept
             = default;
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr
         const_bit_iterator & operator=(const_bit_iterator &&) noexcept
             = default;
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(const bit_iterator & to_copy) noexcept
+        constexpr
+        explicit const_bit_iterator(const bit_iterator & to_copy) noexcept
           : bit_iterator_base{to_copy.word_ptr_, to_copy.mask_} {}
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
-        constexpr const_bit_iterator(bit_iterator && to_copy) noexcept
+        constexpr
+        explicit const_bit_iterator(bit_iterator && to_copy) noexcept
           : bit_iterator_base{to_copy.word_ptr_, to_copy.mask_} {}
+
+        ~const_bit_iterator() = default;
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
@@ -1018,31 +1034,36 @@ class bit_array_base
             return tmp;
         }
 
-        inline constexpr const_iterator & operator+=(difference_type amt) noexcept
+        inline constexpr
+        const_iterator & operator+=(difference_type amt) noexcept
         {
             bit_iterator_base::increment_by(amt);
             return *this;
         }
 
-        inline constexpr const_iterator & operator-=(difference_type amt) noexcept
+        inline constexpr
+        const_iterator & operator-=(difference_type amt) noexcept
         {
             bit_iterator_base::decrement_by(amt);
             return *this;
         }
 
-        inline constexpr const_iterator operator+(difference_type amt) const noexcept
+        inline constexpr
+        const_iterator operator+(difference_type amt) const noexcept
         {
             const_iterator tmp = *this;
             return tmp += amt;
         }
 
-        inline constexpr const_iterator operator-(difference_type amt) const noexcept
+        inline constexpr
+        const_iterator operator-(difference_type amt) const noexcept
         {
             const_iterator tmp = *this;
             return tmp -= amt;
         }
 
-        inline constexpr const_reference operator[](difference_type i) const noexcept
+        inline constexpr
+        const_reference operator[](difference_type i) const noexcept
         {
             return *(*this + i);
         }
@@ -1080,18 +1101,23 @@ inline bit_array_base::bit_iterator_base::difference_type operator-(
     const bit_array_base::bit_iterator_base & lhs,
     const bit_array_base::bit_iterator_base & rhs)
 {
-    constexpr auto bits_per_word = bit_array_base::bit_iterator_base::bits_per_word;
+    constexpr auto bits_per_word
+        = bit_array_base::bit_iterator_base::bits_per_word;
     return bits_per_word*(lhs.word_ptr_ - rhs.word_ptr_)
         + (psnip_builtin_ctz64(lhs.mask_) - psnip_builtin_ctz64(rhs.mask_));
 }
 
 template <std::size_t Nbits>
-class alignas(utils::max_align_v) static_bit_array : public bit_array_base
+class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
 {
-    static constexpr std::size_t length_in_words = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
+    static constexpr std::size_t length_in_words
+        = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
   public:
-    constexpr static_bit_array(static_bit_array &&) = default;
-    constexpr static_bit_array(const static_bit_array &) = default;
+    constexpr static_bit_array(static_bit_array &&) noexcept = default;
+    constexpr static_bit_array(const static_bit_array &) noexcept = default;
+    ~static_bit_array() = default;
+    constexpr static_bit_array & operator=(static_bit_array &&) noexcept = default;
+    constexpr static_bit_array & operator=(const static_bit_array &) noexcept = default;
     /// @brief constructs a `static_bit_array` that holds `num_bits` bits
     inline constexpr static_bit_array()
       : bit_array_base{Nbits, &arr[0]} { arr_[data_length_] = sentinel; }
@@ -1109,23 +1135,26 @@ class alignas(utils::max_align_v) static_bit_array : public bit_array_base
 class dynamic_bit_array : public bit_array_base
 {
   public:
-    constexpr dynamic_bit_array(dynamic_bit_array && other)
+    constexpr dynamic_bit_array(dynamic_bit_array && other) noexcept
         : bit_array_base(other)
     {
         other.arr_ = nullptr;
     }
     constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
-    /// @throws `std::bad_alloc` if allocating storage fails
-    inline dynamic_bit_array(std::size_t nbits)
+    /// @throws std::bad_alloc if allocating storage fails
+    inline explicit dynamic_bit_array(std::size_t nbits)
       : bit_array_base{nbits, static_cast<word_pointer>(
-            std::aligned_alloc(utils::max_align_v,
-                utils::quotient_ceiling(nbits+bits_per_word, bits_per_word) * sizeof(word_type)))
+            std::aligned_alloc(utils::max_align_v, sizeof(word_type) *
+                utils::quotient_ceiling(nbits+bits_per_word, bits_per_word)))
             }
     {
         if (HEDLEY_UNLIKELY(arr_ == nullptr)) throw std::bad_alloc{};
         arr_[data_length_] = sentinel;
     }
+
+    dynamic_bit_array & operator=(dynamic_bit_array &&) noexcept = default;
+    dynamic_bit_array & operator=(const dynamic_bit_array &) noexcept = delete;
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -1142,6 +1171,11 @@ inline constexpr void swap(bit_array_base::bit_reference lhs,
     bool tmp = lhs;
     lhs = rhs;
     rhs = tmp;
+}
+
+inline std::ostream & operator<<(std::ostream & os, bit_array_base::bit_reference bit)
+{
+    return os << dpf::to_string(bit);
 }
 
 }  // namespace dpf

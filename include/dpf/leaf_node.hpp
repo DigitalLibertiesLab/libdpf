@@ -1,9 +1,11 @@
 /// @file dpf/leaf_node.hpp
+/// @brief
+/// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief miscellaneous helper functions, structs, preprocessor directives
+/// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_LEAF_NODE_HPP__
 #define LIBDPF_INCLUDE_DPF_LEAF_NODE_HPP__
@@ -16,116 +18,130 @@
 
 #include "simde/simde/x86/avx2.h"
 
-#include <dpf/bit.hpp>
-#include <dpf/xor_wrapper.hpp>
-#include <dpf/wildcard.hpp>
-#include <dpf/leaf_arithmetic.hpp>
-#include <dpf/utils.hpp>
-#include <dpf/random.hpp>
+#include "dpf/bit.hpp"
+#include "dpf/xor_wrapper.hpp"
+#include "dpf/wildcard.hpp"
+#include "dpf/leaf_arithmetic.hpp"
+#include "dpf/utils.hpp"
+#include "dpf/random.hpp"
 
 namespace dpf
 {
 
 /// @brief `value` is `true` if multiple leaves are packed into each leaf node
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 using is_packable = std::bool_constant<
-    std::not_equal_to<>{}(utils::bitlength_of_v<output_t>, utils::bitlength_of_v<node_t>) &&
-    std::equal_to<>{}(utils::bitlength_of_v<node_t> % utils::bitlength_of_v<output_t>, 0)>;
+    std::not_equal_to<>{}(utils::bitlength_of_v<OutputT>, utils::bitlength_of_v<NodeT>) &&
+    std::equal_to<>{}(utils::bitlength_of_v<NodeT> % utils::bitlength_of_v<OutputT>, 0)>;
 
-template <typename output_t, typename node_t>
-static constexpr bool is_packable_v = is_packable<output_t, node_t>::value;
+template <typename OutputT,
+          typename NodeT>
+static constexpr bool is_packable_v = is_packable<OutputT, NodeT>::value;
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 struct outputs_per_leaf
     : public std::integral_constant<std::size_t,
-        !is_packable_v<output_t, node_t> ? 1 :
-            utils::bitlength_of_v<node_t> / utils::bitlength_of_v<output_t>> { };
+        !is_packable_v<OutputT, NodeT> ? 1 :
+            utils::bitlength_of_v<NodeT> / utils::bitlength_of_v<OutputT>> { };
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 static constexpr std::size_t outputs_per_leaf_v
-    = outputs_per_leaf<output_t, node_t>::value;
+    = outputs_per_leaf<OutputT, NodeT>::value;
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 static constexpr std::size_t lg_outputs_per_leaf_v
-    = std::log2(outputs_per_leaf<output_t, node_t>::value);
+    = std::log2(outputs_per_leaf<OutputT, NodeT>::value);
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 struct block_length_of_leaf : std::integral_constant<std::size_t,
-                                !is_packable_v<output_t, node_t> ? 1 :
+                                !is_packable_v<OutputT, NodeT> ? 1 :
                                     utils::quotient_ceiling(
-                                        utils::bitlength_of_v<output_t>,
-                                        utils::bitlength_of_v<node_t>)
+                                        utils::bitlength_of_v<OutputT>,
+                                        utils::bitlength_of_v<NodeT>)
                                     >{ };
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 static constexpr std::size_t block_length_of_leaf_v
-    = block_length_of_leaf<output_t, node_t>::value;
+    = block_length_of_leaf<OutputT, NodeT>::value;
 
-template <typename output_t, typename node_t>
+template <typename OutputT,
+          typename NodeT>
 constexpr std::size_t offset_within_block(std::size_t x) noexcept
 {
-    return x % dpf::outputs_per_leaf_v<output_t, node_t>;
+    return x % dpf::outputs_per_leaf_v<OutputT, NodeT>;
 }
 
-template <std::size_t I, typename N, std::size_t I_, typename outputs_t>
+template <std::size_t I,
+          typename N,
+          std::size_t I_,
+          typename OutputsT>
 struct block_offset_of_leaf
 {
-    static constexpr std::size_t value = dpf::block_length_of_leaf_v<std::tuple_element_t<I_, outputs_t>, N>
-        + block_offset_of_leaf<I, N, I_+1, outputs_t>::value;
+    static constexpr std::size_t value = dpf::block_length_of_leaf_v<std::tuple_element_t<I_, OutputsT>, N>
+        + block_offset_of_leaf<I, N, I_+1, OutputsT>::value;
 };
 
-template <std::size_t I, typename N, typename outputs_t>
-struct block_offset_of_leaf<I, N, I, outputs_t>
+template <std::size_t I,
+          typename N,
+          typename OutputsT>
+struct block_offset_of_leaf<I, N, I, OutputsT>
 {
     static constexpr std::size_t value = 0;
 };
 
-template <std::size_t I, typename N, typename outputs_t>
+template <std::size_t I, typename N, typename OutputsT>
 inline constexpr std::size_t block_offset_of_leaf_v
-    = block_offset_of_leaf<I, N, 0, outputs_t>::value;
+    = block_offset_of_leaf<I, N, 0, OutputsT>::value;
 
 
-template <typename node_t,
-          typename output_t,
-          std::size_t block_len = block_length_of_leaf_v<output_t, node_t>>
+template <typename NodeT,
+          typename OutputT,
+          std::size_t block_len = block_length_of_leaf_v<OutputT, NodeT>>
 struct leaf_node
 {
-    static_assert(block_len == block_length_of_leaf_v<output_t, node_t>);
-    using type = std::array<node_t, block_len>;
+    static_assert(block_len == block_length_of_leaf_v<OutputT, NodeT>);
+    using type = std::array<NodeT, block_len>;
 };
 
-template <typename node_t,
-          typename output_t>
-struct leaf_node<node_t, output_t, 1>
+template <typename NodeT,
+          typename OutputT>
+struct leaf_node<NodeT, OutputT, 1>
 {
-    static_assert(1 == block_length_of_leaf_v<output_t, node_t>);
-    using type = node_t;
+    static_assert(1 == block_length_of_leaf_v<OutputT, NodeT>);
+    using type = NodeT;
 };
 
-template <typename node_t,
-          typename output_t>
-using leaf_node_t = typename leaf_node<node_t, output_t>::type;
+template <typename NodeT,
+          typename OutputT>
+using leaf_node_t = typename leaf_node<NodeT, OutputT>::type;
 
-template <typename node_t,
-          typename output_t,
-          typename... output_ts>
+template <typename NodeT,
+          typename OutputT,
+          typename... OutputTs>
 struct leaf_tuple
 {
-    using type = std::tuple<leaf_node_t<node_t, output_t>,
-                            leaf_node_t<node_t, output_ts>...>;
+    using type = std::tuple<leaf_node_t<NodeT, OutputT>,
+                            leaf_node_t<NodeT, OutputTs>...>;
 };
-template <typename node_t,
-          typename output_t,
-          typename... output_ts>
-using leaf_tuple_t = typename leaf_tuple<node_t, output_t, output_ts...>::type;
+template <typename NodeT,
+          typename OutputT,
+          typename... OutputTs>
+using leaf_tuple_t = typename leaf_tuple<NodeT, OutputT, OutputTs...>::type;
 
-template <typename node_t, typename output_t>
-static output_t extract_leaf(const leaf_node_t<node_t, output_t> & leaf, std::size_t x) noexcept
+template <typename NodeT,
+          typename OutputT>
+static OutputT extract_leaf(const leaf_node_t<NodeT, OutputT> & leaf, std::size_t x) noexcept
 {
-    auto off = offset_within_block<output_t, node_t>(x);
+    auto off = offset_within_block<OutputT, NodeT>(x);
 
-    output_t y;
-    if constexpr (std::is_same_v<output_t, dpf::bit>)
+    OutputT y;
+    if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
         auto yy = simde_mm_set_epi64x(uint64_t(off <= 63) << (off % 64),
                                       uint64_t(off >= 64) << (off % 64));
@@ -133,42 +149,46 @@ static output_t extract_leaf(const leaf_node_t<node_t, output_t> & leaf, std::si
     }
     else
     {
-        std::memcpy(&y, reinterpret_cast<const output_t *>(&leaf) + off, sizeof(y));
+        std::memcpy(&y, reinterpret_cast<const OutputT *>(&leaf) + off, sizeof(y));
     }
 
     return y;
 }
 
-template <typename node_t, typename input_t, typename output_t>
-auto make_naked_leaf(input_t x, output_t y)
+template <typename NodeT,
+          typename InputT,
+          typename OutputT>
+auto make_naked_leaf(InputT x, OutputT y)
 {
-    using leaf_t = dpf::leaf_node_t<node_t, output_t>;
-    auto off = offset_within_block<output_t, node_t>(x);
+    using leaf_t = dpf::leaf_node_t<NodeT, OutputT>;
+    auto off = offset_within_block<OutputT, NodeT>(x);
     leaf_t Y{0};
-    if constexpr (std::is_same_v<output_t, dpf::bit>)
+    if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
-        Y = simde_mm_set_epi64x(uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64),
-                                uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64));
+        Y = simde_mm_set_epi64x(uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64),
+                                uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64));
     }
     else
     {
-        std::memcpy(reinterpret_cast<output_t *>(&Y) + off, &y, sizeof(y));
+        std::memcpy(reinterpret_cast<OutputT *>(&Y) + off, &y, sizeof(y));
     }
 
     return Y;
 }
 
-template <typename prg_t, std::size_t I, typename seed_t,
-    typename outputs_t>
-auto make_leaf_mask_inner(const seed_t & seed)
+template <typename ExteriorPRG,
+          std::size_t I,
+          typename ExteriorBlock,
+          typename OutputsT>
+auto make_leaf_mask_inner(const ExteriorBlock & seed)
 {
-    using node_t = typename prg_t::block_t;
-    using output_t = std::tuple_element_t<I, outputs_t>;
+    using node_t = typename ExteriorPRG::block_t;
+    using output_t = std::tuple_element_t<I, OutputsT>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_t = dpf::leaf_node_t<node_t, output_t>;
 
-    if constexpr(std::tuple_size_v<outputs_t> == 1
+    if constexpr(std::tuple_size_v<OutputsT> == 1
         && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
     {
         return seed;
@@ -176,68 +196,79 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     else
     {
         auto count = dpf::block_length_of_leaf_v<output_t, node_t>;
-        auto pos = dpf::block_offset_of_leaf_v<I, node_t, outputs_t>;
+        auto pos = dpf::block_offset_of_leaf_v<I, node_t, OutputsT>;
         leaf_t output;
-        prg_t::eval(seed, &output, count, pos);
+        ExteriorPRG::eval(seed, &output, count, pos);
 
         return output;
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
-template <typename prg_t, std::size_t I, typename seed_t,
-    typename... output_ts>
-auto make_leaf_mask(const seed_t & seed0, const seed_t & seed1, output_ts...)
+template <typename ExteriorPRG,
+          std::size_t I,
+          typename ExteriorBlock,
+          typename... OutputTs>
+auto make_leaf_mask(const ExteriorBlock & seed0, const ExteriorBlock & seed1, OutputTs...)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_t = typename prg_t::block_t;
-    using outputs_t = std::tuple<output_ts...>;
+    using node_t = typename ExteriorPRG::block_t;
+    using outputs_t = std::tuple<OutputTs...>;
     using output_t = std::tuple_element_t<I, outputs_t>;
 
-    auto mask0 = make_leaf_mask_inner<prg_t, I, node_t, outputs_t>(seed0);
-    auto mask1 = make_leaf_mask_inner<prg_t, I, node_t, outputs_t>(seed1);
+    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed0);
+    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed1);
 
     return dpf::subtract<output_t, node_t>(mask1, mask0);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
-template <typename prg_t, std::size_t I, typename input_t, typename seed_t,
-    typename... output_ts>
-auto make_leaf(input_t x, const seed_t & seed0, const seed_t & seed1, bool sign,
-    output_ts...ys)
+template <typename ExteriorPRG,
+          std::size_t I,
+          typename InputT,
+          typename ExteriorBlock,
+          typename... OutputTs>
+auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1, bool sign,
+    OutputTs...ys)
 {
     auto tuple = std::make_tuple(ys...);
-    using type = std::tuple_element_t<I, std::tuple<output_ts...>>;
+    using type = std::tuple_element_t<I, std::tuple<OutputTs...>>;
     auto Y = std::get<I>(tuple);
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_t = typename prg_t::block_t;
+    using node_t = typename ExteriorPRG::block_t;
     return sign ? dpf::subtract<type, node_t>(
                     make_naked_leaf<node_t>(x, Y),
-                    make_leaf_mask<prg_t, I>(seed0, seed1, ys...))
+                    make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...))
                 : dpf::subtract<type, node_t>(
-                    make_leaf_mask<prg_t, I>(seed0, seed1, ys...),
+                    make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...),
                     make_naked_leaf<node_t>(x, Y));
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
-template <typename prg_t, typename input_t, typename seed_t,
-    typename... output_ts, std::size_t... Is>
-auto make_leaves_impl(input_t x, const seed_t & seed0, const seed_t & seed1,
-    bool sign, std::index_sequence<Is...>, output_ts... ys)
+template <typename ExteriorPRG,
+          typename InputT,
+          typename ExteriorBlock,
+          typename... OutputTs,
+          std::size_t... Is>
+auto make_leaves_impl(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
+    bool sign, std::index_sequence<Is...>, OutputTs... ys)
 {
-    return std::make_tuple(make_leaf<prg_t, Is>(x, seed0, seed1, sign, ys...)...);
+    return std::make_tuple(make_leaf<ExteriorPRG, Is>(x, seed0, seed1, sign, ys...)...);
 }
 
-template <typename prg_t, typename input_t, typename seed_t, typename... output_ts,
-          typename Indices = std::make_index_sequence<sizeof...(output_ts)>>
-auto make_leaves(input_t x, const seed_t & seed0, const seed_t & seed1,
-    bool sign, output_ts... ys)
+template <typename ExteriorPRG,
+          typename InputT,
+          typename ExteriorBlock,
+          typename... OutputTs,
+          typename Indices = std::make_index_sequence<sizeof...(OutputTs)>>
+auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
+    bool sign, OutputTs... ys)
 {
-    using node_t = typename prg_t::block_t;
-    auto tup = make_leaves_impl<prg_t>(x, seed0, seed1, sign, Indices{}, ys...);
+    using node_t = typename ExteriorPRG::block_t;
+    auto tup = make_leaves_impl<ExteriorPRG>(x, seed0, seed1, sign, Indices{}, ys...);
     std::pair<decltype(tup), decltype(tup)> ret;
 
     // post-processing to secret-share any wildcard leaves
@@ -253,7 +284,7 @@ auto make_leaves(input_t x, const seed_t & seed0, const seed_t & seed1,
                     if constexpr (dpf::is_wildcard_v<auto_type>)
                     {
                         dpf::uniform_fill(arg1);
-                        arg2 = dpf::subtract<actual_type_t<auto_type>, node_t>(arg0, arg1);
+                        arg2 = dpf::subtract<concrete_type_t<auto_type>, node_t>(arg0, arg1);
                     }
                     else
                     {

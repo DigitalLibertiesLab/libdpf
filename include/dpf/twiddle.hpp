@@ -1,12 +1,10 @@
-/// @file twiddle.hpp
+/// @file dpf/twiddle.hpp
+/// @brief
+/// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief defines `enum dpf::bit` and associated helpers
-/// @version 1.0
-/// @date 2022-06-07
-///
-/// @copyright Copyright (c) 2019-2022 Ryan Henry and others
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_TWIDDLE_HPP__
 #define LIBDPF_INCLUDE_DPF_TWIDDLE_HPP__

@@ -1,9 +1,10 @@
 /// @file dpf/setbit_index_iterable.hpp
+/// @brief
+/// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @brief defines `bit_array` and associated helpers
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_SETBIT_INDEX_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SETBIT_INDEX_ITERABLE_HPP__
@@ -80,6 +81,10 @@ class setbit_index_iterable
         constexpr const_iterator(const_iterator &&) noexcept = default;
         HEDLEY_ALWAYS_INLINE
         constexpr const_iterator(const const_iterator &) noexcept = default;
+
+        ~const_iterator() noexcept = default;
+        const_iterator & operator=(const_iterator &&) noexcept = default;
+        const_iterator & operator=(const const_iterator &) = default;
 
         HEDLEY_CONST
         HEDLEY_NO_THROW
@@ -251,7 +256,7 @@ dpf::setbit_index_iterable indices_set_in(bit_array_base && b,
 
 template <class UnaryFunction>
 HEDLEY_ALWAYS_INLINE
-void for_each_index(const bit_array_base & arr, UnaryFunction f)
+void for_each_set_index(const bit_array_base & arr, UnaryFunction f)
 {
     for (auto i : indices_set_in(arr)) f(i);
 }
