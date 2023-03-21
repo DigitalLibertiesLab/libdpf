@@ -115,6 +115,7 @@ template <typename NodeT> struct add_t<simde_uint128, NodeT> : public std::plus<
 
 template <typename NodeT> struct add_t<float, NodeT> : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<double, NodeT> : public std::bit_xor<> {};
+template <typename T, typename NodeT> struct add_t<xor_wrapper<T>, NodeT> : public std::bit_xor<> {};
 
 namespace detail
 {
@@ -202,6 +203,7 @@ template <typename NodeT> struct subtract_t<simde_uint128, NodeT> : public std::
 
 template <typename NodeT> struct subtract_t<float, NodeT> : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<double, NodeT> : public std::bit_xor<> {};
+template <typename T, typename NodeT> struct subtract_t<xor_wrapper<T>, NodeT> : public std::bit_xor<> {};
 
 }  // namespace dpf
 

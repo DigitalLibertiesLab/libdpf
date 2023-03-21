@@ -53,7 +53,7 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & pat
 template <std::size_t I = 0,
           typename DpfKey,
           class PathMemoizer>
-inline auto eval_point_exterior(const DpfKey & dpf, const PathMemoizer & path)
+inline auto eval_point_exterior(const DpfKey & dpf, PathMemoizer & path)
 {
     assert_not_wildcard<I>(dpf);
 

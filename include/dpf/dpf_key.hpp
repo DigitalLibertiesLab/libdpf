@@ -150,7 +150,6 @@ auto make_dpf(InputT x, OutputT y, OutputTs... ys)
         dpf::set_lo_bit(RootSampler())
     };
 
-
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::array<interior_node_t, depth> correction_word;
