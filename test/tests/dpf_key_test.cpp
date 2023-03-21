@@ -123,19 +123,24 @@ TEST(DpfKeyTest, SimpleGen) {
     // 1: 546c7398 7aa0d795 5b9fd929 b102cc1a
     // 2: 6d9edc8a 6d54b590 97147f0c bfc700b5
 
-    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[1], 0xd68266081a585266);
-    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[0], 0x0e975243b4820e10);
-    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[1], std::get<0>(dpf1.get_mutable_exterior_cw())[1]);
-    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[0], std::get<0>(dpf1.get_mutable_exterior_cw())[0]);
+    EXPECT_EQ(dpf0.exterior_cw<0>()[1], 0xd68266081a585266);
+    EXPECT_EQ(dpf0.exterior_cw<0>()[0], 0x0e975243b4820e10);
+    EXPECT_EQ(dpf0.exterior_cw<0>()[1], dpf1.exterior_cw<0>()[1]);
+    EXPECT_EQ(dpf0.exterior_cw<0>()[0], dpf1.exterior_cw<0>()[0]);
 
-    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[1], 0xf4b79498656fa03f);
-    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[0], 0x67a02ad7b73d4c3a);
-    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[1], std::get<1>(dpf1.get_mutable_exterior_cw())[1]);
-    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[0], std::get<1>(dpf1.get_mutable_exterior_cw())[0]);
+    EXPECT_EQ(dpf0.exterior_cw<1>()[1], 0xf4b79498656fa03f);
+    EXPECT_EQ(dpf0.exterior_cw<1>()[0], 0x67a02ad7b73d4c3a);
+    EXPECT_EQ(dpf0.exterior_cw<1>()[1], dpf1.exterior_cw<1>()[1]);
+    EXPECT_EQ(dpf0.exterior_cw<1>()[0], dpf1.exterior_cw<1>()[0]);
 
-    simde__m128i wildcard = simde_mm_add_epi32(std::get<2>(dpf0.get_mutable_exterior_cw()), std::get<2>(dpf1.get_mutable_exterior_cw()));
+    simde__m128i wildcard = simde_mm_add_epi32(dpf0.exterior_cw<2>(), dpf1.exterior_cw<2>());
     EXPECT_EQ(wildcard[1], 0x6d9edc8a6d54b590);
     EXPECT_EQ(wildcard[0], 0x97147f0cbfc700b5);
-    EXPECT_EQ(dpf0.get_wildcard_mask().to_string(), "100");
-    EXPECT_EQ(dpf1.get_wildcard_mask().to_string(), "100");
+
+    EXPECT_EQ(dpf0.is_wildcard(0), false);
+    EXPECT_EQ(dpf0.is_wildcard(1), false);
+    EXPECT_EQ(dpf0.is_wildcard(2), true);
+    EXPECT_EQ(dpf1.is_wildcard(0), false);
+    EXPECT_EQ(dpf1.is_wildcard(1), false);
+    EXPECT_EQ(dpf1.is_wildcard(2), true);
 }
