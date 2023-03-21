@@ -131,6 +131,16 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace wildcards
 
+namespace utils
+{
+
+template <typename T>
+struct bitlength_of<wildcard_value<T>>
+  : public bitlength_of<T>
+{ };
+
+}  // namespace utils
+
 }  // namespace dpf
 
 #endif  // LIBDPF_INCLUDE_DPF_WILDCARD_HPP__

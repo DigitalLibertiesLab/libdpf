@@ -26,7 +26,7 @@ struct xor_wrapper
   public:
     using value_type = std::make_unsigned_t<T>;
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
-    // static constexpr auto bit_and = std::bit_and<value_type>{};
+    static constexpr auto bit_and = std::bit_and<value_type>{};
 
     /// @{
         
@@ -34,7 +34,7 @@ struct xor_wrapper
     constexpr xor_wrapper() = default;
 
     /// @brief Copy c'tor
-    constexpr explicit xor_wrapper(const xor_wrapper &) noexcept = default;
+    constexpr xor_wrapper(const xor_wrapper &) noexcept = default;
 
     /// @brief Move c'tor
     constexpr explicit xor_wrapper(xor_wrapper &&) noexcept = default;
@@ -133,7 +133,7 @@ HEDLEY_NO_THROW
 constexpr xor_wrapper<T> operator+(const xor_wrapper<T> & lhs,
     const xor_wrapper<T> & rhs) noexcept
 {
-    return xor_wrapper<T>::bit_xor(lhs.value, rhs.value);
+    return xor_wrapper<T>(xor_wrapper<T>::bit_xor(lhs.value, rhs.value));
 }
 
 template <typename T>
@@ -142,7 +142,7 @@ HEDLEY_NO_THROW
 constexpr xor_wrapper<T> operator-(const xor_wrapper<T> & lhs,
     const xor_wrapper<T> & rhs) noexcept
 {
-    return xor_wrapper<T>::bit_xor(lhs.value, rhs.value);
+    return xor_wrapper<T>(xor_wrapper<T>::bit_xor(lhs.value, rhs.value));
 }
 
 template <typename T>
@@ -151,7 +151,7 @@ HEDLEY_NO_THROW
 constexpr xor_wrapper<T> operator*(const xor_wrapper<T> & lhs,
     const xor_wrapper<T> & rhs) noexcept
 {
-    return xor_wrapper<T>::bit_and(lhs.value, rhs.value);
+    return xor_wrapper<T>(xor_wrapper<T>::bit_and(lhs.value, rhs.value));
 }
 
 using xint128_t = xor_wrapper<simde_uint128>;  ///< `xor_wrapper<simde_uint128>`
