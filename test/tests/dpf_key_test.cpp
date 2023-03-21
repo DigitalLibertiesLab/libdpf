@@ -20,8 +20,10 @@ simde__m128i fake_root_sampler()
 
 TEST(DpfKeyTest, SimpleGen) {
     uint8_t x = 0xAA;  // = 0b 1010 1010
-    uint32_t y = 0xAAAAAAAA;
-    auto [dpf0, dpf1] = dpf::make_dpf<dpf::prg::aes128, dpf::prg::aes128, &fake_root_sampler>(x, y);
+    uint32_t y0 = 0xAAAAAAAA;  // additive / subtractive share
+    dpf::xor_wrapper<uint32_t> y1 = dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555));  // xor share
+    dpf::wildcard_value<uint32_t> y2 = dpf::wildcard_value<uint32_t>();  // wildcard
+    auto [dpf0, dpf1] = dpf::make_dpf<dpf::prg::aes128, dpf::prg::aes128, &fake_root_sampler>(x, y0, y1, y2);
 
     // 128-bit representation of 0x4 with lowest bit unset
     EXPECT_EQ(dpf0.root[1], 0);
@@ -60,7 +62,6 @@ TEST(DpfKeyTest, SimpleGen) {
     EXPECT_EQ(dpf0.interior_cws[2][0], dpf1.interior_cws[2][0]);
     EXPECT_EQ(dpf0.correction_advice[2], 0b10);
     EXPECT_EQ(dpf0.correction_advice[2], dpf1.correction_advice[2]);
-
 
     // dpf0 after level 2:
     // 0x39adfa95d94a10fdff65a956019f0a6c
@@ -103,5 +104,38 @@ TEST(DpfKeyTest, SimpleGen) {
     // dpf1 after level 5:
     // 0x1afcd5c2a2a3f4b9be5b9564585df4f3
 
-    // TODO: Check exterior nodes and leaves
+    // Leaf layer
+
+    // dpf0 make leaf mask inner:
+    // 0: bb994bbd eba3cbb2 39b39032 e5f31930
+    // 1: d32db0c1 3da76455 961fadd7 4b5d7350
+    // 2: 5de4be73 fd14043f 19b22bba be0ff8f8
+    // dpf1 make leaf mask inner:
+    // 0: 921bb1c5 b0a6c8c2 484ae275 9a752740
+    // 1: 279a2459 0d9d913f f1bf8700 fc603f6a
+    // 2: cb839afd 6a68b9cf b0c6aac6 7dd6f9ad
+    // naked masks:
+    // 0: 00000000 aaaaaaaa 00000000 00000000
+    // 1: 00000000 55555555 00000000 00000000
+    // 2: 00000000 00000000 00000000 00000000
+    // correction words:
+    // 0: d6826608 1a585266 0e975243 b4820e10
+    // 1: 546c7398 7aa0d795 5b9fd929 b102cc1a
+    // 2: 6d9edc8a 6d54b590 97147f0c bfc700b5
+
+    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[1], 0xd68266081a585266);
+    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[0], 0x0e975243b4820e10);
+    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[1], std::get<0>(dpf1.get_mutable_exterior_cw())[1]);
+    EXPECT_EQ(std::get<0>(dpf0.get_mutable_exterior_cw())[0], std::get<0>(dpf1.get_mutable_exterior_cw())[0]);
+
+    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[1], 0xf4b79498656fa03f);
+    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[0], 0x67a02ad7b73d4c3a);
+    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[1], std::get<1>(dpf1.get_mutable_exterior_cw())[1]);
+    EXPECT_EQ(std::get<1>(dpf0.get_mutable_exterior_cw())[0], std::get<1>(dpf1.get_mutable_exterior_cw())[0]);
+
+    simde__m128i wildcard = simde_mm_add_epi32(std::get<2>(dpf0.get_mutable_exterior_cw()), std::get<2>(dpf1.get_mutable_exterior_cw()));
+    EXPECT_EQ(wildcard[1], 0x6d9edc8a6d54b590);
+    EXPECT_EQ(wildcard[0], 0x97147f0cbfc700b5);
+    EXPECT_EQ(dpf0.get_wildcard_mask().to_string(), "100");
+    EXPECT_EQ(dpf1.get_wildcard_mask().to_string(), "100");
 }
