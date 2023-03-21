@@ -161,6 +161,17 @@ using xint16_t = xor_wrapper<psnip_uint16_t>;  ///< `xor_wrapper<psnip_uint16_t>
 using xint8_t = xor_wrapper<psnip_uint8_t>;    ///< `xor_wrapper<psnip_uint8_t>`
 using xchar_t = xor_wrapper<unsigned char>;    ///< `xor_wrapper<unsigned char>`
 
+namespace utils
+{
+
+/// @brief specializes `dpf::utils::bitlength_of` for `dpf::xor_wrapper`
+template <typename T>
+struct bitlength_of<xor_wrapper<T>>
+  : public bitlength_of<T>
+{ };
+
+}  // namespace utils
+
 }  // namespace dpf
 
 #endif  // LIBDPF_INCLUDE_DPF_XOR_WRAPPER_HPP__

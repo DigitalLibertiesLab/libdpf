@@ -134,6 +134,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 namespace utils
 {
 
+/// @brief specializes `dpf::utils::bitlength_of` for `dpf::wildcard_value`
 template <typename T>
 struct bitlength_of<wildcard_value<T>>
   : public bitlength_of<T>

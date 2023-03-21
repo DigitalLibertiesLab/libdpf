@@ -20,8 +20,6 @@
 #include "portable-snippets/exact-int/exact-int.h"
 #include "portable-snippets/builtin/builtin.h"
 
-#include "dpf/xor_wrapper.hpp"
-
 #define DPF_UNROLL_LOOPS __attribute__((optimize("O3", "unroll-loops")))
 #define DPF_ALWAYS_VECTORIZE (#pragma GCC ivdep)
 
@@ -123,17 +121,6 @@ struct bitlength_of
   : public std::integral_constant<std::size_t,
         std::numeric_limits<make_unsigned_t<T>>::digits>
 { };
-
-template <typename T>
-struct bitlength_of<xor_wrapper<T>>
-  : public std::integral_constant<std::size_t,
-        std::numeric_limits<make_unsigned_t<T>>::digits>
-{ };
-
-// template <typename T>
-// struct bitlength_of<wildcard_value<T>>
-//   : public bitlength_of<T>
-// { };
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

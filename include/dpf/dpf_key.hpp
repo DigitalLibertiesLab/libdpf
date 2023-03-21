@@ -120,16 +120,6 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
-
-    const auto get_wildcard_mask() const
-    {
-        return wildcard_mask;
-    }
-
-    const auto get_mutable_exterior_cw() const
-    {
-        return mutable_exterior_cw;
-    }
 };  // struct dpf_key
 
 template <typename T>
