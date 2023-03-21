@@ -17,7 +17,6 @@ namespace dpf
 {
 
 template <typename T>
-HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
 auto & uniform_fill(T & buf) noexcept  // NOLINT

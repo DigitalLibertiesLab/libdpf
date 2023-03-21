@@ -155,6 +155,7 @@ static OutputT extract_leaf(const leaf_node_t<NodeT, OutputT> & leaf, std::size_
     return y;
 }
 
+// Inserts y at correct place (based on x) within a (otherwise 0) NodeT
 template <typename NodeT,
           typename InputT,
           typename OutputT>
@@ -272,29 +273,32 @@ auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & se
     std::pair<decltype(tup), decltype(tup)> ret;
 
     // post-processing to secret-share any wildcard leaves
-    std::apply([&ret](auto &&... args0)
+    std::apply([&ret, &tup](auto &&... types)
     {
-        std::apply([&ret, &args0...](auto &&... args1)
+        std::apply([&ret, &types...](auto &&... args0)
         {
-            std::apply([&ret, &args0..., &args1...](auto &&... args2)
+            std::apply([&ret, &types..., &args0...](auto &&... args1)
             {
-                ([](auto & arg0, auto & arg1, auto & arg2)
+                std::apply([&types..., &args0..., &args1...](auto &&... args2)
                 {
-                    using auto_type = typename std::remove_reference_t<decltype(arg0)>;
-                    if constexpr (dpf::is_wildcard_v<auto_type>)
+                    ([](auto & type, auto & arg0, auto & arg1, auto & arg2)
                     {
-                        dpf::uniform_fill(arg1);
-                        arg2 = dpf::subtract<concrete_type_t<auto_type>, node_t>(arg0, arg1);
-                    }
-                    else
-                    {
-                        arg1 = arg0;
-                        arg2 = arg0;
-                    }
-                }(args0, args1, args2), ...);
-            }, ret.second);
-        }, ret.first);
-    }, tup);
+                        using auto_type = typename std::remove_reference_t<decltype(type)>;
+                        if constexpr (dpf::is_wildcard_v<auto_type>)
+                        {
+                            dpf::uniform_fill(arg1);
+                            arg2 = dpf::subtract<concrete_type_t<auto_type>, node_t>(arg0, arg1);
+                        }
+                        else
+                        {
+                            arg1 = arg0;
+                            arg2 = arg0;
+                        }
+                    }(types, args0, args1, args2), ...);
+                }, ret.second);
+            }, ret.first);
+        }, tup);
+    }, std::make_tuple(ys...));
 
     return ret;
 }
