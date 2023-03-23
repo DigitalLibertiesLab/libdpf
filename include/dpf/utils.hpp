@@ -109,7 +109,7 @@ static constexpr IntegralT get_to_node(InputT to)
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_t,
           typename IntegralT = typename DpfKey::integral_type>
-static constexpr IntegralT get_nodes_in_interval(InputT from, InputT to)
+static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
 {
     return get_to_node<DpfKey, InputT, IntegralT>(to) - get_from_node<DpfKey, InputT, IntegralT>(from);
 }

@@ -30,13 +30,15 @@ namespace internal
 {
 
 template <typename DpfKey,
-          class IntervalMemoizer>
+          class IntervalMemoizer,
+          typename IntegralT = typename DpfKey::integral_type>
 DPF_UNROLL_LOOPS
-inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, std::size_t to_node,
+inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
+    using integral_type = typename DpfKey::integral_type;
     using node_type = typename DpfKey::interior_node_t;
 
     // level_index represents the current level being built
@@ -75,9 +77,10 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
 template <std::size_t I = 0,
           typename DpfKey,
           class OutputBuffer,
-          class IntervalMemoizer>
+          class IntervalMemoizer,
+          typename IntegralT = typename DpfKey::integral_type>
 DPF_UNROLL_LOOPS
-inline auto eval_interval_exterior(const DpfKey & dpf, std::size_t from_node, std::size_t to_node,
+inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     OutputBuffer & outbuf, IntervalMemoizer & memoizer)
 {
     assert_not_wildcard<I>(dpf);
@@ -86,7 +89,7 @@ inline auto eval_interval_exterior(const DpfKey & dpf, std::size_t from_node, st
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
     using exterior_node_type = typename DpfKey::exterior_node_t;
 
-    auto nodes_in_interval = to_node - from_node;
+    std::size_t nodes_in_interval = to_node - from_node;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -111,7 +114,7 @@ template <std::size_t I = 0,
           typename InputT>
 DPF_UNROLL_LOOPS
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
-    OutputBuffer & outbuf, IntervalMemoizer & memoizer)
+    OutputBuffer && outbuf, IntervalMemoizer & memoizer)
 {
     assert_not_wildcard<I>(dpf);
 
@@ -122,7 +125,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     integral_type from_node = utils::get_from_node<dpf_type, input_type, integral_type>(from),
         to_node = utils::get_to_node<dpf_type, input_type, integral_type>(to);
-    integral_type nodes_in_interval = to_node - from_node;
+    std::size_t nodes_in_interval = to_node - from_node;
 
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
@@ -135,7 +138,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename InputT,
           typename OutputBuffer>
-auto eval_interval(const DpfKey & dpf, InputT from, InputT to, OutputBuffer & outbuf)
+auto eval_interval(const DpfKey & dpf, InputT from, InputT to, OutputBuffer && outbuf)
 {
     auto memoizer = make_basic_interval_memoizer(dpf, from, to);
     return eval_interval<I>(dpf, from, to, outbuf, memoizer);
@@ -156,7 +159,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           class OutputBuffer,
           class IntervalMemoizer>
-auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf, IntervalMemoizer & memoizer)
+auto eval_full(const DpfKey & dpf, OutputBuffer && outbuf, IntervalMemoizer & memoizer)
 {
     using input_type = typename DpfKey::input_type;
     return eval_interval<I>(dpf, input_type(0), std::numeric_limits<input_type>::max(), outbuf, memoizer);
@@ -165,7 +168,7 @@ auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf, IntervalMemoizer & mem
 template <std::size_t I = 0,
           typename DpfKey,
           class OutputBuffer>
-auto eval_full(const DpfKey & dpf, OutputBuffer & outbuf)
+auto eval_full(const DpfKey & dpf, OutputBuffer && outbuf)
 {
     using input_type = typename DpfKey::input_type;
     auto memoizer = make_basic_interval_memoizer(dpf, input_type(0), std::numeric_limits<input_type>::max());

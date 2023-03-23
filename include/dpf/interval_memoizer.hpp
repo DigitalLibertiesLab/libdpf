@@ -20,13 +20,14 @@ struct interval_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
+    using integral_type = typename DpfKey::integral_type;
     using node_type = typename DpfKey::interior_node_t;
 
     // level 0 should access the root
     // level goes up to (and including) depth
     virtual node_type * operator[](std::size_t) const noexcept = 0;
 
-    virtual std::size_t assign_interval(const dpf_type & dpf, std::size_t new_from, std::size_t new_to)
+    virtual std::size_t assign_interval(const dpf_type & dpf, integral_type new_from, integral_type new_to)
     {
         static constexpr auto complement_of = std::bit_not{};
         if (dpf_.has_value() == false
@@ -59,7 +60,7 @@ struct interval_memoizer_base
         return get_nodes_at_level(level, from_.value_or(0), to_.value_or(0));
     }
 
-    static std::size_t get_nodes_at_level(std::size_t level, std::size_t from_node, std::size_t to_node)
+    static std::size_t get_nodes_at_level(std::size_t level, integral_type from_node, integral_type to_node)
     {
         // Algorithm explanation:
         //   Input:
@@ -100,8 +101,8 @@ struct interval_memoizer_base
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
-    std::optional<std::size_t> from_;
-    std::optional<std::size_t> to_;
+    std::optional<integral_type> from_;
+    std::optional<integral_type> to_;
     std::size_t level_index;
 };
 
@@ -214,7 +215,7 @@ auto make_interval_memoizer(InputT from, InputT to)
         throw std::domain_error("from cannot be greater than to");
     }
 
-    integral_type nodes_in_interval = utils::get_nodes_in_interval<dpf_type, input_type, integral_type>(from, to);
+    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type, input_type, integral_type>(from, to);
 
     if (nodes_in_interval*sizeof(typename dpf_type::interior_node_t) < 64)
     {
