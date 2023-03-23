@@ -38,7 +38,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
 {
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using integral_type = typename DpfKey::integral_type;
+    // using integral_type = typename DpfKey::integral_type;
     using node_type = typename DpfKey::interior_node_t;
 
     // level_index represents the current level being built
