@@ -90,7 +90,7 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
             {"root", dpf.root},
             {"correction_words", dpf.correction_words},
             {"correction_advice", dpf.correction_advice},
-            {"leaves", dpf.mutable_exterior_cw},
+            {"leaves", dpf.exterior_cws()},
             {"wildcards", dpf.wildcard_bitmask()}
         };
     }

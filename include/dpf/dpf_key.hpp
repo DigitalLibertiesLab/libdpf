@@ -69,10 +69,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         correction_advice{correction_advice_}
     { }
 
+  private:
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
     leaf_tuple mutable_exterior_cw;
-  private:
-
   public:
     const interior_node root;
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -97,6 +96,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     const auto & exterior_cw() const
     {
         return std::get<I>(mutable_exterior_cw);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    const auto & exterior_cws() const
+    {
+        return mutable_exterior_cw;
     }
 
     HEDLEY_NO_THROW
