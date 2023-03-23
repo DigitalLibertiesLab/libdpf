@@ -44,7 +44,7 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & pat
         level_index <= dpf.depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
-        auto cw = set_lo_bit(dpf.interior_cws[level_index-1],
+        auto cw = set_lo_bit(dpf.correction_words[level_index-1],
             dpf.correction_advice[level_index-1]>>bit);
         path[level_index] = dpf_type::traverse_interior(path[level_index-1], cw, bit);
     }

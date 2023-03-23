@@ -49,7 +49,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
 {
     auto path = make_basic_path_memoizer(dpf);
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
-    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     std::size_t i = 0;
     for (auto it = begin; it != end; ++it)
@@ -133,8 +133,8 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
     for (; level_index <= to_level; level_index = memoizer.advance_level())
     {
         const node_type cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
         auto prevbuf = memoizer[level_index-1];
@@ -174,7 +174,7 @@ inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequenc
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
     auto buf = memoizer[dpf.depth];
@@ -206,7 +206,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
     using node_type = typename DpfKey::exterior_node;
-    using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
+    using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto buf = memoizer[dpf.depth];
 
     leaf_node_type node;

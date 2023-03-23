@@ -50,8 +50,8 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
     {
         std::size_t i = !!(mask & from_node), j = i;
         const node_type cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
         if (i == 1)

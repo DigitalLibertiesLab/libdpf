@@ -42,7 +42,7 @@ struct dpf_key
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_nodes_tuple = dpf::leaf_tuple_t<exterior_node,
+    using leaf_tuple = dpf::leaf_tuple_t<exterior_node,
         OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t depth = utils::bitlength_of_v<input_type>
@@ -60,24 +60,24 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     constexpr dpf_key(interior_node root_,
                       const std::array<interior_node, depth> & interior_cws_,
                       const std::array<uint8_t, depth> & correction_advice_,
-                      const leaf_nodes_tuple & exterior_cw_,
+                      const leaf_tuple & exterior_cw_,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
         root{root_},
-        interior_cws{interior_cws_},
+        correction_words{interior_cws_},
         correction_advice{correction_advice_}
     { }
 
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
-    leaf_nodes_tuple mutable_exterior_cw;
+    leaf_tuple mutable_exterior_cw;
   private:
 
   public:
     const interior_node root;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    const std::array<interior_node, depth> interior_cws;
+    const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
