@@ -14,14 +14,14 @@ namespace dpf
 {
 
 template <typename DpfKey>
-struct alignas(alignof(typename DpfKey::interior_node_t))
+struct alignas(alignof(typename DpfKey::interior_node))
 basic_path_memoizer final
-    : public std::array<typename DpfKey::interior_node_t, DpfKey::depth+1>
+    : public std::array<typename DpfKey::interior_node, DpfKey::depth+1>
 {
   public:
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
     static constexpr auto depth = DpfKey::depth;
 
     basic_path_memoizer()
@@ -59,8 +59,8 @@ struct nonmemoizing_path_memoizer final
 {
   public:
     using dpf_type = DpfKey;
-    using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using input_type = typename dpf_type::input_type;
+    using node_type = typename dpf_type::interior_node;
 
     nonmemoizing_path_memoizer()
       : dpf_{std::nullopt} { }
@@ -75,7 +75,11 @@ struct nonmemoizing_path_memoizer final
     HEDLEY_CONST
     std::size_t assign_x(const dpf_type & dpf, input_type) noexcept
     {
-        if (std::addressof(dpf_->get()) != std::addressof(dpf)) v = dpf.root;
+        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
+        {
+            dpf_ = dpf;
+            v = dpf.root;
+        }
         return 1;
     }
 
