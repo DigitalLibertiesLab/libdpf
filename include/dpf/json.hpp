@@ -19,6 +19,38 @@
 namespace nlohmann
 {
 
+template <>
+struct adl_serializer<simde__m128i>
+{
+    static void from_json(const nlohmann::json & j, simde__m128i & a)
+    {
+        std::array<psnip_uint64_t, 2> A;
+        j.get_to(A);
+        a = simde_mm_set_epi64x(A[1], A[0]);
+    }
+
+    static void to_json(nlohmann::json & j, const simde__m128i & a)
+    {
+        j = nlohmann::json{a[0], a[1]};
+    }
+};
+
+template <>
+struct adl_serializer<simde__m256i>
+{
+    static void from_json(const nlohmann::json & j, simde__m256i & a)
+    {
+        std::array<psnip_uint64_t, 4> A;
+        j.get_to(A);
+        a = simde_mm256_set_epi64x(A[3], A[2], A[1], A[0]);
+    }
+
+    static void to_json(nlohmann::json & j, const simde__m256i & a)
+    {
+        j = nlohmann::json{a[0], a[1], a[2], a[3]};
+    }
+};
+
 template <typename InteriorPRG,
           typename ExteriorPRG,
           typename InputT,
@@ -27,14 +59,41 @@ template <typename InteriorPRG,
 struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>>
 {
     using dpf_type = dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>;
+    using interior_node = typename dpf_type::interior_node;
+    using leaf_tuple = typename dpf_type::leaf_tuple;
 
-    // the "normal" method for serializing involves overloading `to_json` and `from_json` for the generic specialization of 
-    // adl_serializer to use. This doesn't work for non-default constructible types.
-    // But for arbitrary movable types, the docs say you can just specialize adl_serializer
-    // like the sigs below [https://json.nlohmann.me/features/arbitrary_types/#how-do-i-convert-third-party-types]
-    static dpf_type from_json(const nlohmann::json & j);
+    static dpf_type from_json(const nlohmann::json & j)
+    {
+        interior_node root;
+        j.at("root").get_to(root);
+        std::array<interior_node, dpf_type::depth> correction_words;
+        j.at("correction_words").get_to(correction_words);
+        std::array<uint8_t, dpf_type::depth> correction_advice;
+        j.at("correction_advice").get_to(correction_advice);
+        leaf_tuple leaves;
+        j.at("leaves").get_to(leaves);
+        std::string wildcard_mask_str;
+        j.at("wildcards").get_to(wildcard_mask_str);
 
-    static void to_json(nlohmann::json & j, const dpf_type & dpf);
+        return dpf_type{
+            root,
+            correction_words,
+            correction_advice,
+            leaves,
+            std::bitset<std::tuple_size_v<leaf_tuple>>(wildcard_mask_str)
+        };
+    }
+
+    static void to_json(nlohmann::json & j, const dpf_type & dpf)
+    {
+        j = nlohmann::json{
+            {"root", dpf.root},
+            {"correction_words", dpf.correction_words},
+            {"correction_advice", dpf.correction_advice},
+            {"leaves", dpf.mutable_exterior_cw},
+            {"wildcards", dpf.wildcard_bitmask()}
+        };
+    }
 };
 
 }  // namespace nlohmann
@@ -46,10 +105,18 @@ namespace json
 {
 
 template <typename DpfKey>
-static void to_json(nlohmann::json & j, const DpfKey & dpf);
+static std::string to_json(const DpfKey & dpf)
+{
+    nlohmann::json json = dpf;
+    return json.dump();
+}
 
 template <typename DpfType>
-static auto from_json(const nlohmann::json & j);
+static auto from_json(std::string json_string)
+{
+    nlohmann::json json = nlohmann::json::parse(json_string);
+    return static_cast<DpfType>(json);
+}
 
 }  // namespace dpf::json
 
