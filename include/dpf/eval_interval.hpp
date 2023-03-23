@@ -117,15 +117,17 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     using dpf_type = DpfKey;
     using input_type = InputT;
+    using integral_type = typename DpfKey::integral_type;
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
-    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
-        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
+    integral_type from_node = utils::get_from_node<dpf_type, input_type, integral_type>(from),
+        to_node = utils::get_to_node<dpf_type, input_type, integral_type>(to);
+    integral_type nodes_in_interval = to_node - from_node;
 
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<output_type>(utils::data(outbuf), (to_node-from_node)*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<output_type>(utils::data(outbuf), (nodes_in_interval)*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 

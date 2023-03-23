@@ -88,6 +88,32 @@ static constexpr T quotient_floor(T numerator, T denominator)
     return numerator / denominator;
 }
 
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_type,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_from_node(InputT from)
+{
+    return quotient_floor(static_cast<IntegralT>(from),
+        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
+}
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_t,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_to_node(InputT to)
+{
+    return quotient_ceiling(static_cast<IntegralT>(to+1),
+        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
+}
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_t,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_nodes_in_interval(InputT from, InputT to)
+{
+    return get_to_node<DpfKey, InputT, IntegralT>(to) - get_from_node<DpfKey, InputT, IntegralT>(from);
+}
+
 template <typename T>
 struct make_unsigned : public std::make_unsigned<T> { };
 

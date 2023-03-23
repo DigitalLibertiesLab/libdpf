@@ -207,15 +207,14 @@ auto make_interval_memoizer(InputT from, InputT to)
 {
     using dpf_type = DpfKey;
     using input_type = InputT;
+    using integral_type = typename DpfKey::integral_type;
 
     if (from > to)
     {
         throw std::domain_error("from cannot be greater than to");
     }
 
-    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
-        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
-    auto nodes_in_interval = to_node - from_node;
+    integral_type nodes_in_interval = utils::get_nodes_in_interval<dpf_type, input_type, integral_type>(from, to);
 
     if (nodes_in_interval*sizeof(typename dpf_type::interior_node_t) < 64)
     {
