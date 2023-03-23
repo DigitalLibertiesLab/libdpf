@@ -306,21 +306,21 @@ template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node>, InputT>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_double_space_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node>, InputT>(recipe);
 }
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type>
 auto make_full_tree_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
-    return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node_t>, InputT>(recipe);
+    return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey, InputT, typename DpfKey::interior_node>, InputT>(recipe);
 }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

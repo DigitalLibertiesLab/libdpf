@@ -37,7 +37,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, std::size_t from_node, st
 {
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
 
     // level_index represents the current level being built
     // level_index = 0 => root
@@ -83,8 +83,8 @@ inline auto eval_interval_exterior(const DpfKey & dpf, std::size_t from_node, st
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    using exterior_node_type = typename DpfKey::exterior_node_t;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
+    using exterior_node_type = typename DpfKey::exterior_node;
 
     auto nodes_in_interval = to_node - from_node;
 
@@ -117,7 +117,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     using dpf_type = DpfKey;
     using input_type = InputT;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
 
     std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
         to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);

@@ -82,7 +82,7 @@ template <std::size_t I = 0,
           class PathMemoizer>
 auto eval_point(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
     return make_dpf_output<output_type>(internal::eval_point<I>(dpf, x, path), x);
 }
 

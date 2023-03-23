@@ -48,8 +48,8 @@ DPF_UNROLL_LOOPS
 auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
     auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     std::size_t i = 0;
     for (auto it = begin; it != end; ++it)
@@ -68,7 +68,7 @@ DPF_UNROLL_LOOPS
 auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
     auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
     std::size_t i = 0;
     for (auto it = begin; it != end; ++it)
@@ -121,7 +121,7 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
     SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
 
     // level_index represents the current level being built
     // level_index = 0 => root
@@ -174,7 +174,7 @@ inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequenc
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
     auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
     auto buf = memoizer[dpf.depth];
@@ -199,14 +199,14 @@ inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequenc
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
     auto cw = dpf.template exterior_cw<I>();
-    using node_type = typename DpfKey::exterior_node_t;
-    using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    using node_type = typename DpfKey::exterior_node;
+    using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_tuple>;
     auto buf = memoizer[dpf.depth];
 
     leaf_node_type node;
@@ -238,7 +238,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
 
     internal::eval_sequence_interior(dpf, recipe, memoizer);
 

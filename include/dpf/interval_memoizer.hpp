@@ -20,7 +20,7 @@ struct interval_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
 
     // level 0 should access the root
     // level goes up to (and including) depth
@@ -106,14 +106,14 @@ struct interval_memoizer_base
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
     using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
     using parent::depth;
     using parent::output_length;
@@ -148,14 +148,14 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
     using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
     using parent::depth;
     using parent::output_length;
@@ -217,7 +217,7 @@ auto make_interval_memoizer(InputT from, InputT to)
         to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
     auto nodes_in_interval = to_node - from_node;
 
-    if (nodes_in_interval*sizeof(typename dpf_type::interior_node_t) < 64)
+    if (nodes_in_interval*sizeof(typename dpf_type::interior_node) < 64)
     {
         throw std::out_of_range("intervals must span at least 64 bytes");
     }

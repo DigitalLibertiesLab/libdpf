@@ -215,11 +215,11 @@ auto make_leaf_mask(const ExteriorBlock & seed0, const ExteriorBlock & seed1, Ou
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_t = typename ExteriorPRG::block_t;
-    using outputs_t = std::tuple<OutputTs...>;
-    using output_t = std::tuple_element_t<I, outputs_t>;
+    using outputs_tuple = std::tuple<OutputTs...>;
+    using output_t = std::tuple_element_t<I, outputs_tuple>;
 
-    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed0);
-    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed1);
+    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_tuple>(seed0);
+    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_tuple>(seed1);
 
     return dpf::subtract<output_t, node_t>(mask1, mask0);
 HEDLEY_PRAGMA(GCC diagnostic pop)
