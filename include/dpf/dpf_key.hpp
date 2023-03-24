@@ -73,6 +73,14 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
     leaf_nodes_t mutable_exterior_cw;
 
+    template <std::size_t I,
+              typename LeafT = std::tuple_element_t<I, leaf_nodes_t>>
+    auto __make_concrete(const LeafT & cw)
+    {
+        std::get<I>(mutable_exterior_cw) = cw;
+        wildcard_mask.reset(I);
+    }
+
   public:
     const interior_node_t root;
 HEDLEY_PRAGMA(GCC diagnostic push)
