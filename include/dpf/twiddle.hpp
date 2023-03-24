@@ -55,10 +55,25 @@ simde__m128i unset_lo_bit(simde__m128i a)
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
-simde__m128i get_if_lo_bit(simde__m128i a, simde__m128i b)
+auto get_if_lo_bit(simde__m128i a, simde__m128i b)
 {
     return simde_mm_and_si128(a, dpf::mask_from_lo_bit(b));
 }
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+template <std::size_t N>
+HEDLEY_NO_THROW
+HEDLEY_ALWAYS_INLINE
+HEDLEY_CONST
+auto get_if_lo_bit(std::array<simde__m128i, N> a, simde__m128i b)
+{
+    auto mask = dpf::mask_from_lo_bit(b);
+    std::transform(std::begin(a), std::end(a), std::begin(a), [mask](simde__m128i & a){return simde_mm_and_si128(a, mask);});
+    return a;
+}
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE

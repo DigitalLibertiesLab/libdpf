@@ -89,6 +89,27 @@ struct add2x64_t
     }
 };
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+struct add_array_t
+{
+    template <typename T, std::size_t N>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
+    {
+        std::array<simde__m128i, N> c;
+        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
+            [](const T & a, const T & b)
+            {
+                return std::bit_xor<>{}(a, b);
+            });
+        return c;
+    }
+};
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
 }  // namespace detail
 
 template <typename NodeT, typename T>
@@ -176,6 +197,24 @@ struct sub2x64_t
         return simde_mm_sub_epi64(a, b);
     }
 };
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+struct sub_array_t
+{
+    template <typename T, std::size_t N>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
+    {
+        std::array<T, N> c;
+        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
+            [](const T & a, const T & b) { return std::bit_xor<>{}(a, b); });
+        return c;
+    }
+};
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace detail
 

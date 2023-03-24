@@ -122,6 +122,9 @@ struct bitlength_of
         std::numeric_limits<make_unsigned_t<T>>::digits>
 { };
 
+template <typename T>
+static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
+
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <>
@@ -143,10 +146,11 @@ struct bitlength_of<simde__m256i>
 // template <>
 // struct bitlength_of<simde__m512i>
 //   : public std::integral_constant<std::size_t, 512> { };
-HEDLEY_PRAGMA(GCC diagnostic pop)
 
-template <typename T>
-static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
+template <typename T, std::size_t N>
+struct bitlength_of<std::array<T, N>>
+  : public std::integral_constant<std::size_t, bitlength_of_v<T> * N> { };
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <typename T>
 struct msb_of

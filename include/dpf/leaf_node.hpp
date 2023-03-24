@@ -32,7 +32,7 @@ namespace dpf
 template <typename OutputT,
           typename NodeT>
 using is_packable = std::bool_constant<
-    std::not_equal_to<>{}(utils::bitlength_of_v<OutputT>, utils::bitlength_of_v<NodeT>) &&
+    std::less<>{}(utils::bitlength_of_v<OutputT>, utils::bitlength_of_v<NodeT>) &&
     std::equal_to<>{}(utils::bitlength_of_v<NodeT> % utils::bitlength_of_v<OutputT>, 0)>;
 
 template <typename OutputT,
@@ -58,8 +58,8 @@ static constexpr std::size_t lg_outputs_per_leaf_v
 
 template <typename OutputT,
           typename NodeT>
-struct block_length_of_leaf : std::integral_constant<std::size_t,
-                                !is_packable_v<OutputT, NodeT> ? 1 :
+struct block_length_of_leaf
+    : std::integral_constant<std::size_t, is_packable_v<OutputT, NodeT> ? 1 :
                                     utils::quotient_ceiling(
                                         utils::bitlength_of_v<OutputT>,
                                         utils::bitlength_of_v<NodeT>)
@@ -123,7 +123,7 @@ using leaf_node_t = typename leaf_node<NodeT, OutputT>::type;
 
 template <typename NodeT,
           typename OutputT,
-          typename... OutputTs>
+          typename ...OutputTs>
 struct leaf_tuple
 {
     using type = std::tuple<leaf_node_t<NodeT, OutputT>,
@@ -131,7 +131,7 @@ struct leaf_tuple
 };
 template <typename NodeT,
           typename OutputT,
-          typename... OutputTs>
+          typename ...OutputTs>
 using leaf_tuple_t = typename leaf_tuple<NodeT, OutputT, OutputTs...>::type;
 
 template <typename NodeT,
@@ -161,11 +161,12 @@ template <typename NodeT,
           typename OutputT>
 auto make_naked_leaf(InputT x, OutputT y)
 {
-    using leaf_t = dpf::leaf_node_t<NodeT, OutputT>;
+    using leaf_type = dpf::leaf_node_t<NodeT, OutputT>;
     auto off = offset_within_block<OutputT, NodeT>(x);
-    leaf_t Y{0};
+    leaf_type Y{0};
     if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
+        // todo(ryan): this is hard coded for 128 bits!
         Y = simde_mm_set_epi64x(uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64),
                                 uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64));
     }
@@ -177,29 +178,34 @@ auto make_naked_leaf(InputT x, OutputT y)
     return Y;
 }
 
+// TODO(ryan): This will currently fail for cases where ExteriorBlock != InteriorBlock.
+// TODO(ryan): It needs to take mismatched blocks and invoke a template function to do the right thing
+// TODO(ryan): For m128 -> m256, paddcaning w/ 128 zeros will suffice
+// TODO(ryan): For m256 -> m128, we can just truncate.
+// This also applies to other functions that have ExteriorBlock as a template param
 template <typename ExteriorPRG,
           std::size_t I,
           typename ExteriorBlock,
           typename OutputsT>
 auto make_leaf_mask_inner(const ExteriorBlock & seed)
 {
-    using node_t = typename ExteriorPRG::block_t;
-    using output_t = std::tuple_element_t<I, OutputsT>;
+    using node_type = typename ExteriorPRG::block_t;
+    using output_type = std::tuple_element_t<I, OutputsT>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_t = dpf::leaf_node_t<node_t, output_t>;
+    using leaf_type = dpf::leaf_node_t<node_type, output_type>;
 
     if constexpr(std::tuple_size_v<OutputsT> == 1
-        && dpf::block_length_of_leaf_v<output_t, node_t> == 1)
+        && dpf::block_length_of_leaf_v<output_type, node_type> == 1)
     {
         return seed;
     }
     else
     {
-        auto count = dpf::block_length_of_leaf_v<output_t, node_t>;
-        auto pos = dpf::block_offset_of_leaf_v<I, node_t, OutputsT>;
-        leaf_t output;
-        ExteriorPRG::eval(seed, &output, count, pos);
+        auto count = dpf::block_length_of_leaf_v<output_type, node_type>;
+        auto pos = dpf::block_offset_of_leaf_v<I, node_type, OutputsT>;
+        leaf_type output;
+        ExteriorPRG::eval(seed, reinterpret_cast<node_type *>(&output), count, pos);
 
         return output;
     }
@@ -209,19 +215,19 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <typename ExteriorPRG,
           std::size_t I,
           typename ExteriorBlock,
-          typename... OutputTs>
+          typename ...OutputTs>
 auto make_leaf_mask(const ExteriorBlock & seed0, const ExteriorBlock & seed1, OutputTs...)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_t = typename ExteriorPRG::block_t;
-    using outputs_t = std::tuple<OutputTs...>;
-    using output_t = std::tuple_element_t<I, outputs_t>;
+    using node_type = typename ExteriorPRG::block_t;
+    using outputs_tuple = std::tuple<OutputTs...>;
+    using output_type = std::tuple_element_t<I, outputs_tuple>;
 
-    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed0);
-    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_t, outputs_t>(seed1);
+    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_type, outputs_tuple>(seed0);
+    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_type, outputs_tuple>(seed1);
 
-    return dpf::subtract<output_t, node_t>(mask1, mask0);
+    return dpf::subtract<output_type, node_type>(mask1, mask0);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
@@ -229,9 +235,9 @@ template <typename ExteriorPRG,
           std::size_t I,
           typename InputT,
           typename ExteriorBlock,
-          typename... OutputTs>
+          typename ...OutputTs>
 auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1, bool sign,
-    OutputTs...ys)
+    OutputTs ...ys)
 {
     auto tuple = std::make_tuple(ys...);
     using type = std::tuple_element_t<I, std::tuple<OutputTs...>>;
@@ -239,23 +245,23 @@ auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_t = typename ExteriorPRG::block_t;
-    return sign ? dpf::subtract<type, node_t>(
-                    make_naked_leaf<node_t>(x, Y),
+    using node_type = typename ExteriorPRG::block_t;
+    return sign ? dpf::subtract<type, node_type>(
+                    make_naked_leaf<node_type>(x, Y),
                     make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...))
-                : dpf::subtract<type, node_t>(
+                : dpf::subtract<type, node_type>(
                     make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...),
-                    make_naked_leaf<node_t>(x, Y));
+                    make_naked_leaf<node_type>(x, Y));
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename ExteriorPRG,
           typename InputT,
           typename ExteriorBlock,
-          typename... OutputTs,
-          std::size_t... Is>
+          typename ...OutputTs,
+          std::size_t ...Is>
 auto make_leaves_impl(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
-    bool sign, std::index_sequence<Is...>, OutputTs... ys)
+    bool sign, std::index_sequence<Is...>, OutputTs ...ys)
 {
     return std::make_tuple(make_leaf<ExteriorPRG, Is>(x, seed0, seed1, sign, ys...)...);
 }
@@ -263,34 +269,53 @@ auto make_leaves_impl(InputT x, const ExteriorBlock & seed0, const ExteriorBlock
 template <typename ExteriorPRG,
           typename InputT,
           typename ExteriorBlock,
-          typename... OutputTs,
+          typename ...OutputTs,
           typename Indices = std::make_index_sequence<sizeof...(OutputTs)>>
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
     bool sign, OutputTs... ys)
 {
-    using node_t = typename ExteriorPRG::block_t;
+    using node_type = typename ExteriorPRG::block_t;
     auto tup = make_leaves_impl<ExteriorPRG>(x, seed0, seed1, sign, Indices{}, ys...);
-    std::pair<decltype(tup), decltype(tup)> ret;
 
     // post-processing to secret-share any wildcard leaves
-    std::apply([&ret, &tup](auto &&... types)
+    // that is, after the call to `make_leaves_impl`, any values that were
+    // should be `wildcards` will currently have a correction_word for `0` in
+    // `tup`. Below is a glorified loop that creates two tuples from `tup`
+    // (stored in the pair `ret`). For concrete types, it simply copies the
+    // corresponding correction_words from `tup`; for the `wildcard`s, it
+    // additively shares them.
+
+    std::pair<decltype(tup), decltype(tup)> ret;
+
+    // N.B.: Despite the nesting, the loops below advance in lockstep, making
+    // only a single pass over each of the tuples being looped over
+
+    // loop over the original inputs (to interrogate their types)
+    std::apply([&ret, &tup](auto && ...types)
     {
-        std::apply([&ret, &types...](auto &&... args0)
+        // loop over the elements of `tup`, our "template" for a leaf tuple
+        std::apply([&ret, &types...](auto && ...args0)
         {
-            std::apply([&ret, &types..., &args0...](auto &&... args1)
+            // and also over the elements of `ret.first`, the first output
+            std::apply([&ret, &types..., &args0...](auto && ...args1)
             {
-                std::apply([&types..., &args0..., &args1...](auto &&... args2)
+                // and also `ret.second`, the secound output
+                std::apply([&types..., &args0..., &args1...](auto && ...args2)
                 {
+                    // lambda to decide whether to copy the leaf (for concrete types)
+                    // or whether to secret share it (for wildcard types)
                     ([](auto & type, auto & arg0, auto & arg1, auto & arg2)
                     {
                         using auto_type = typename std::remove_reference_t<decltype(type)>;
                         if constexpr (dpf::is_wildcard_v<auto_type>)
                         {
+                            // secret share the value
                             dpf::uniform_fill(arg1);
-                            arg2 = dpf::subtract<concrete_type_t<auto_type>, node_t>(arg0, arg1);
+                            arg2 = dpf::subtract<concrete_type_t<auto_type>, node_type>(arg0, arg1);
                         }
                         else
                         {
+                            // copy concrete value
                             arg1 = arg0;
                             arg2 = arg0;
                         }

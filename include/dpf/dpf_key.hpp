@@ -104,12 +104,13 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             interior_prg_t::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
-    template <std::size_t I>
+    template <std::size_t I,
+              typename LeafT = std::tuple_element_t<I, leaf_nodes_t>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     static auto traverse_exterior(const interior_node_t & node,
-        const exterior_node_t & cw) noexcept
+        const LeafT & cw) noexcept
     {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
