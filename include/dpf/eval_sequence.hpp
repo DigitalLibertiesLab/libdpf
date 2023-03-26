@@ -85,7 +85,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator,
           typename OutputBuffer>
-inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
+inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                     std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -234,7 +234,7 @@ template <std::size_t I = 0,
           class OutputBuffer,
           typename SequenceMemoizer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffer & outbuf, SequenceMemoizer & memoizer)
+    OutputBuffer && outbuf, SequenceMemoizer & memoizer)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -260,7 +260,7 @@ template <std::size_t I = 0,
           typename InputT,
           class OutputBuffer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffer & outbuf)
+    OutputBuffer && outbuf)
 {
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
     return eval_sequence<I>(dpf, recipe, outbuf, memoizer);
