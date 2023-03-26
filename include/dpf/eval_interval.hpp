@@ -46,30 +46,34 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
     // level_index = depth => last layer of interior nodes
     std::size_t level_index = memoizer.assign_interval(dpf, from_node, to_node);
     input_type mask = dpf.msb_mask >> (level_index-1 + dpf_type::lg_outputs_per_leaf);
-    std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
+    std::size_t nodes_at_level = memoizer.get_nodes_at_level();
 
-    for (; level_index <= to_level; level_index = memoizer.advance_level(), mask>>=1)
+    for (; level_index <= to_level; level_index = memoizer.advance_level(), nodes_at_level = memoizer.get_nodes_at_level(), mask>>=1)
     {
-        std::size_t i = !!(mask & from_node), j = i;
+        std::size_t i = 0, j = 0;
+        bool from_offset = mask & from_node,
+             to_offset = from_offset ^ (nodes_at_level & 1);
         const node_type cw[2] = {
             set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
             set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
-        if (i == 1)
+        // process node which only requires a right traversal
+        if (from_offset == true)
         {
-            memoizer[level_index][0] = dpf_type::traverse_interior(memoizer[level_index-1][0], cw[1], 1);
+            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j++], cw[1], 1);
         }
-        for (; j < nodes_at_level-1; ++j)
+        // process all nodes which require both a left traversal and a right traversal
+        for (; i < nodes_at_level - to_offset;)
         {
-            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[0], 0);
-            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[1], 1);
+            auto cur_node = memoizer[level_index-1][j++];
+            memoizer[level_index][i++] = dpf_type::traverse_interior(cur_node, cw[0], 0);
+            memoizer[level_index][i++] = dpf_type::traverse_interior(cur_node, cw[1], 1);
         }
-        nodes_at_level = memoizer.get_nodes_at_level(level_index);
-        memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[0], 0);
-        if (i < nodes_at_level)
+        // process node which only requires a left traversal
+        if (to_offset == true)
         {
-            memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[1], 1);
+            memoizer[level_index][i] = dpf_type::traverse_interior(memoizer[level_index-1][j], cw[0], 0);
         }
     }
 }
@@ -119,7 +123,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using input_type = InputT;
+    using input_type = typename DpfKey::input_type;
     using integral_type = typename DpfKey::integral_type;
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
@@ -130,7 +134,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<output_type>(utils::data(outbuf), (nodes_in_interval)*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
+    return subinterval_iterable<output_type>(utils::data(outbuf), nodes_in_interval*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
         dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
 }
 
