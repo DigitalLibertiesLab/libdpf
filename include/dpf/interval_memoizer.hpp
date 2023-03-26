@@ -118,7 +118,6 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using unique_ptr = typename Allocator::unique_ptr;
     using parent::depth;
     using parent::output_length;
-    using signed_size_type = std::make_signed_t<std::size_t>;
 
     // See comment for full_tree_interval_memoizer::initialize_endpoints() for
     //   general explanation of derivation for "nodes at previous level".
@@ -132,7 +131,7 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     //           => pivot = n-(n+1)/2 = (n-1)/2 = n/2-1/2 = floor(n/2)
     //     n even => n/2 OR (n+2)/2 nodes on previous level
     //            => pivot = n-(n+2)/2 = (n-2)/2 = n/2-1
-    //     unified => floor(n/2)-1+(n%2) = ((n-2)>>1)+(n&1)
+    //     unified => floor(n/2)-1+(n%2) = (n>>1)+(n&1)-1
     // In general, each previous level has roughly one half the nodes, but this is
     //   not true for some small n, which can stay constant up to the root.
     //   To handle this, take the maximum between the unified calculation shown
@@ -141,8 +140,7 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     //     at most ((n+2)/2+2)/2 = n+6>>2 nodes two levels up
     explicit basic_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
       : parent::interval_memoizer_base(output_len),
-        pivot{std::max(static_cast<signed_size_type>(((output_len-2)>>1)+(output_len&1)),
-            static_cast<signed_size_type>(output_len+6>>2))},
+        pivot{std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2)},
         buf{alloc.allocate_unique_ptr(pivot+((output_len+2)>>1))}
     { }
 
