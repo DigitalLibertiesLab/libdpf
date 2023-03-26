@@ -44,7 +44,7 @@ namespace dpf
 /// @tparam Alignment specifies the alignment (default: `dpf::utils::max_align`).'
 ///         The program is ill-formed if `Alignment` is not a power of 2.
 template <class T,
-          std::size_t Alignment = utils::max_align_v>
+          std::size_t Alignment = alignof(T)>
 class aligned_allocator
 {
   private:

@@ -123,6 +123,16 @@ struct xor_wrapper
         return value >= rhs.value;
     }
 
+    using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<value_type>>;
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr explicit operator integral_type() const noexcept
+    {
+        return static_cast<integral_type>(value);
+    }
+
   private:
     value_type value;
 };

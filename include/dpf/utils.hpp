@@ -38,19 +38,21 @@ static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
 }
 
 
-/// @brief the primitive integral type used to represent the `modint`
+/// @brief the primitive integral type used to represent non integral types
 template <std::size_t Nbits>
 struct integral_type_from_bitlength
 {
     static constexpr auto less_equal = std::less_equal<void>{};
-    using type = std::conditional_t<less_equal(Nbits, 64),
-        std::conditional_t<less_equal(Nbits, 32),
-            std::conditional_t<less_equal(Nbits, 16),
-                std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
-                psnip_uint16_t>,
-            psnip_uint32_t>,
-        psnip_uint64_t>,
-    simde_uint128>;
+    using type = std::conditional_t<less_equal(Nbits, 128),
+        std::conditional_t<less_equal(Nbits, 64),
+            std::conditional_t<less_equal(Nbits, 32),
+                std::conditional_t<less_equal(Nbits, 16),
+                    std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
+                    psnip_uint16_t>,
+                psnip_uint32_t>,
+            psnip_uint64_t>,
+        simde_uint128>,
+    void>;
 };
 
 template <std::size_t Nbits>
@@ -75,7 +77,7 @@ HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr T quotient_ceiling(T numerator, T denominator)
 {
-    return 1 + (numerator - 1) / denominator;
+    return 1 + static_cast<T>(numerator - 1) / denominator;
 }
 
 /// @brief Integer overflow-proof floor of division
@@ -111,7 +113,8 @@ template <typename DpfKey,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
 {
-    return get_to_node<DpfKey, InputT, IntegralT>(to) - get_from_node<DpfKey, InputT, IntegralT>(from);
+    return static_cast<std::size_t>(get_to_node<DpfKey, InputT, IntegralT>(to))
+        - static_cast<std::size_t>(get_from_node<DpfKey, InputT, IntegralT>(from));
 }
 
 template <typename T>

@@ -172,6 +172,18 @@ class bitstring : public bit_array_base
             return *this;
         }
 
+        /// @brief shifts the bit mask to the left by the given number of
+        ///        bits
+        /// @param shift_by number of bits to shift the mask to the left
+        /// @return a reference to the modified `dpf::bitstring::bit_mask`
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        constexpr bit_mask & operator<<=(int shift_by) noexcept
+        {
+            which_bit_ += shift_by;
+            return *this;
+        }
+
         /// @brief returns `true` if and only if the bit mask corresponds to a
         ///        valid bit position in a `dpf::bitstring<Nbits>`
         /// @return `(0 <= which_bit()) && (which_bit() < Nbits)`
@@ -292,6 +304,22 @@ class bitstring : public bit_array_base
     {
         return std::lexicographical_compare(rbegin(arr), rend(arr),
             rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
+    }
+
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr explicit operator integral_type() const noexcept
+    {
+        integral_type ret(0);
+        for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+        {
+            ret <<= bits_per_word;
+            ret += arr[i-1];
+        }
+        return ret;
     }
 
     /// @}

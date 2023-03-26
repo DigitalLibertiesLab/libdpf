@@ -88,13 +88,13 @@ class basic_fixed_length_string
     static constexpr string_view alphabet = Alphabet;
 
     /// @brief radix used by the integer representation of the string
-    static constexpr std::size_t radix = alphabet.size()+1;
+    static constexpr std::size_t radix = alphabet.size();
 
     /// @brief the (maximum) length of a string
     static constexpr std::size_t max_length = N;
 
     /// @brief the empty string
-    static constexpr auto empty_string = basic_fixed_length_string{};
+    // static constexpr auto empty_string = basic_fixed_length_string{};
 
     /// @brief the number of bits needed to uniquely represent any string
     ///        of length at most `max_length` over `alphabet`
@@ -200,8 +200,10 @@ class basic_fixed_length_string
     /// @brief retrieve the integer representation of this
     ///        `basic_fixed_length_string`
     /// @return the integer representation of this string
-    HEDLEY_ALWAYS_INLINE
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
+    HEDLEY_CONST
     HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
     constexpr operator integral_type() const noexcept
     {
         return val;
@@ -229,7 +231,7 @@ class basic_fixed_length_string
             utils::constexpr_maybe_throw<std::domain_error>(
                 next_digit == npos,
                 "str contains a disallowed char");
-            val = val * radix + next_digit + 1;
+            val = val * radix + next_digit;
         }
         return val;
     }

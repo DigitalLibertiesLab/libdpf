@@ -486,6 +486,7 @@ class modint
     }
 
     /// @brief convert this `modint` to the equivalent `integeral_type`
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
@@ -521,7 +522,7 @@ class modint
 
   private:
     /// @brief bitmask used for performing reductions modulo `2^Nbits`
-    static constexpr integral_type modulo_mask = (integral_type{1} << Nbits)-1;
+    static constexpr integral_type modulo_mask = ~integral_type{0} >> utils::bitlength_of_v<integral_type> - Nbits;
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;

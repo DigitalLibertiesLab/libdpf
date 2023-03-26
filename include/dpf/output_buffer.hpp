@@ -22,12 +22,13 @@
 namespace dpf
 {
 
-template <typename T>
+template <typename T,
+          std::size_t Alignment = utils::max_align_v>
 class output_buffer final
-  : private std::vector<T, dpf::aligned_allocator<T>>
+  : private std::vector<T, dpf::aligned_allocator<T, Alignment>>
 {
   private:
-    using vector = std::vector<T, dpf::aligned_allocator<T>>;
+    using vector = std::vector<T, dpf::aligned_allocator<T, Alignment>>;
   public:
     using value_type = typename vector::value_type;
     using iterator = typename vector::iterator;

@@ -157,6 +157,9 @@ template <> struct add_t<uint32_t, simde__m128i> final : public detail::add4x32_
 template <> struct add_t<int64_t, simde__m128i> final : public detail::add2x64_t {};
 template <> struct add_t<uint64_t, simde__m128i> final : public detail::add2x64_t {};
 
+template <> struct add_t<simde_int128, simde__m128i> final : public std::plus<simde_int128> {};
+template <> struct add_t<simde_uint128, simde__m128i> final : public std::plus<simde_uint128> {};
+
 template <> struct add_t<bool, simde__m256i> final : public detail::add32x8_t {};
 // template <> struct add_t<unsigned char, simde__m256i> final : public detail::add32x8_t {};
 template <> struct add_t<int8_t, simde__m256i> final : public detail::add32x8_t {};
@@ -171,8 +174,9 @@ template <> struct add_t<uint32_t, simde__m256i> final : public detail::add8x32_
 template <> struct add_t<int64_t, simde__m256i> final : public detail::add4x64_t {};
 template <> struct add_t<uint64_t, simde__m256i> final : public detail::add4x64_t {};
 
-template <typename NodeT> struct add_t<simde_int128, NodeT> final : public std::plus<simde_int128> {};
-template <typename NodeT> struct add_t<simde_uint128, NodeT> final : public std::plus<simde_uint128> {};
+// TODO
+// template <> struct add_t<simde_int128, simde__m256i> final : public detail::add2x128_t {};
+// template <> struct add_t<simde_uint128, simde__m256i> final : public detail::add2x128_t {};
 
 template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
@@ -309,6 +313,9 @@ template <> struct subtract_t<uint32_t, simde__m128i> final : public detail::sub
 template <> struct subtract_t<int64_t, simde__m128i> final : public detail::sub2x64_t {};
 template <> struct subtract_t<uint64_t, simde__m128i> final : public detail::sub2x64_t {};
 
+template <> struct subtract_t<simde_int128, simde__m128i> final : public std::minus<simde_int128> {};
+template <> struct subtract_t<simde_uint128, simde__m128i> final : public std::minus<simde_uint128> {};
+
 template <> struct subtract_t<bool, simde__m256i> final : public detail::sub32x8_t {};
 template <> struct subtract_t<char, simde__m256i> final : public detail::sub32x8_t {};
 // template <> struct subtract_t<unsigned char, simde__m256i> final : public detail::sub32x8_t {};
@@ -324,8 +331,9 @@ template <> struct subtract_t<uint32_t, simde__m256i> final : public detail::sub
 template <> struct subtract_t<int64_t, simde__m256i> final : public detail::sub4x64_t {};
 template <> struct subtract_t<uint64_t, simde__m256i> final : public detail::sub4x64_t {};
 
-template <typename NodeT> struct subtract_t<simde_int128, NodeT> final : public std::minus<simde_int128> {};
-template <typename NodeT> struct subtract_t<simde_uint128, NodeT> final : public std::minus<simde_uint128> {};
+// TODO
+// template <> struct subtract_t<simde_int128, simde__m256i> final : public detail::sub2x128_t {};
+// template <> struct subtract_t<simde_uint128, simde__m256i> final : public detail::sub2x128_t {};
 
 template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
