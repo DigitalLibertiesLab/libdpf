@@ -29,7 +29,6 @@ class modint
 {
   public:
     /// @brief the primitive integral type used to represent the `modint`
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
     using integral_type = dpf::utils::integral_type_from_bitlength_t<Nbits>;
 
     /// @brief construct the `modint`
@@ -486,7 +485,6 @@ class modint
     }
 
     /// @brief convert this `modint` to the equivalent `integeral_type`
-    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE

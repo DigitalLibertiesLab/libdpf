@@ -46,27 +46,31 @@ namespace dpf
 namespace alphabets
 {
     /// @brief the printable ASCII chars
-    static constexpr char printable_ascii[] = " !\"#$%&'()*+,-./0123456789:"\
+    static constexpr char printable_ascii[] = "\0 !\"#$%&'()*+,-./0123456789:"\
                                                ";<=>?@ABCDEFGHIJKLMNOPQRSTUV"\
                                                "WXYZ[\\]^_`abcdefghijklmnopq"\
                                                "rstuvwxyz{|}~";
     /// @brief the lowercase Roman alphabet
-    static constexpr char lowercase_alpha[] = "abcdefghijklmnopqrstuvwxyz";
+    static constexpr char lowercase_alpha[] = "\0abcdefghijklmnopqrstuvwxyz";
     /// @brief the lowercase and uppercase Roman alphabet
-    static constexpr char alpha[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKL"\
+    static constexpr char alpha[] = "\0abcdefghijklmnopqrstuvwxyzABCDEFGHIJKL"\
                                      "MNOPQRSTUVWXYZ";
     /// @brief the lowercase and uppercase Roman alphabet plus digits 0-9
-    static constexpr char alphanumeric[] = "abcdefghijklmnopqrstuvwxyzABCDE"\
+    static constexpr char alphanumeric[] = "\0abcdefghijklmnopqrstuvwxyzABCDE"\
                                             "FGHIJKLMNOPQRSTUVWXYZ0123456789";
     /// @brief the lowercase Roman alphabet plus digits 0-9
-    static constexpr char lowercase_alphanumeric[] = "abcdefghijklmnopqrstu"\
+    static constexpr char lowercase_alphanumeric[] = "\0abcdefghijklmnopqrstu"\
                                                       "vwxyz0123456789";
+    /// @brief hashtags
+    static constexpr char hashtag[] = "\0abcdefghijklmnopqrstuvwxyz#-";
     /// @brief binary
     static constexpr char binary[] = "01";
-    /// @brief hex digits
-    static constexpr char hex[] = "0123456789abcdefABCDEF";
+    /// @brief octal
+    static constexpr char octal[] = "01234567";
+    /// @brief decimal
+    static constexpr char decimal[] = "0123456789";
     /// @brief hex w/ lowercase letters
-    static constexpr char lowercase_hex[] = "0123456789abcdef";
+    static constexpr char hex[] = "0123456789abcdef";
     /// @brief hex w/ uppercase letters
     static constexpr char uppercase_hex[] = "0123456789ABCDEF";
     /// @brief base64 digits
@@ -84,11 +88,11 @@ class basic_fixed_length_string
   public:
     using string_view = std::basic_string_view<CharT, Traits>;
 
-    /// @brief the alphabet over which the string is constructed
-    static constexpr string_view alphabet = Alphabet;
-
     /// @brief radix used by the integer representation of the string
-    static constexpr std::size_t radix = alphabet.size();
+    static constexpr std::size_t radix = string_view(&Alphabet[1]).size() + 1;
+
+    /// @brief the alphabet over which the string is constructed
+    static constexpr string_view alphabet = string_view(Alphabet, radix+1);
 
     /// @brief the (maximum) length of a string
     static constexpr std::size_t max_length = N;
@@ -105,7 +109,6 @@ class basic_fixed_length_string
     static_assert(N != 0, "maximum string length must be positive");
 
     /// @brief the primitive integral type used to represent the string
-    static_assert(bits && bits <= 128, "representation must fit in 128 bits");
     using integral_type = dpf::utils::integral_type_from_bitlength_t<bits>;
 
     /// @brief construct the `basic_fixed_length_string`
@@ -200,7 +203,6 @@ class basic_fixed_length_string
     /// @brief retrieve the integer representation of this
     ///        `basic_fixed_length_string`
     /// @return the integer representation of this string
-    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
@@ -219,6 +221,7 @@ class basic_fixed_length_string
     static constexpr integral_type encode_(string_view str)
     {
         constexpr auto npos = string_view::npos;
+        using namespace std::string_literals;
 
         utils::constexpr_maybe_throw<std::length_error>(
             str.size() > max_length,
@@ -230,7 +233,7 @@ class basic_fixed_length_string
             auto next_digit = alphabet.find(c);
             utils::constexpr_maybe_throw<std::domain_error>(
                 next_digit == npos,
-                "str contains a disallowed char");
+                "str contains a disallowed char: "s + c);
             val = val * radix + next_digit;
         }
         return val;

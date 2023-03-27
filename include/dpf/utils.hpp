@@ -32,9 +32,9 @@ namespace utils
 /// @brief Ugly hack to implement `constexpr`-friendly conditional `throw`
 template <typename Exception>
 HEDLEY_ALWAYS_INLINE
-static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
+static constexpr auto constexpr_maybe_throw(bool b, std::string_view what) -> void
 {
-    (b ? throw Exception{what} : 0);
+    (b ? throw Exception{std::data(what)} : 0);
 }
 
 
@@ -42,6 +42,7 @@ static constexpr auto constexpr_maybe_throw(bool b, const char * what) -> void
 template <std::size_t Nbits>
 struct integral_type_from_bitlength
 {
+    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
     static constexpr auto less_equal = std::less_equal<void>{};
     using type = std::conditional_t<less_equal(Nbits, 128),
         std::conditional_t<less_equal(Nbits, 64),
