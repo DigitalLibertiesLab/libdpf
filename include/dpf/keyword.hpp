@@ -211,6 +211,14 @@ class basic_fixed_length_string
         return val;
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type data() const noexcept
+    {
+        return val;
+    }
+
   private:
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer

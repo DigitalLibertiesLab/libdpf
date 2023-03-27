@@ -133,6 +133,14 @@ struct xor_wrapper
         return static_cast<integral_type>(value);
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr value_type data() const noexcept
+    {
+        return value;
+    }
+
   private:
     value_type value;
 };
