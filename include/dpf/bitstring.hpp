@@ -374,29 +374,32 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
     }
 };
 
-}  // namespace utils
+}  // namespace dpf::utils
+
+namespace literals
+{
+    /// @brief user-defined numeric literal for creating `dpf::bitstring` objects
+    /// @details A user-defined literal that provides syntactic sugar for defining
+    ///          compile-time constant `dpf::bitstring` instances. For example,
+    ///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
+    ///          defines a `dpf::bitstring<40>` representing the same bits as the
+    ///          literal, in the same order. The length of the resulting `dpf::bitstring`
+    ///          is equal to `sizeof...(bits)`.
+    /// @tparam bits the bits comprising the bitstring
+    /// @throws std::domain_error if one or more character in the literal is
+    ///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
+    ///          suffix itsef.
+    /// @return the `dpf::bitstring`
+    template <char... bits>
+    constexpr static auto operator "" _bitstring()
+    {
+        dpf::bitstring<sizeof...(bits)> bs;
+        std::size_t i = 0;
+        (bs.set(i++, dpf::to_bit(bits)), ...);
+        return bs;
+    }
+}  // namespace dpf::literals
 
 }  // namespace dpf
-
-/// @brief user-defined numeric literal for creating `dpf::bitstring` objects
-/// @details A user-defined literal that provides syntactic sugar for defining
-///          compile-time constant `dpf::bitstring` instances. For example,
-///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
-///          defines a `dpf::bitstring<40>` representing the same bits as the
-///          literal, in the same order. The length of the resulting `dpf::bitstring`
-///          is equal to `sizeof...(bits)`.
-/// @tparam bits the bits comprising the bitstring
-/// @throws std::domain_error if one or more character in the literal is
-///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
-///          suffix itsef.
-/// @return the `dpf::bitstring`
-template <char... bits>
-constexpr static auto operator "" _bitstring()
-{
-    dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = 0;
-    (bs.set(i++, dpf::to_bit(bits)), ...);
-    return bs;
-}
 
 #endif  // LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
