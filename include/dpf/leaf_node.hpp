@@ -175,34 +175,31 @@ auto make_naked_leaf(InputT x, OutputT y)
     return Y;
 }
 
-// TODO(ryan): This will currently fail for cases where ExteriorBlock != InteriorBlock.
-// TODO(ryan): It needs to take mismatched blocks and invoke a template function to do the right thing
-// TODO(ryan): For m128 -> m256, paddcaning w/ 128 zeros will suffice
-// TODO(ryan): For m256 -> m128, we can just truncate.
-// This also applies to other functions that have ExteriorBlock as a template param
 template <typename ExteriorPRG,
           std::size_t I,
-          typename ExteriorBlock,
-          typename OutputsT>
-auto make_leaf_mask_inner(const ExteriorBlock & seed)
+          typename OutputsTuple,
+          typename InteriorBlock>
+auto make_leaf_mask_inner(const InteriorBlock & seed)
 {
     using node_type = typename ExteriorPRG::block_t;
-    using output_type = std::tuple_element_t<I, OutputsT>;
+    using output_type = std::tuple_element_t<I, OutputsTuple>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_type = dpf::leaf_node_t<node_type, output_type>;
 
-    if constexpr(std::tuple_size_v<OutputsT> == 1
-        && dpf::block_length_of_leaf_v<output_type, node_type> == 1)
+    if constexpr(std::tuple_size_v<OutputsTuple> == 1
+        && dpf::block_length_of_leaf_v<output_type, node_type> == 1
+        && std::is_same_v<InteriorBlock, node_type>)
     {
         return seed;
     }
     else
     {
         auto count = dpf::block_length_of_leaf_v<output_type, node_type>;
-        auto pos = dpf::block_offset_of_leaf_v<I, node_type, OutputsT>;
+        auto pos = dpf::block_offset_of_leaf_v<I, node_type, OutputsTuple>;
         leaf_type output;
-        ExteriorPRG::eval(seed, reinterpret_cast<node_type *>(&output), count, pos);
+        auto seed_ = utils::to_exterior_node<node_type>(seed);
+        ExteriorPRG::eval(seed_, reinterpret_cast<node_type *>(&output), count, pos);
 
         return output;
     }
@@ -211,18 +208,17 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <typename ExteriorPRG,
           std::size_t I,
-          typename ExteriorBlock,
-          typename ...OutputTs>
-auto make_leaf_mask(const ExteriorBlock & seed0, const ExteriorBlock & seed1, OutputTs...)
+          typename OutputsTuple,
+          typename InteriorBlock>
+auto make_leaf_mask(const InteriorBlock & seed0, const InteriorBlock & seed1)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_type = typename ExteriorPRG::block_t;
-    using outputs_tuple = std::tuple<OutputTs...>;
-    using output_type = std::tuple_element_t<I, outputs_tuple>;
+    using output_type = std::tuple_element_t<I, OutputsTuple>;
 
-    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, node_type, outputs_tuple>(seed0);
-    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, node_type, outputs_tuple>(seed1);
+    auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, OutputsTuple>(seed0);
+    auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, OutputsTuple>(seed1);
 
     return dpf::subtract<output_type, node_type>(mask1, mask0);
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -236,18 +232,19 @@ template <typename ExteriorPRG,
 auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1, bool sign,
     OutputTs ...ys)
 {
-    auto tuple = std::make_tuple(ys...);
-    using type = std::tuple_element_t<I, std::tuple<OutputTs...>>;
-    auto Y = std::get<I>(tuple);
+    using output_tuple_type = std::tuple<OutputTs...>;
+    output_tuple_type output_tuple = std::make_tuple(ys...);
+    using output_type = std::tuple_element_t<I, output_tuple_type>;
+    output_type Y = std::get<I>(output_tuple);
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_type = typename ExteriorPRG::block_t;
-    return sign ? dpf::subtract<type, node_type>(
+    return sign ? dpf::subtract<output_type, node_type>(
                     make_naked_leaf<node_type>(x, Y),
-                    make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...))
-                : dpf::subtract<type, node_type>(
-                    make_leaf_mask<ExteriorPRG, I>(seed0, seed1, ys...),
+                    make_leaf_mask<ExteriorPRG, I, output_tuple_type>(seed0, seed1))
+                : dpf::subtract<output_type, node_type>(
+                    make_leaf_mask<ExteriorPRG, I, output_tuple_type>(seed0, seed1),
                     make_naked_leaf<node_type>(x, Y));
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }

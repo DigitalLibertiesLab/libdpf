@@ -140,6 +140,14 @@ simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
                                      uint64_t(i >= 192)), i % 64);
 }
 
+template <typename ExteriorT, typename InteriorT>
+ExteriorT to_exterior_node(InteriorT seed);
+
+template <> simde__m128i to_exterior_node<simde__m128i, simde__m128i>(simde__m128i seed) { return seed; }
+template <> simde__m256i to_exterior_node<simde__m256i, simde__m128i>(simde__m128i seed) { return _mm256_zextsi128_si256(seed); }
+template <> simde__m256i to_exterior_node<simde__m256i, simde__m256i>(simde__m256i seed) { return seed; }
+template <> simde__m128i to_exterior_node<simde__m128i, simde__m256i>(simde__m256i seed) { return _mm256_castsi256_si128(seed); }
+
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,

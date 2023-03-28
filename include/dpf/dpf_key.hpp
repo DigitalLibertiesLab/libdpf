@@ -116,8 +116,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using output_t = std::tuple_element_t<I, outputs_t>;
         return dpf::subtract<output_t, exterior_node_t>(
-            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t,
-                outputs_t>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg_t, I, outputs_t>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
