@@ -174,8 +174,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         };
 
         bool t[2] = {
-            dpf::get_lo_bit(child[0]) ^ !bit,
-            dpf::get_lo_bit(child[1]) ^ bit
+            static_cast<bool>(dpf::get_lo_bit(child[0]) ^ !bit),
+            static_cast<bool>(dpf::get_lo_bit(child[1]) ^ bit)
         };
         auto cw = dpf::set_lo_bit(child[!bit], t[bit]);
         parent[0] = dpf::xor_if(child0[bit], cw, advice[0]);
