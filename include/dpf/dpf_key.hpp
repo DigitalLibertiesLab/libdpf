@@ -113,19 +113,19 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             interior_prg_t::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
-    template <std::size_t I>
+    template <std::size_t I,
+              typename LeafT = std::tuple_element_t<I, leaf_nodes_t>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     static auto traverse_exterior(const interior_node_t & node,
-        const exterior_node_t & cw) noexcept
+        const LeafT & cw) noexcept
     {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using output_t = std::tuple_element_t<I, outputs_t>;
         return dpf::subtract<output_t, exterior_node_t>(
-            make_leaf_mask_inner<exterior_prg_t, I, exterior_node_t,
-                outputs_t>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg_t, I, outputs_t>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
@@ -183,8 +183,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         };
 
         bool t[2] = {
-            dpf::get_lo_bit(child[0]) ^ !bit,
-            dpf::get_lo_bit(child[1]) ^ bit
+            static_cast<bool>(dpf::get_lo_bit(child[0]) ^ !bit),
+            static_cast<bool>(dpf::get_lo_bit(child[1]) ^ bit)
         };
         auto cw = dpf::set_lo_bit(child[!bit], t[bit]);
         parent[0] = dpf::xor_if(child0[bit], cw, advice[0]);
