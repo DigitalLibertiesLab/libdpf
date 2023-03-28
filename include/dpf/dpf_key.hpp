@@ -43,8 +43,8 @@ struct dpf_key
     using outputs_t = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t,
-        OutputT, OutputTs...>;
+    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t, OutputT, OutputTs...>;
+    using beaver_tuple_t = dpf::beaver_tuple_t<exterior_node_t, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t depth = utils::bitlength_of_v<input_type>
         - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
@@ -62,9 +62,11 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                       const std::array<interior_node_t, depth> & interior_cws_,
                       const std::array<uint8_t, depth> & correction_advice_,
                       const leaf_nodes_t & exterior_cw_,
-                      const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
+                      const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
+                      beaver_tuple_t beavers = beaver_tuple_t{})
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
+        mutable_beaver_tuple{beavers},
         root{root_},
         interior_cws{interior_cws_},
         correction_advice{correction_advice_}
@@ -73,14 +75,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
   private:
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
     leaf_nodes_t mutable_exterior_cw;
-
-    template <std::size_t I,
-              typename LeafT = std::tuple_element_t<I, leaf_nodes_t>>
-    auto __make_concrete(const LeafT & cw)
-    {
-        std::get<I>(mutable_exterior_cw) = cw;
-        wildcard_mask.reset(I);
-    }
+    beaver_tuple_t mutable_beaver_tuple;
 
   public:
     const interior_node_t root;

@@ -134,6 +134,53 @@ template <typename NodeT,
           typename ...OutputTs>
 using leaf_tuple_t = typename leaf_tuple<NodeT, OutputT, OutputTs...>::type;
 
+template <bool isWildcard,
+          typename NodeT,
+          typename OutputT,
+          std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
+struct beaver final { };
+
+template <typename NodeT,
+          typename OutputT>
+struct beaver<true, NodeT, OutputT, 1> 
+{
+    static_assert(1 == outputs_per_leaf_v<OutputT, NodeT>);
+    beaver() : is_locked{ATOMIC_FLAG_INIT} {}
+    std::atomic_flag is_locked;
+};
+
+template <typename NodeT,
+          typename OutputT,
+          std::size_t outputs_per_leaf>
+struct beaver<true, NodeT, OutputT, outputs_per_leaf> final
+{
+    static_assert(outputs_per_leaf == outputs_per_leaf_v<OutputT, NodeT>);
+    beaver() = delete;
+    beaver(OutputT v, const NodeT & b, const NodeT & bv)
+      : is_locked{ATOMIC_FLAG_INIT},
+        output_blind{v},
+        vector_blind{b},
+        blinded_vector{bv} {}
+
+    std::atomic_flag is_locked;
+    OutputT output_blind;
+    NodeT vector_blind;
+    NodeT blinded_vector;
+};
+
+template <typename NodeT,
+          typename OutputT,
+          typename ...OutputTs>
+struct beaver_tuple
+{
+    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, OutputT>,
+                            beaver<is_wildcard_v<OutputTs>, NodeT, OutputTs>...>;
+};
+template <typename NodeT,
+          typename OutputT,
+          typename ...OutputTs>
+using beaver_tuple_t = typename beaver_tuple<NodeT, OutputT, OutputTs...>::type;
+
 template <typename NodeT,
           typename OutputT>
 static OutputT extract_leaf(const leaf_node_t<NodeT, OutputT> & leaf, std::size_t x) noexcept
