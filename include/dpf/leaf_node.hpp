@@ -143,8 +143,7 @@ static OutputT extract_leaf(const leaf_node_t<NodeT, OutputT> & leaf, std::size_
     OutputT y;
     if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
-        auto yy = simde_mm_set_epi64x(uint64_t(off <= 63) << (off % 64),
-                                      uint64_t(off >= 64) << (off % 64));
+        auto yy = utils::single_bit_mask<NodeT>(off);
         y = dpf::to_bit(simde_mm_testz_si128(leaf, yy));
     }
     else
@@ -166,9 +165,7 @@ auto make_naked_leaf(InputT x, OutputT y)
     leaf_type Y{0};
     if constexpr (std::is_same_v<OutputT, dpf::bit>)
     {
-        // todo(ryan): this is hard coded for 128 bits!
-        Y = simde_mm_set_epi64x(uint64_t(off>=64 ? y : dpf::bit::zero) << (off % 64),
-                                uint64_t(off<=63 ? y : dpf::bit::zero) << (off % 64));
+        Y = get_if(utils::single_bit_mask<NodeT>(off), y);
     }
     else
     {

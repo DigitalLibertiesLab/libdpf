@@ -130,14 +130,21 @@ simde__m128i set_lo_2bits(simde__m128i a, uint_fast8_t i)
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
-simde__m128i xor_if(simde__m128i a, simde__m128i c, bool b)
+simde__m128i get_if(simde__m128i c, bool b)
 {
     static constexpr simde__m128i mask[] = {
         {int64_t(0), int64_t(0)},
         {~int64_t(0), ~int64_t(0)}
     };
-    c = simde_mm_and_si128(c, mask[b]);
-    return simde_mm_xor_si128(a, c);
+    return simde_mm_and_si128(c, mask[b]);
+}
+
+HEDLEY_NO_THROW
+HEDLEY_ALWAYS_INLINE
+HEDLEY_CONST
+simde__m128i xor_if(simde__m128i a, simde__m128i c, bool b)
+{
+    return simde_mm_xor_si128(a, get_if(c, b));
 }
 
 }  // namespace dpf

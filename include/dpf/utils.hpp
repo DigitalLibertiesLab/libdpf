@@ -116,6 +116,30 @@ auto make_bitset(Bools... bs)
     return ret;
 }
 
+template <typename NodeT>
+static NodeT single_bit_mask(std::size_t i);
+
+template <>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_PURE
+HEDLEY_NO_THROW
+simde__m128i single_bit_mask<simde__m128i>(std::size_t i)
+{
+    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i <= 63), uint64_t(i >= 64)), i % 64);
+}
+
+template <>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_PURE
+HEDLEY_NO_THROW
+simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
+{
+    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i <= 63),
+                                     uint64_t(i >= 64 && i <= 127),
+                                     uint64_t(i >= 127 && i <= 191),
+                                     uint64_t(i >= 192)), i % 64);
+}
+
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,
