@@ -87,13 +87,19 @@ static constexpr IntegralT get_to_node(InputT to)
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
 
+template <typename IntegralT>
+static constexpr std::size_t get_nodes_in_interval_impl(IntegralT from_node, IntegralT to_node)
+{
+    return static_cast<std::size_t>(to_node) - static_cast<std::size_t>(from_node);
+}
+
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_t,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
 {
-    return static_cast<std::size_t>(get_to_node<DpfKey, InputT, IntegralT>(to))
-        - static_cast<std::size_t>(get_from_node<DpfKey, InputT, IntegralT>(from));
+    return get_nodes_in_interval_impl(get_from_node<DpfKey, InputT, IntegralT>(from),
+        get_to_node<DpfKey, InputT, IntegralT>(to));
 }
 
 template <typename T>

@@ -129,7 +129,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     integral_type from_node = utils::get_from_node<dpf_type, input_type, integral_type>(from),
         to_node = utils::get_to_node<dpf_type, input_type, integral_type>(to);
-    std::size_t nodes_in_interval = to_node - from_node;
+    std::size_t nodes_in_interval = utils::get_nodes_in_interval_impl(from_node, to_node);
 
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
