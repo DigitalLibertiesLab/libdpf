@@ -43,8 +43,8 @@ struct dpf_key
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_tuple = dpf::leaf_tuple_t<exterior_node,
-        OutputT, OutputTs...>;
+    using leaf_nodes = dpf::leaf_tuple_t<exterior_node, OutputT, OutputTs...>;
+    using beaver_tuple = dpf::beaver_tuple_t<exterior_node, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t depth = utils::bitlength_of_v<input_type>
         - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node>;
@@ -61,10 +61,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     constexpr dpf_key(interior_node root_,
                       const std::array<interior_node, depth> & interior_cws_,
                       const std::array<uint8_t, depth> & correction_advice_,
-                      const leaf_tuple & exterior_cw_,
-                      const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
+                      const leaf_nodes & exterior_cw_,
+                      const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
+                      beaver_tuple beavers_)
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
+        mutable_beaver_tuple{beavers_},
         root{root_},
         correction_words{interior_cws_},
         correction_advice{correction_advice_}
@@ -72,7 +74,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
   private:
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
-    leaf_tuple mutable_exterior_cw;
+    leaf_nodes mutable_exterior_cw;
+    beaver_tuple mutable_beaver_tuple;
+
   public:
     const interior_node root;
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -115,19 +119,19 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             interior_prg_type::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
-    template <std::size_t I>
+    template <std::size_t I,
+              typename LeafT>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     static auto traverse_exterior(const interior_node & node,
-        const exterior_node & cw) noexcept
+        const LeafT & cw) noexcept
     {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        using output_t = std::tuple_element_t<I, outputs_tuple>;
-        return dpf::subtract<output_t, exterior_node>(
-            make_leaf_mask_inner<exterior_prg_type, I, exterior_node,
-                outputs_tuple>(unset_lo_2bits(node)),
+        using output_type = std::tuple_element_t<I, outputs_tuple>;
+        return dpf::subtract<output_type, exterior_node>(
+            make_leaf_mask_inner<exterior_prg_type, I, outputs_tuple>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
@@ -185,8 +189,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         };
 
         bool t[2] = {
-            dpf::get_lo_bit(child[0]) ^ !bit,
-            dpf::get_lo_bit(child[1]) ^ bit
+            static_cast<bool>(dpf::get_lo_bit(child[0]) ^ !bit),
+            static_cast<bool>(dpf::get_lo_bit(child[1]) ^ bit)
         };
         auto cw = dpf::set_lo_bit(child[!bit], t[bit]);
         parent[0] = dpf::xor_if(child0[bit], cw, advice[0]);
@@ -201,14 +205,16 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     bool sign0 = dpf::get_lo_bit(parent[0]);
     // bool sign1 = dpf::get_lo_bit(parent[1]);
 
-    auto leaves = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]),
+    auto [pair0, pair1] = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]),
         unset_lo_2bits(parent[1]), sign0, y, ys...);
+    auto & [leaves0, beavers0] = pair0;
+    auto & [leaves1, beavers1] = pair1;
 
     return std::make_pair(
         dpf_type{root[0], correction_words, correction_advice,
-            leaves.first, wildcard_mask},
+            leaves0, wildcard_mask, beavers0},
         dpf_type{root[1], correction_words, correction_advice,
-            leaves.second, wildcard_mask});
+            leaves1, wildcard_mask, beavers1});
 }  // make_dpf
 
 }  // namespace dpf

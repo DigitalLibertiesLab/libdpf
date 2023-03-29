@@ -97,11 +97,46 @@ auto make_bitset(Bools... bs)
     return ret;
 }
 
+template <typename NodeT>
+static NodeT single_bit_mask(std::size_t i);
+
+template <>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_PURE
+HEDLEY_NO_THROW
+simde__m128i single_bit_mask<simde__m128i>(std::size_t i)
+{
+    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i <= 63), uint64_t(i >= 64)), i % 64);
+}
+
+template <>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_PURE
+HEDLEY_NO_THROW
+simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
+{
+    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i <= 63),
+                                     uint64_t(i >= 64 && i <= 127),
+                                     uint64_t(i >= 127 && i <= 191),
+                                     uint64_t(i >= 192)), i % 64);
+}
+
+template <typename ExteriorT, typename InteriorT>
+ExteriorT to_exterior_node(InteriorT seed);
+
+template <> simde__m128i to_exterior_node<simde__m128i, simde__m128i>(simde__m128i seed) { return seed; }
+template <> simde__m256i to_exterior_node<simde__m256i, simde__m128i>(simde__m128i seed) { return _mm256_zextsi128_si256(seed); }
+template <> simde__m256i to_exterior_node<simde__m256i, simde__m256i>(simde__m256i seed) { return seed; }
+template <> simde__m128i to_exterior_node<simde__m128i, simde__m256i>(simde__m256i seed) { return _mm256_castsi256_si128(seed); }
+
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,
         std::numeric_limits<make_unsigned_t<T>>::digits>
 { };
+
+template <typename T>
+static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -124,10 +159,11 @@ struct bitlength_of<simde__m256i>
 // template <>
 // struct bitlength_of<simde__m512i>
 //   : public std::integral_constant<std::size_t, 512> { };
-HEDLEY_PRAGMA(GCC diagnostic pop)
 
-template <typename T>
-static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
+template <typename T, std::size_t N>
+struct bitlength_of<std::array<T, N>>
+  : public std::integral_constant<std::size_t, bitlength_of_v<T> * N> { };
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 /// @brief the primitive integral type used to represent non integral types
 template <std::size_t Nbits>
@@ -169,7 +205,7 @@ template <typename DpfKey,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr IntegralT get_from_node(InputT from)
 {
-    contexpr auto to_int = to_integral_type<InputT>{};
+    constexpr auto to_int = to_integral_type<InputT>{};
     return quotient_floor(to_int(from),
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
@@ -179,7 +215,7 @@ template <typename DpfKey,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr IntegralT get_to_node(InputT to)
 {
-    contexpr auto to_int = to_integral_type<InputT>{};
+    constexpr auto to_int = to_integral_type<InputT>{};
     return quotient_ceiling(to_int(to+1),
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
