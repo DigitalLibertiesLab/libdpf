@@ -140,6 +140,7 @@ template <bool isWildcard,
           std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
 struct beaver final { };
 
+
 template <typename NodeT,
           typename OutputT>
 struct beaver<true, NodeT, OutputT, 1> final
@@ -367,31 +368,27 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                     // secret share the value
                                     dpf::uniform_fill(leaf0);
                                     leaf1 = dpf::subtract<output_type, node_type>(leaf, leaf0);
-                                    if constexpr(dpf::is_wildcard_v<output_type>)
+                                    // also initialize the beavers
+                                    if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
                                     {
-                                        // secret share the value
-                                        dpf::uniform_fill(leaf0);
-                                        leaf1 = dpf::subtract<output_type, node_type>(leaf, leaf0);
-                                        // also initialize the beavers
-                                        if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
-                                        {
-                                            // todo: value should be ~0 when the output_type is an xor_wrapper<T>
-                                            auto vector = make_naked_leaf<node_type>(x, output_type(1));
+                                        // todo: value should be ~0 when the output_type is an xor_wrapper<T>
+                                        output_type tmp = 1;
+                                        if constexpr(utils::is_xor_wrapper_v<output_type>) { tmp = ~0; }
+                                        auto vector = make_naked_leaf<node_type>(x, output_type(1));
 
-                                            uniform_fill(beaver0.output_blind);
-                                            uniform_fill(beaver0.vector_blind);
+                                        uniform_fill(beaver0.output_blind);
+                                        uniform_fill(beaver0.vector_blind);
 
-                                            uniform_fill(beaver1.output_blind);
-                                            uniform_fill(beaver1.vector_blind);
+                                        uniform_fill(beaver1.output_blind);
+                                        uniform_fill(beaver1.vector_blind);
 
-                                            beaver0.blinded_vector = dpf::add<output_type, node_type>(vector, beaver1.vector_blind);
-                                            beaver1.blinded_vector = dpf::add<output_type, node_type>(vector, beaver0.vector_blind);
+                                        beaver0.blinded_vector = dpf::add<output_type, node_type>(vector, beaver1.vector_blind);
+                                        beaver1.blinded_vector = dpf::add<output_type, node_type>(vector, beaver0.vector_blind);
 
-                                            leaf0= dpf::add<output_type, node_type>(leaf0,
-                                                dpf::multiply<output_type, node_type>(beaver0.vector_blind, beaver1.output_blind));
-                                            leaf1= dpf::add<output_type, node_type>(leaf1,
-                                                dpf::multiply<output_type, node_type>(beaver1.vector_blind, beaver0.output_blind));
-                                        }
+                                        leaf0= dpf::add<output_type, node_type>(leaf0,
+                                            dpf::multiply<output_type, node_type>(beaver0.vector_blind, beaver1.output_blind));
+                                        leaf1= dpf::add<output_type, node_type>(leaf1,
+                                            dpf::multiply<output_type, node_type>(beaver1.vector_blind, beaver0.output_blind));
                                     }
                                 }
                                 else

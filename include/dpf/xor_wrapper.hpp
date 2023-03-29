@@ -190,6 +190,9 @@ struct bitlength_of<xor_wrapper<T>>
   : public bitlength_of<T>
 { };
 
+template <typename T>
+struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
+
 }  // namespace utils
 
 }  // namespace dpf
