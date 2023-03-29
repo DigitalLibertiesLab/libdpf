@@ -19,6 +19,29 @@
 namespace nlohmann
 {
 
+template <typename NodeT,
+          typename OutputT,
+          std::size_t outputs_per_leaf>
+struct adl_serializer<beaver<true, NodeT, OutputT, outputs_per_leaf>>
+{
+    static void from_json(const nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)
+    {
+        j.get_to(beaver.output_blind);
+        j.get_to(beaver.vector_blind);
+        j.get_to(beaver_blinded_vector);
+    }
+
+    static void to_json(nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)
+    {
+        j = nlohmann::json{
+            {"output_blind", beaver.output_blind},
+            {"vector_blind", beaver.vector_blind},
+            {"blinded_vector", beaver.blinded_vector}
+        };
+    }
+};
+
+
 template <>
 struct adl_serializer<simde__m128i>
 {
@@ -61,6 +84,7 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
     using dpf_type = dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>;
     using interior_node = typename dpf_type::interior_node;
     using leaf_tuple = typename dpf_type::leaf_tuple;
+    using beaver_tuple = typename dpf_type::beaver_tuple;
 
     static dpf_type from_json(const nlohmann::json & j)
     {
@@ -74,13 +98,16 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
         j.at("leaves").get_to(leaves);
         std::string wildcard_mask_str;
         j.at("wildcards").get_to(wildcard_mask_str);
+        beaver_tuple beavers;
+        j.at("beavers").get_to(beavers);
 
         return dpf_type{
             root,
             correction_words,
             correction_advice,
             leaves,
-            std::bitset<std::tuple_size_v<leaf_tuple>>(wildcard_mask_str)
+            std::bitset<std::tuple_size_v<leaf_tuple>>(wildcard_mask_str),
+            beavers
         };
     }
 
@@ -91,7 +118,8 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
             {"correction_words", dpf.correction_words},
             {"correction_advice", dpf.correction_advice},
             {"leaves", dpf.exterior_cws()},
-            {"wildcards", dpf.wildcard_bitmask()}
+            {"wildcards", dpf.wildcard_bitmask()},
+            {"beavers", dpf.beavers()}
         };
     }
 };
