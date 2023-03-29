@@ -371,10 +371,15 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                     // also initialize the beavers
                                     if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
                                     {
-                                        // todo: value should be ~0 when the output_type is an xor_wrapper<T>
-                                        output_type tmp = 1;
-                                        if constexpr(utils::is_xor_wrapper_v<output_type>) { tmp = ~0; }
-                                        auto vector = make_naked_leaf<node_type>(x, output_type(1));
+                                        dpf::leaf_node_t<node_type, output_type> vector;
+                                        if constexpr(utils::is_xor_wrapper_v<decltype(x)> == true)
+                                        {
+                                            vector = make_naked_leaf<node_type>(x, output_type(~0));
+                                        }
+                                        else
+                                        {
+                                            vector = make_naked_leaf<node_type>(x, output_type(1));
+                                        }
 
                                         uniform_fill(beaver0.output_blind);
                                         uniform_fill(beaver0.vector_blind);
