@@ -142,7 +142,7 @@ struct beaver final { };
 
 template <typename NodeT,
           typename OutputT>
-struct beaver<true, NodeT, OutputT, 1> 
+struct beaver<true, NodeT, OutputT, 1> final
 {
     static_assert(1 == outputs_per_leaf_v<OutputT, NodeT>);
     beaver() : is_locked{ATOMIC_FLAG_INIT} { }
