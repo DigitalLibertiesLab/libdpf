@@ -206,7 +206,7 @@ class basic_fixed_length_string
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr operator integral_type() const noexcept
+    constexpr explicit operator integral_type() const noexcept
     {
         return val;
     }

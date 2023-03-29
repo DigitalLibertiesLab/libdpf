@@ -493,6 +493,14 @@ class modint
         return val & modulo_mask;
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type data() const noexcept
+    {
+        return val;
+    }
+
     template <typename CharT,
               class Traits = std::char_traits<CharT>,
               class Allocator = std::allocator<CharT>>

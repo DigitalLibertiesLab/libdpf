@@ -37,28 +37,6 @@ static constexpr auto constexpr_maybe_throw(bool b, std::string_view what) -> vo
     (b ? throw Exception{std::data(what)} : 0);
 }
 
-
-/// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits>
-struct integral_type_from_bitlength
-{
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
-    static constexpr auto less_equal = std::less_equal<void>{};
-    using type = std::conditional_t<less_equal(Nbits, 128),
-        std::conditional_t<less_equal(Nbits, 64),
-            std::conditional_t<less_equal(Nbits, 32),
-                std::conditional_t<less_equal(Nbits, 16),
-                    std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
-                    psnip_uint16_t>,
-                psnip_uint32_t>,
-            psnip_uint64_t>,
-        simde_uint128>,
-    void>;
-};
-
-template <std::size_t Nbits>
-using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits>::type;
-
 struct max_align
 {
     static constexpr std::size_t value = 64;  // alignof(__m512i)
@@ -177,6 +155,35 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <typename T>
 static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
+
+/// @brief the primitive integral type used to represent non integral types
+template <std::size_t Nbits>
+struct integral_type_from_bitlength
+{
+    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    static constexpr auto less_equal = std::less_equal<void>{};
+    using type = std::conditional_t<less_equal(Nbits, 128),
+        std::conditional_t<less_equal(Nbits, 64),
+            std::conditional_t<less_equal(Nbits, 32),
+                std::conditional_t<less_equal(Nbits, 16),
+                    std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
+                    psnip_uint16_t>,
+                psnip_uint32_t>,
+            psnip_uint64_t>,
+        simde_uint128>,
+    void>;
+};
+
+template <std::size_t Nbits>
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits>::type;
+
+template <typename T>
+auto to_integral_type(T input)
+{
+    static constexpr std::size_t bits = bitlength_of_v<T>;
+    using integral_type = integral_type_from_bitlength_t<bits>;
+    return static_cast<integral_type>(input);
+}
 
 template <typename T>
 struct msb_of

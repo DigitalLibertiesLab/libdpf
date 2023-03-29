@@ -53,6 +53,9 @@ template <std::size_t Nbits>
 class bitstring : public bit_array_base
 {
   public:
+    /// @brief the primitive integral type used to represent the string
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
+
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
     ///        is stateless, the constructors have no visible effect.
@@ -306,20 +309,26 @@ class bitstring : public bit_array_base
             rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
     }
 
-    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
     template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr explicit operator integral_type() const noexcept
     {
-        integral_type ret(0);
-        for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+        if constexpr(Nbits <= bits_per_word)
         {
-            ret <<= bits_per_word;
-            ret += arr[i-1];
+            return integral_type(arr[0]);
         }
-        return ret;
+        else
+        {
+            integral_type ret(0);
+            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+            {
+                ret <<= bits_per_word;
+                ret += arr[i-1];
+            }
+            return ret;
+        }
     }
 
     /// @}
