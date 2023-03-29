@@ -230,15 +230,13 @@ HEDLEY_ALWAYS_INLINE
 auto make_interval_memoizer(InputT from, InputT to)
 {
     using dpf_type = DpfKey;
-    using input_type = typename DpfKey::input_type;
-    using integral_type = typename DpfKey::integral_type;
 
     if (from > to)
     {
         throw std::domain_error("from cannot be greater than to");
     }
 
-    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type, input_type, integral_type>(from, to);
+    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
 
     return MemoizerT(nodes_in_interval);
 }

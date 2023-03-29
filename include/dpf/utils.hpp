@@ -69,39 +69,6 @@ static constexpr T quotient_floor(T numerator, T denominator)
     return numerator / denominator;
 }
 
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type,
-          typename IntegralT = typename DpfKey::integral_type>
-static constexpr IntegralT get_from_node(InputT from)
-{
-    return quotient_floor(static_cast<IntegralT>(from),
-        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
-}
-
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_t,
-          typename IntegralT = typename DpfKey::integral_type>
-static constexpr IntegralT get_to_node(InputT to)
-{
-    return quotient_ceiling(static_cast<IntegralT>(to+1),
-        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
-}
-
-template <typename IntegralT>
-static constexpr std::size_t get_nodes_in_interval_impl(IntegralT from_node, IntegralT to_node)
-{
-    return static_cast<std::size_t>(to_node) - static_cast<std::size_t>(from_node);
-}
-
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_t,
-          typename IntegralT = typename DpfKey::integral_type>
-static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
-{
-    return get_nodes_in_interval_impl(get_from_node<DpfKey, InputT, IntegralT>(from),
-        get_to_node<DpfKey, InputT, IntegralT>(to));
-}
-
 template <typename T>
 struct make_unsigned : public std::make_unsigned<T> { };
 
@@ -166,7 +133,7 @@ static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
 template <std::size_t Nbits>
 struct integral_type_from_bitlength
 {
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    // static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
     static constexpr auto less_equal = std::less_equal<void>{};
     using type = std::conditional_t<less_equal(Nbits, 128),
         std::conditional_t<less_equal(Nbits, 64),
@@ -184,11 +151,52 @@ template <std::size_t Nbits>
 using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits>::type;
 
 template <typename T>
-auto to_integral_type(T input)
+struct to_integral_type
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
     using integral_type = integral_type_from_bitlength_t<bits>;
-    return static_cast<integral_type>(input);
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type operator()(T input) const noexcept
+    {
+        return static_cast<integral_type>(input);
+    }
+};
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_type,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_from_node(InputT from)
+{
+    contexpr auto to_int = to_integral_type<InputT>{};
+    return quotient_floor(to_int(from),
+        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
+}
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_t,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_to_node(InputT to)
+{
+    contexpr auto to_int = to_integral_type<InputT>{};
+    return quotient_ceiling(to_int(to+1),
+        static_cast<IntegralT>(DpfKey::outputs_per_leaf));
+}
+
+template <typename IntegralT>
+static constexpr std::size_t get_nodes_in_interval_impl(IntegralT from_node, IntegralT to_node)
+{
+    return static_cast<std::size_t>(to_node) - static_cast<std::size_t>(from_node);
+}
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_t,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
+{
+    return get_nodes_in_interval_impl(get_from_node<DpfKey, InputT, IntegralT>(from),
+        get_to_node<DpfKey, InputT, IntegralT>(to));
 }
 
 template <typename T>

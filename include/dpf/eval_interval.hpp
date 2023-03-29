@@ -123,12 +123,11 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using input_type = typename DpfKey::input_type;
     using integral_type = typename DpfKey::integral_type;
     using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
 
-    integral_type from_node = utils::get_from_node<dpf_type, input_type, integral_type>(from),
-        to_node = utils::get_to_node<dpf_type, input_type, integral_type>(to);
+    integral_type from_node = utils::get_from_node<dpf_type>(from),
+        to_node = utils::get_to_node<dpf_type>(to);
     std::size_t nodes_in_interval = utils::get_nodes_in_interval_impl(from_node, to_node);
 
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
