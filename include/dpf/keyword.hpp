@@ -93,9 +93,6 @@ class basic_fixed_length_string
     /// @brief the (maximum) length of a string
     static constexpr std::size_t max_length = N;
 
-    /// @brief the empty string
-    static constexpr auto empty_string = basic_fixed_length_string{};
-
     /// @brief the number of bits needed to uniquely represent any string
     ///        of length at most `max_length` over `alphabet`
     static constexpr std::size_t bits

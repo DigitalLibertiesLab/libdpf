@@ -63,7 +63,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                       const std::array<uint8_t, depth> & correction_advice_,
                       const leaf_nodes_t & exterior_cw_,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
-                      beaver_tuple_t beavers = beaver_tuple_t{})
+                      beaver_tuple_t beavers)
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
         mutable_beaver_tuple{beavers},
@@ -194,14 +194,16 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     bool sign0 = dpf::get_lo_bit(parent[0]);
     // bool sign1 = dpf::get_lo_bit(parent[1]);
 
-    auto leaves = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]),
+    auto [pair0, pair1] = dpf::make_leaves<ExteriorPRG>(x, unset_lo_2bits(parent[0]),
         unset_lo_2bits(parent[1]), sign0, y, ys...);
+    auto & [leaves0, beavers0] = pair0;
+    auto & [leaves1, beavers1] = pair1;
 
     return std::make_pair(
         specialization{root[0], correction_word, correction_advice,
-            leaves.first, wildcard_mask},
+            leaves0, wildcard_mask, beavers0},
         specialization{root[1], correction_word, correction_advice,
-            leaves.second, wildcard_mask});
+            leaves1, wildcard_mask, beavers1});
 }  // make_dpf
 
 }  // namespace dpf
