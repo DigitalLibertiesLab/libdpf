@@ -109,6 +109,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         return mutable_exterior_cw;
     }
 
+    HEDLEY_ALWAYS_INLINE
+    const auto & beavers() const
+    {
+        return mutable_beaver_tuple;
+    }
+
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
