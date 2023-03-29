@@ -340,26 +340,26 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     // only a single pass over each of the tuples being looped over
 
     // loop over the original inputs (to interrogate their output_types)
-    std::apply([&return_tuple, &leaves](auto && ...output_types)
+    std::apply([x, &return_tuple, &leaves](auto && ...output_types)
     {
         // loop over the elements of `leaves`, our "template" for a leaf tuple
-        std::apply([&return_tuple, &output_types...](auto && ...args0)
+        std::apply([x, &return_tuple, &output_types...](auto && ...args0)
         {
             // and also over the elements of `return_tuple.first.first`, the first leaf tuple
-            std::apply([&return_tuple, &output_types..., &args0...](auto && ...leaves0)
+            std::apply([x, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
             {
                 // and also `return_tuple.second.first`, the secound leaf tuple
-                std::apply([&return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
+                std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
                 {
                     // plus `return_tuple.first.second`, the first beaver tuple
-                    std::apply([&return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
+                    std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
                     {
                         // and `return_tuple.second.second`, the secound beaver tuple
-                        std::apply([&output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
+                        std::apply([x, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
                         {
                             // lambda to decide whether to copy the leaf (for concrete output_types)
                             // or whether to secret share it (for wildcard output_types)
-                            ([](auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1)
+                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1)
                             {
                                 using output_type = typename std::remove_reference_t<decltype(type)>;
                                 if constexpr(dpf::is_wildcard_v<output_type>)
@@ -375,8 +375,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                         // also initialize the beavers
                                         if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
                                         {
-                                            // need the standard basis vector
-                                            node_type vector{};
+                                            // todo: value should be ~0 when the output_type is an xor_wrapper<T>
+                                            auto vector = make_naked_leaf<node_type>(x, output_type(1));
 
                                             uniform_fill(beaver0.output_blind);
                                             uniform_fill(beaver0.vector_blind);
@@ -400,7 +400,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                     leaf0 = leaf;
                                     leaf1 = leaf;
                                 }
-                            }(output_types, args0, leaves0, leaves1, beavers0, beavers1), ...);
+                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1), ...);
                         }, return_tuple.second.second);
                     }, return_tuple.first.second);
                 }, return_tuple.second.first);
