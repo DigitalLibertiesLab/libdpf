@@ -53,6 +53,9 @@ template <std::size_t Nbits>
 class bitstring : public bit_array_base
 {
   public:
+    /// @brief the primitive integral type used to represent the string
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
+
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
     ///        is stateless, the constructors have no visible effect.
@@ -169,6 +172,18 @@ class bitstring : public bit_array_base
         constexpr bit_mask & operator>>=(int shift_by) noexcept
         {
             which_bit_ -= shift_by;
+            return *this;
+        }
+
+        /// @brief shifts the bit mask to the left by the given number of
+        ///        bits
+        /// @param shift_by number of bits to shift the mask to the left
+        /// @return a reference to the modified `dpf::bitstring::bit_mask`
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        constexpr bit_mask & operator<<=(int shift_by) noexcept
+        {
+            which_bit_ += shift_by;
             return *this;
         }
 
@@ -294,6 +309,28 @@ class bitstring : public bit_array_base
             rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
     }
 
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr explicit operator integral_type() const noexcept
+    {
+        if constexpr(Nbits <= bits_per_word)
+        {
+            return integral_type(arr[0]);
+        }
+        else
+        {
+            integral_type ret(0);
+            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+            {
+                ret <<= bits_per_word;
+                ret += arr[i-1];
+            }
+            return ret;
+        }
+    }
+
     /// @}
 
   private:
@@ -346,29 +383,32 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
     }
 };
 
-}  // namespace utils
+}  // namespace dpf::utils
+
+namespace literals
+{
+    /// @brief user-defined numeric literal for creating `dpf::bitstring` objects
+    /// @details A user-defined literal that provides syntactic sugar for defining
+    ///          compile-time constant `dpf::bitstring` instances. For example,
+    ///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
+    ///          defines a `dpf::bitstring<40>` representing the same bits as the
+    ///          literal, in the same order. The length of the resulting `dpf::bitstring`
+    ///          is equal to `sizeof...(bits)`.
+    /// @tparam bits the bits comprising the bitstring
+    /// @throws std::domain_error if one or more character in the literal is
+    ///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
+    ///          suffix itsef.
+    /// @return the `dpf::bitstring`
+    template <char... bits>
+    constexpr static auto operator "" _bitstring()
+    {
+        dpf::bitstring<sizeof...(bits)> bs;
+        std::size_t i = 0;
+        (bs.set(i++, dpf::to_bit(bits)), ...);
+        return bs;
+    }
+}  // namespace dpf::literals
 
 }  // namespace dpf
-
-/// @brief user-defined numeric literal for creating `dpf::bitstring` objects
-/// @details A user-defined literal that provides syntactic sugar for defining
-///          compile-time constant `dpf::bitstring` instances. For example,
-///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
-///          defines a `dpf::bitstring<40>` representing the same bits as the
-///          literal, in the same order. The length of the resulting `dpf::bitstring`
-///          is equal to `sizeof...(bits)`.
-/// @tparam bits the bits comprising the bitstring
-/// @throws std::domain_error if one or more character in the literal is
-///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
-///          suffix itsef.
-/// @return the `dpf::bitstring`
-template <char... bits>
-constexpr static auto operator "" _bitstring()
-{
-    dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = 0;
-    (bs.set(i++, dpf::to_bit(bits)), ...);
-    return bs;
-}
 
 #endif  // LIBDPF_INCLUDE_DPF_BITSTRING_HPP__

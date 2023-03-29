@@ -89,33 +89,101 @@ struct add2x64_t
     }
 };
 
+/// @brief Function object for adding vectors of `32x8`-bit integral types
+struct add32x8_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_add_epi8(a, b);
+    }
+};
+
+/// @brief Function object for adding vectors of `16x16`-bit integral types
+struct add16x16_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_add_epi16(a, b);
+    }
+};
+
+/// @brief Function object for adding vectors of `8x32`-bit integral types
+struct add8x32_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_add_epi32(a, b);
+    }
+};
+
+/// @brief Function object for adding vectors of `4x64`-bit integral types
+struct add4x64_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_add_epi64(a, b);
+    }
+};
+
 }  // namespace detail
 
-template <typename NodeT, typename T>
-struct add_t<NodeT, dpf::xor_wrapper<T>> : public std::bit_xor<> {};
-template <typename NodeT> struct add_t<dpf::bit, NodeT> : public std::bit_xor<> {};
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 
-template <typename NodeT> struct add_t<bool, NodeT> : public detail::add16x8_t {};
-template <typename NodeT> struct add_t<char, NodeT> : public detail::add16x8_t {};
-// template <typename NodeT> struct add_t<unsigned char, NodeT> : public detail::add16x8_t {};
-template <typename NodeT> struct add_t<int8_t, NodeT> : public detail::add16x8_t {};
-template <typename NodeT> struct add_t<uint8_t, NodeT> : public detail::add16x8_t {};
+template <> struct add_t<bool, simde__m128i> final : public detail::add16x8_t {};
+template <> struct add_t<char, simde__m128i> final : public detail::add16x8_t {};
+// template <> struct add_t<unsigned char, simde__m128i> final : public detail::add16x8_t {};
+template <> struct add_t<int8_t, simde__m128i> final : public detail::add16x8_t {};
+template <> struct add_t<uint8_t, simde__m128i> final : public detail::add16x8_t {};
 
-template <typename NodeT> struct add_t<int16_t, NodeT> : public detail::add8x16_t {};
-template <typename NodeT> struct add_t<uint16_t, NodeT> : public detail::add8x16_t {};
+template <> struct add_t<int16_t, simde__m128i> final : public detail::add8x16_t {};
+template <> struct add_t<uint16_t, simde__m128i> final : public detail::add8x16_t {};
 
-template <typename NodeT> struct add_t<int32_t, NodeT> : public detail::add4x32_t {};
-template <typename NodeT> struct add_t<uint32_t, NodeT> : public detail::add4x32_t {};
+template <> struct add_t<int32_t, simde__m128i> final : public detail::add4x32_t {};
+template <> struct add_t<uint32_t, simde__m128i> final : public detail::add4x32_t {};
 
-template <typename NodeT> struct add_t<int64_t, NodeT> : public detail::add2x64_t {};
-template <typename NodeT> struct add_t<uint64_t, NodeT> : public detail::add2x64_t {};
+template <> struct add_t<int64_t, simde__m128i> final : public detail::add2x64_t {};
+template <> struct add_t<uint64_t, simde__m128i> final : public detail::add2x64_t {};
 
-template <typename NodeT> struct add_t<simde_int128, NodeT> : public std::plus<simde_int128> {};
-template <typename NodeT> struct add_t<simde_uint128, NodeT> : public std::plus<simde_uint128> {};
+template <> struct add_t<simde_int128, simde__m128i> final : public std::plus<simde_int128> {};
+template <> struct add_t<simde_uint128, simde__m128i> final : public std::plus<simde_uint128> {};
 
-template <typename NodeT> struct add_t<float, NodeT> : public std::bit_xor<> {};
-template <typename NodeT> struct add_t<double, NodeT> : public std::bit_xor<> {};
-template <typename T, typename NodeT> struct add_t<xor_wrapper<T>, NodeT> : public std::bit_xor<> {};
+template <> struct add_t<bool, simde__m256i> final : public detail::add32x8_t {};
+// template <> struct add_t<unsigned char, simde__m256i> final : public detail::add32x8_t {};
+template <> struct add_t<int8_t, simde__m256i> final : public detail::add32x8_t {};
+template <> struct add_t<uint8_t, simde__m256i> final : public detail::add32x8_t {};
+
+template <> struct add_t<int16_t, simde__m256i> final : public detail::add16x16_t {};
+template <> struct add_t<uint16_t, simde__m256i> final : public detail::add16x16_t {};
+
+template <> struct add_t<int32_t, simde__m256i> final : public detail::add8x32_t {};
+template <> struct add_t<uint32_t, simde__m256i> final : public detail::add8x32_t {};
+
+template <> struct add_t<int64_t, simde__m256i> final : public detail::add4x64_t {};
+template <> struct add_t<uint64_t, simde__m256i> final : public detail::add4x64_t {};
+
+// TODO
+// template <> struct add_t<simde_int128, simde__m256i> final : public detail::add2x128_t {};
+// template <> struct add_t<simde_uint128, simde__m256i> final : public detail::add2x128_t {};
+
+template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor<> {};
+template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
+template <typename NodeT> struct add_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
+template <typename T, typename NodeT> struct add_t<xor_wrapper<T>, NodeT> final : public std::plus<xor_wrapper<T>> {};
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 namespace detail
 {
@@ -177,33 +245,102 @@ struct sub2x64_t
     }
 };
 
+/// @brief Function object for subtracting vectors of `32x8`-bit integral types
+struct sub32x8_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_sub_epi8(a, b);
+    }
+};
+
+/// @brief Function object for subtracting vectors of `16x16`-bit integral types
+struct sub16x16_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_sub_epi16(a, b);
+    }
+};
+
+/// @brief Function object for subtracting vectors of `8x32`-bit integral types
+struct sub8x32_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_sub_epi32(a, b);
+    }
+};
+
+/// @brief Function object for subtracting vectors of `4x64`-bit integral types
+struct sub4x64_t
+{
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const simde__m256i & a, const simde__m256i & b) const
+    {
+        return simde_mm256_sub_epi64(a, b);
+    }
+};
+
 }  // namespace detail
 
-template <typename NodeT, typename T>
-struct subtract_t<NodeT, dpf::xor_wrapper<T>> : public std::bit_xor<> {};
-template <typename NodeT> struct subtract_t<dpf::bit, NodeT> : public std::bit_xor<> {};
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 
-template <typename NodeT> struct subtract_t<bool, NodeT> : public detail::sub16x8_t {};
-template <typename NodeT> struct subtract_t<char, NodeT> : public detail::sub16x8_t {};
-// template <typename NodeT> struct subtract_t<unsigned char, NodeT> : public detail::sub16x8_t {};
-template <typename NodeT> struct subtract_t<int8_t, NodeT> : public detail::sub16x8_t {};
-template <typename NodeT> struct subtract_t<uint8_t, NodeT> : public detail::sub16x8_t {};
+template <> struct subtract_t<bool, simde__m128i> final : public detail::sub16x8_t {};
+template <> struct subtract_t<char, simde__m128i> final : public detail::sub16x8_t {};
+// template <> struct subtract_t<unsigned char, simde__m128i> final : public detail::sub16x8_t {};
+template <> struct subtract_t<int8_t, simde__m128i> final : public detail::sub16x8_t {};
+template <> struct subtract_t<uint8_t, simde__m128i> final : public detail::sub16x8_t {};
 
-template <typename NodeT> struct subtract_t<int16_t, NodeT> : public detail::sub8x16_t {};
-template <typename NodeT> struct subtract_t<uint16_t, NodeT> : public detail::sub8x16_t {};
+template <> struct subtract_t<int16_t, simde__m128i> final : public detail::sub8x16_t {};
+template <> struct subtract_t<uint16_t, simde__m128i> final : public detail::sub8x16_t {};
 
-template <typename NodeT> struct subtract_t<int32_t, NodeT> : public detail::sub4x32_t {};
-template <typename NodeT> struct subtract_t<uint32_t, NodeT> : public detail::sub4x32_t {};
+template <> struct subtract_t<int32_t, simde__m128i> final : public detail::sub4x32_t {};
+template <> struct subtract_t<uint32_t, simde__m128i> final : public detail::sub4x32_t {};
 
-template <typename NodeT> struct subtract_t<int64_t, NodeT> : public detail::sub2x64_t {};
-template <typename NodeT> struct subtract_t<uint64_t, NodeT> : public detail::sub2x64_t {};
+template <> struct subtract_t<int64_t, simde__m128i> final : public detail::sub2x64_t {};
+template <> struct subtract_t<uint64_t, simde__m128i> final : public detail::sub2x64_t {};
 
-template <typename NodeT> struct subtract_t<simde_int128, NodeT> : public std::minus<simde_int128> {};
-template <typename NodeT> struct subtract_t<simde_uint128, NodeT> : public std::minus<simde_uint128> {};
+template <> struct subtract_t<simde_int128, simde__m128i> final : public std::minus<simde_int128> {};
+template <> struct subtract_t<simde_uint128, simde__m128i> final : public std::minus<simde_uint128> {};
 
-template <typename NodeT> struct subtract_t<float, NodeT> : public std::bit_xor<> {};
-template <typename NodeT> struct subtract_t<double, NodeT> : public std::bit_xor<> {};
-template <typename T, typename NodeT> struct subtract_t<xor_wrapper<T>, NodeT> : public std::bit_xor<> {};
+template <> struct subtract_t<bool, simde__m256i> final : public detail::sub32x8_t {};
+template <> struct subtract_t<char, simde__m256i> final : public detail::sub32x8_t {};
+// template <> struct subtract_t<unsigned char, simde__m256i> final : public detail::sub32x8_t {};
+template <> struct subtract_t<int8_t, simde__m256i> final : public detail::sub32x8_t {};
+template <> struct subtract_t<uint8_t, simde__m256i> final : public detail::sub32x8_t {};
+
+template <> struct subtract_t<int16_t, simde__m256i> final : public detail::sub16x16_t {};
+template <> struct subtract_t<uint16_t, simde__m256i> final : public detail::sub16x16_t {};
+
+template <> struct subtract_t<int32_t, simde__m256i> final : public detail::sub8x32_t {};
+template <> struct subtract_t<uint32_t, simde__m256i> final : public detail::sub8x32_t {};
+
+template <> struct subtract_t<int64_t, simde__m256i> final : public detail::sub4x64_t {};
+template <> struct subtract_t<uint64_t, simde__m256i> final : public detail::sub4x64_t {};
+
+// TODO
+// template <> struct subtract_t<simde_int128, simde__m256i> final : public detail::sub2x128_t {};
+// template <> struct subtract_t<simde_uint128, simde__m256i> final : public detail::sub2x128_t {};
+
+template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bit_xor<> {};
+template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
+template <typename NodeT> struct subtract_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
+template <typename T, typename NodeT> struct subtract_t<xor_wrapper<T>, NodeT> final : public std::minus<xor_wrapper<T>> {};
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace dpf
 

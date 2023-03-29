@@ -39,6 +39,7 @@ struct dpf_key
     using exterior_prg_type = ExteriorPRG;
     using exterior_node = typename ExteriorPRG::block_t;
     using input_type = InputT;
+    using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>>;
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

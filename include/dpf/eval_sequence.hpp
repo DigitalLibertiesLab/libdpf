@@ -85,7 +85,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator,
           typename OutputBuffer>
-inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
+inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                     std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -130,7 +130,7 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
     std::size_t recipe_index = recipe.level_endpoints[level_index-1];
     std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
 
-    for (; level_index <= to_level; level_index = memoizer.advance_level())
+    for (; level_index <= to_level; level_index = memoizer.advance_level(), nodes_at_level = memoizer.get_nodes_at_level(level_index-1))
     {
         const node_type cw[2] = {
             set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
@@ -153,7 +153,6 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
                 currbuf[output_index++] = dpf_type::traverse_interior(prevbuf[input_index], cw[dir], dir);
             }
         }
-        nodes_at_level = memoizer.get_nodes_at_level(level_index);
     }
 }
 
@@ -234,7 +233,7 @@ template <std::size_t I = 0,
           class OutputBuffer,
           typename SequenceMemoizer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffer & outbuf, SequenceMemoizer & memoizer)
+    OutputBuffer && outbuf, SequenceMemoizer & memoizer)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -260,7 +259,7 @@ template <std::size_t I = 0,
           typename InputT,
           class OutputBuffer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffer & outbuf)
+    OutputBuffer && outbuf)
 {
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
     return eval_sequence<I>(dpf, recipe, outbuf, memoizer);
