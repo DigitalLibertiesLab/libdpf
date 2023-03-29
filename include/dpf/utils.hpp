@@ -169,7 +169,7 @@ template <typename DpfKey,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr IntegralT get_from_node(InputT from)
 {
-    contexpr auto to_int = to_integral_type<InputT>{};
+    constexpr auto to_int = to_integral_type<InputT>{};
     return quotient_floor(to_int(from),
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
@@ -179,7 +179,7 @@ template <typename DpfKey,
           typename IntegralT = typename DpfKey::integral_type>
 static constexpr IntegralT get_to_node(InputT to)
 {
-    contexpr auto to_int = to_integral_type<InputT>{};
+    constexpr auto to_int = to_integral_type<InputT>{};
     return quotient_ceiling(to_int(to+1),
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
