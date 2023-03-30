@@ -19,6 +19,7 @@
 #include "dpf/twiddle.hpp"
 #include "dpf/leaf_node.hpp"
 #include "dpf/aligned_allocator.hpp"
+#include "dpf/network.hpp"
 
 namespace dpf
 {
@@ -63,10 +64,10 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                       const std::array<uint8_t, depth> & correction_advice_,
                       const leaf_nodes & exterior_cw_,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
-                      beaver_tuple beavers_)
+                      beaver_tuple && beavers_)
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
-        mutable_beaver_tuple{beavers_},
+        mutable_beaver_tuple{std::forward<beaver_tuple>(beavers_)},
         root{root_},
         correction_words{interior_cws_},
         correction_advice{correction_advice_}
@@ -84,6 +85,33 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
+
+    template <std::size_t I = 0,
+              typename OutputT_,
+              typename PeerT,
+              std::enable_if_t<std::is_same_v<concrete_type_t<OutputT>, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>, bool> = true>
+    auto assign_leaf(OutputT_ && output, PeerT & peer)  // NOLINT
+    {
+        using leaf_type = leaf_node_t<exterior_node, OutputT_>;
+        auto & leaf = std::get<I>(mutable_exterior_cw);
+        auto & beaver = std::get<I>(mutable_beaver_tuple);
+        if (!beaver.is_locked->test_and_set()) throw;
+
+        OutputT aa, a = output + beaver.output_blind;
+        leaf_type lleaf;
+        dpf::write(peer, make_const_buffer_sequence(a));
+        dpf::read(peer, make_mutable_buffer_sequence(aa));
+        leaf = add<OutputT_, exterior_node>(leaf,
+            subtract<OutputT_, exterior_node>(
+                multiply<OutputT_, exterior_node>(beaver.blinded_vector, output),
+                multiply<OutputT_, exterior_node>(beaver.vector_blind, aa)
+            )
+        );
+        dpf::write(peer, make_const_buffer_sequence(leaf));
+        dpf::read(peer, make_mutable_buffer_sequence(lleaf));
+        leaf = add<OutputT_, exterior_node>(leaf, lleaf);
+        wildcard_mask.set(I);
+    }
 
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const
@@ -218,9 +246,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return std::make_pair(
         dpf_type{root[0], correction_words, correction_advice,
-            leaves0, wildcard_mask, beavers0},
+            leaves0, wildcard_mask, std::move(beavers0)},
         dpf_type{root[1], correction_words, correction_advice,
-            leaves1, wildcard_mask, beavers1});
+            leaves1, wildcard_mask, std::move(beavers1)});
 }  // make_dpf
 
 }  // namespace dpf

@@ -162,6 +162,11 @@ operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 
 /// @}
 
+dpf::bit operator+(dpf::bit lhs, dpf::bit rhs) noexcept
+{
+    return static_cast<dpf::bit>(lhs + rhs);
+}
+
 namespace utils
 {
 

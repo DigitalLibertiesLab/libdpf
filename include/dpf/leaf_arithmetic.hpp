@@ -544,8 +544,24 @@ template <> struct multiply_t<uint64_t, simde__m256i> final : public detail::mul
 
 // template <typename NodeT> struct multiply_t<float, NodeT> final : public std::bit_and<> {};
 // template <typename NodeT> struct multiply_t<double, NodeT> final : public std::bit_and<> {};
-// template <typename NodeT> struct multiply_t<dpf::bit, NodeT> final : public std::bit_and<> {};
-// template <typename T, typename NodeT> struct multiply_t<xor_wrapper<T>, NodeT> final : public std::and<xor_wrapper<T>> {};
+template <> struct multiply_t<dpf::bit, simde__m128i> final
+{
+    auto operator()(const simde__m128i & a, const dpf::bit & b) const
+    {
+        simde__m128i bb = simde_mm_set1_epi8(-uint8_t(b));
+        return simde_mm_and_si128(a, bb);
+    }
+};
+template <> struct multiply_t<dpf::bit, simde__m256i> final
+{
+    auto operator()(const simde__m256i & a, const dpf::bit & b) const
+    {
+        simde__m256i bb = simde_mm256_set1_epi8(-uint8_t(b));
+        return simde_mm256_and_si256(a, bb);
+    }
+};
+template <typename T, typename NodeT> struct multiply_t<xor_wrapper<T>, NodeT> final : public std::bit_and<xor_wrapper<T>> {};
+
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

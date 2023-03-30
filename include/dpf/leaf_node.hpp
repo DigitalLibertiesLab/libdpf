@@ -15,6 +15,7 @@
 #include <cstring>
 #include <functional>
 #include <tuple>
+#include <shared_mutex>
 
 #include "simde/simde/x86/avx2.h"
 
@@ -146,8 +147,9 @@ template <typename NodeT,
 struct beaver<true, NodeT, OutputT, 1> final
 {
     static_assert(1 == outputs_per_leaf_v<OutputT, NodeT>);
-    beaver() : is_locked{ATOMIC_FLAG_INIT} { }
-    std::atomic_flag is_locked;
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
+    beaver(beaver &&) = default;
+    std::unique_ptr<std::atomic_flag> is_locked;
 };
 
 template <typename NodeT,
@@ -156,9 +158,9 @@ template <typename NodeT,
 struct beaver<true, NodeT, OutputT, outputs_per_leaf> final
 {
     static_assert(outputs_per_leaf == outputs_per_leaf_v<OutputT, NodeT>);
-    beaver() : is_locked{ATOMIC_FLAG_INIT} { }
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
 
-    std::atomic_flag is_locked;
+    std::unique_ptr<std::atomic_flag> is_locked;
     OutputT output_blind;
     NodeT vector_blind;
     NodeT blinded_vector;
@@ -169,8 +171,8 @@ template <typename NodeT,
           typename ...OutputTs>
 struct beaver_tuple
 {
-    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, OutputT>,
-                            beaver<is_wildcard_v<OutputTs>, NodeT, OutputTs>...>;
+    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, concrete_type_t<OutputT>>,
+                            beaver<is_wildcard_v<OutputTs>, NodeT, concrete_type_t<OutputTs>>...>;
 };
 template <typename NodeT,
           typename OutputT,
@@ -365,20 +367,21 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                 using output_type = typename std::remove_reference_t<decltype(type)>;
                                 if constexpr(dpf::is_wildcard_v<output_type>)
                                 {
+                                    using concrete_type = dpf::concrete_type_t<output_type>;
                                     // secret share the value
                                     dpf::uniform_fill(leaf0);
-                                    leaf1 = dpf::subtract<output_type, node_type>(leaf, leaf0);
+                                    leaf1 = dpf::subtract<concrete_type, node_type>(leaf, leaf0);
                                     // also initialize the beavers
-                                    if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
+                                    if constexpr(dpf::outputs_per_leaf_v<concrete_type, node_type> > 1)
                                     {
-                                        dpf::leaf_node_t<node_type, output_type> vector;
+                                        dpf::leaf_node_t<node_type, concrete_type> vector;
                                         if constexpr(utils::is_xor_wrapper_v<decltype(x)> == true)
                                         {
-                                            vector = make_naked_leaf<node_type>(x, output_type(~0));
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(~0));
                                         }
                                         else
                                         {
-                                            vector = make_naked_leaf<node_type>(x, output_type(1));
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(1));
                                         }
 
                                         uniform_fill(beaver0.output_blind);
