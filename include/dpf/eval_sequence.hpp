@@ -110,6 +110,95 @@ auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
     return std::make_tuple(std::move(outbuf), std::move(iterable));
 }
 
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename Iterator,
+          typename OutputBuffer>
+inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
+{
+    using dpf_type = DpfKey;
+    using input_type = typename DpfKey::input_type;
+    using node_type = typename DpfKey::interior_node_t;
+    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+
+    if (!std::is_sorted(begin, end))
+    {
+        throw std::runtime_error("list must be sorted");
+    }
+
+    auto mask = dpf_type::msb_mask;
+    std::size_t nodes_in_sequence = std::distance(begin, end);
+    std::vector<std::vector<node_type>> memo(2, std::vector<node_type>(nodes_in_sequence));
+
+    bool curhalf = (dpf_type::depth ^ 1) & 1;
+    memo[!curhalf][0] = dpf.root;
+    std::size_t nodes_in_interval;
+
+    std::list<Iterator> splits{begin, end};
+    for (std::size_t level_index = 1; level_index <= dpf_type::depth; ++level_index, mask>>=1, curhalf=!curhalf)
+    {
+        std::size_t i = 0, j = 0;
+        const node_type cw[2] = {
+            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+        };
+        // `lower` and `upper` are always adjacent elements of `splits` with `lower` < `upper`
+        // [lower, upper) = "block"
+        for (auto upper = std::begin(splits), lower = upper++; upper != std::end(splits); lower = upper++)
+        {
+            // `upper_bound()` returns iterator to first element where the relevant bit (based on `mask`) is set
+            auto it = std::upper_bound(*lower, *upper, mask,
+                [](auto a, auto b){ return a&b; });
+            if (it == *lower)       // right only since first element in "block" requires right traversal
+            {
+                memo[curhalf][i++] = dpf_type::traverse_interior(memo[!curhalf][j++], cw[1], 1);
+            }
+            else if (it == *upper)  // left only since no element in "block" requires right traversal
+            {
+                memo[curhalf][i++] = dpf_type::traverse_interior(memo[!curhalf][j++], cw[0], 0);
+            }
+            else                    // both ways since some (non-lower) element within "block" requires right traversal
+            {
+                auto cur_node = memo[!curhalf][j++];
+                memo[curhalf][i++] = dpf_type::traverse_interior(cur_node, cw[0], 0);
+                memo[curhalf][i++] = dpf_type::traverse_interior(cur_node, cw[1], 1);
+                splits.insert(upper, it);
+            }
+        }
+        nodes_in_interval = i;
+    }
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    using raw_type = std::tuple_element_t<I, typename DpfKey::leaf_nodes_t>;
+    auto rawbuf = reinterpret_cast<raw_type*>(utils::data(outbuf));
+    auto cw = dpf.template exterior_cw<I>();
+    auto buf = memo[0];
+
+    auto curr = begin, prev = curr;
+    for (std::size_t i = 0, j = 0; i < nodes_in_sequence; ++i)
+    {
+        j += *prev/dpf_type::outputs_per_leaf < *curr/dpf_type::outputs_per_leaf;
+        auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
+            get_if_lo_bit(cw, buf[j]));
+        std::memcpy(&rawbuf[i], &leaf, sizeof(leaf));
+        prev = curr++;
+    }
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
+   return subsequence_iterable<DpfKey, output_type, Iterator>(utils::data(outbuf), begin, end);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename Iterator>
+auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterator end)
+{
+    auto outbuf = make_output_buffer_for_subsequence<I>(dpf, begin, end);
+    auto iterable = eval_sequence_with_recipe<I>(dpf, begin, end, outbuf);
+    return std::make_tuple(std::move(outbuf), std::move(iterable));
+}
+
 namespace internal
 {
 
