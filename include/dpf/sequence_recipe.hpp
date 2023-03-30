@@ -10,7 +10,7 @@
 #ifndef LIBDPF_INCLUDE_DPF_RECIPE_HPP__
 #define LIBDPF_INCLUDE_DPF_RECIPE_HPP__
 
-#include <set>
+#include <list>
 
 namespace dpf
 {
@@ -46,15 +46,6 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
     using dpf_type = DpfKey;
     using input_type = std::remove_reference_t<decltype(*begin)>;
 
-    struct IteratorComp
-    {
-        bool operator()(const RandomAccessIterator & lhs,
-                        const RandomAccessIterator & rhs) const
-        { 
-            return *lhs < *rhs;
-        }
-    };
-
     if (!std::is_sorted(begin, end))
     {
         throw std::runtime_error("list must be sorted");
@@ -62,28 +53,27 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 
     auto mask = dpf_type::msb_mask;
 
-    std::set<RandomAccessIterator, IteratorComp> splits;
-    splits.insert(begin);
+    std::list<RandomAccessIterator> splits{begin, end};
 
     std::vector<std::size_t> level_endpoints;
     level_endpoints.push_back(0);
     std::vector<int8_t> recipe_steps;
     for (std::size_t level_index = 0; level_index < dpf_type::depth; ++level_index, mask>>=1)
     {
-        for (auto upper = std::begin(splits), lower = upper++; ; lower = upper++)
+        // `lower` and `upper` are always adjacent elements of `splits` with `lower` < `upper`
+        // [lower, upper) = "block"
+        for (auto upper = std::begin(splits), lower = upper++; upper != std::end(splits); lower = upper++)
         {
-            bool at_end = (upper == std::end(splits));
-            auto upper_ = at_end ? end : *upper;
-            auto it = std::upper_bound(*lower, upper_, mask,
+            // `upper_bound()` returns iterator to first element where the relevant bit (based on `mask`) is set
+            auto it = std::upper_bound(*lower, *upper, mask,
                 [](auto a, auto b){ return a&b; });
-            if (it == *lower) recipe_steps.push_back(-1);       // right only
-            else if (it == upper_) recipe_steps.push_back(+1);  // left only
+            if (it == *lower) recipe_steps.push_back(-1);       // right only since first element in "block" requires right traversal
+            else if (it == *upper) recipe_steps.push_back(+1);  // left only since no element in "block" requires right traversal
             else
             {
-                recipe_steps.push_back(0);                      // both ways
-                splits.insert(it);
+                recipe_steps.push_back(0);                      // both ways since some (non-lower) element within "block" requires right traversal
+                splits.insert(upper, it);
             }
-            if (at_end) break;
         }
         level_endpoints.push_back(recipe_steps.size());
     }
