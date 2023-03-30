@@ -29,7 +29,7 @@ class modint
 {
   public:
     /// @brief the primitive integral type used to represent the `modint`
-    using integral_type = dpf::utils::integral_type_from_bitlength_t<Nbits>;
+    using integral_type = dpf::utils::nonvoid_integral_type_from_bitlength_t<Nbits>;
 
     /// @brief construct the `modint`
     /// @{

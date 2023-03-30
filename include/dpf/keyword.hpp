@@ -109,7 +109,7 @@ class basic_fixed_length_string
     static_assert(N != 0, "maximum string length must be positive");
 
     /// @brief the primitive integral type used to represent the string
-    using integral_type = dpf::utils::integral_type_from_bitlength_t<bits>;
+    using integral_type = dpf::utils::nonvoid_integral_type_from_bitlength_t<bits>;
 
     /// @brief construct the `basic_fixed_length_string`
     /// @{

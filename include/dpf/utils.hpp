@@ -165,13 +165,14 @@ template <typename T>
 struct to_integral_type
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
+    using T_integral_type = integral_type_from_bitlength_t<bits>;
     using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
     constexpr integral_type operator()(T input) const noexcept
     {
-        return static_cast<integral_type>(input);
+        return static_cast<integral_type>(static_cast<T_integral_type>(input));
     }
 };
 
