@@ -153,13 +153,13 @@ using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbi
 
 /// @brief the primitive integral type used to represent non integral types
 template <std::size_t Nbits, std::size_t MinBits = Nbits>
-struct _integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
+struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
 {
     static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
 };
 
 template <std::size_t Nbits, std::size_t MinBits = Nbits>
-using _integral_type_from_bitlength_t = typename _integral_type_from_bitlength<Nbits, MinBits>::type;
+using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
 
 template <typename T>
 struct to_integral_type
