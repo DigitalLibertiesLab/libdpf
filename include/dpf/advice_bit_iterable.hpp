@@ -24,7 +24,7 @@ struct extract_bit<simde__m128i>
 {
     bool operator()(const simde__m128i * val) const
     {
-        auto buf = reinterpret_cast<const uint64_t *>(val);
+        auto buf = reinterpret_cast<const char *>(val);
         return buf[0] & 1;
     }
     // auto operator()(const simde__m128i & val) const
@@ -38,7 +38,7 @@ struct extract_bit<simde__m256i>
 {
     bool operator()(const simde__m256i * val) const
     {
-        auto buf = reinterpret_cast<const uint64_t *>(val);
+        auto buf = reinterpret_cast<const char *>(val);
         return buf[0] & 1;
     }
     // auto operator()(const simde__m256i & val) const
