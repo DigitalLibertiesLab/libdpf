@@ -17,55 +17,40 @@ namespace dpf
 namespace detail
 {
 
-template <typename NodeT> struct extract_bit;
-
-template <>
-struct extract_bit<simde__m128i>
+template <typename Iterator>
+struct extract_bit_simde_node
 {
-    bool operator()(const simde__m128i * val) const
+    bool operator()(const Iterator it) const
     {
-        auto buf = reinterpret_cast<const char *>(val);
+        auto buf = reinterpret_cast<const char *>(&*it);
         return buf[0] & 1;
     }
-    // auto operator()(const simde__m128i & val) const
-    // {
-    //     return simde_mm_extract_epi8(val, 0) & 1;
-    // }
 };
 
-template <>
-struct extract_bit<simde__m256i>
-{
-    bool operator()(const simde__m256i * val) const
-    {
-        auto buf = reinterpret_cast<const char *>(val);
-        return buf[0] & 1;
-    }
-    // auto operator()(const simde__m256i & val) const
-    // {
-    //     return simde_mm256_extract_epi8(val, 0) & 1;
-    // }
-};
+template <typename NodeT, typename Iterator> struct extract_bit;
+
+template <typename Iterator> struct extract_bit<simde__m128i, Iterator> : public extract_bit_simde_node<Iterator> {};
+template <typename Iterator> struct extract_bit<simde__m256i, Iterator> : public extract_bit_simde_node<Iterator> {};
 
 }  // namespace detail
 
-template <typename NodeT>
+template <typename Iterator>
 class advice_bit_iterable
 {
   public:
-    using node_type = NodeT;
-    static const std::size_t node_size = sizeof(NodeT);
+    using iterator_type = Iterator;
+    using node_type = typename std::iterator_traits<Iterator>::value_type;
     class const_iterator;  // forward declaration
 
-    explicit advice_bit_iterable(const node_type * cont, std::size_t length)
-      : cont_{cont}, length_{length}
+    explicit advice_bit_iterable(const iterator_type it, std::size_t length)
+      : it_{it}, length_{length}
     { }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return const_iterator(cont_);
+        return const_iterator(it_);
     }
 
     HEDLEY_NO_THROW
@@ -79,7 +64,7 @@ class advice_bit_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator(cont_ + length_);
+        return const_iterator(it_ + length_);
     }
 
     HEDLEY_NO_THROW
@@ -101,7 +86,7 @@ class advice_bit_iterable
         using difference_type = std::ptrdiff_t;
 
         HEDLEY_ALWAYS_INLINE
-        constexpr const_iterator(const node_type * it) noexcept
+        constexpr const_iterator(const iterator_type it) noexcept
           : it_{it}
         { }
 
@@ -229,12 +214,12 @@ class advice_bit_iterable
         }
 
       private:
-        const node_type * it_;
-        static constexpr auto bit = detail::extract_bit<node_type>{};
+        iterator_type it_;
+        static constexpr auto bit = detail::extract_bit<node_type, iterator_type>{};
     };  // class dpf::advice_bit_iterable::const_iterator
 
   private:
-    const node_type * cont_;
+    const iterator_type it_;
     const std::size_t length_;
 
 };  // class dpf::advice_bit_iterable
@@ -244,8 +229,8 @@ class advice_bit_iterable
 // namespace std
 // {
 
-// template <>
-// struct iterator_traits<dpf::advice_bit_iterable::const_iterator>
+// template <typename Iterator>
+// struct iterator_traits<typename dpf::advice_bit_iterable<Iterator>::const_iterator>
 // {
 //   private:
 //     using type = dpf::advice_bit_iterable::const_iterator;
