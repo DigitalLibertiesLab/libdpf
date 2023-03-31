@@ -10,6 +10,7 @@
 #define LIBDPF_INCLUDE_DPF_PRG_NONSECURE_JUST_A_COUNTER_HPP__
 
 #include <array>
+#include <atomic>
 
 #include "hedley/hedley.h"
 
@@ -47,7 +48,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         std::fill_n(output, count_, seed);
     }
   public:
-    inline static std::atomic_int count{0};
+    inline static std::atomic_size_t count{0};
 };  // struct nonsecure_just_a_counter
 
 }  // namespace prg
