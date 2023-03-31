@@ -27,13 +27,13 @@ struct nonsecure_just_a_counter final
 
     static block_t eval(block_t seed, uint32_t)
     {
-        count++;
+        count.fetch_add(1, std::memory_order::memory_order_relaxed);
         return seed;
     }
 
     static auto eval01(block_t seed)
     {
-        count+=2;
+        count.fetch_add(2, std::memory_order::memory_order_relaxed);
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         return std::array<block_t, 2>{seed, seed};
@@ -43,11 +43,11 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static void eval(block_t seed, block_t * HEDLEY_RESTRICT output,
         uint32_t count_, uint32_t pos = 0)
     {
-        count += count_;
+        count.fetch_add(count_, std::memory_order::memory_order_relaxed);
         std::fill_n(output, count_, seed);
     }
   public:
-    inline static std::size_t count;
+    inline static std::atomic_int count{0};
 };  // struct nonsecure_just_a_counter
 
 }  // namespace prg
