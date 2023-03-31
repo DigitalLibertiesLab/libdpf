@@ -47,7 +47,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         std::fill_n(output, count_, seed);
     }
   public:
-    static std::size_t count;
+    inline static std::size_t count;
 };  // struct nonsecure_just_a_counter
 
 }  // namespace prg
