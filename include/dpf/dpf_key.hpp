@@ -72,6 +72,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         correction_words{interior_cws_},
         correction_advice{correction_advice_}
     { }
+    dpf_key(const dpf_key &) = delete;
+    dpf_key(dpf_key &&) = default;
 
   private:
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
@@ -90,27 +92,33 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
               typename OutputT_,
               typename PeerT,
               std::enable_if_t<std::is_same_v<concrete_type_t<OutputT>, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>, bool> = true>
-    auto assign_leaf(OutputT_ && output, PeerT & peer)  // NOLINT
+    auto assign_leaf(OutputT_ && output, PeerT & peer_in, PeerT & peer_out)  // NOLINT
     {
         using leaf_type = leaf_node_t<exterior_node, OutputT_>;
         auto & leaf = std::get<I>(mutable_exterior_cw);
         auto & beaver = std::get<I>(mutable_beaver_tuple);
-        if (!beaver.is_locked->test_and_set()) throw;
+        
+        if (beaver.is_locked->test_and_set())
+        {
+            throw std::logic_error("already locked");
+        }
 
-        OutputT aa, a = output + beaver.output_blind;
+        OutputT_ aa, a = OutputT_{output + beaver.output_blind};
         leaf_type lleaf;
-        dpf::write(peer, make_const_buffer_sequence(a));
-        dpf::read(peer, make_mutable_buffer_sequence(aa));
+        dpf::write(peer_out, make_const_buffer_sequence(a));
+        dpf::read(peer_in, make_mutable_buffer_sequence(aa));
         leaf = add<OutputT_, exterior_node>(leaf,
             subtract<OutputT_, exterior_node>(
                 multiply<OutputT_, exterior_node>(beaver.blinded_vector, output),
                 multiply<OutputT_, exterior_node>(beaver.vector_blind, aa)
             )
         );
-        dpf::write(peer, make_const_buffer_sequence(leaf));
-        dpf::read(peer, make_mutable_buffer_sequence(lleaf));
+        dpf::write(peer_out, make_const_buffer_sequence(leaf));
+        dpf::read(peer_in, make_mutable_buffer_sequence(lleaf));
         leaf = add<OutputT_, exterior_node>(leaf, lleaf);
-        wildcard_mask.set(I);
+        std::cout << I << ":" << is_wildcard(I) << "->";
+        this->wildcard_mask[I] = false;
+        std::cout << is_wildcard(I) << "\n";
     }
 
     HEDLEY_ALWAYS_INLINE
