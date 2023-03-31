@@ -29,8 +29,7 @@ class modint
 {
   public:
     /// @brief the primitive integral type used to represent the `modint`
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
-    using integral_type = dpf::utils::integral_type_from_bitlength_t<Nbits>;
+    using integral_type = dpf::utils::nonvoid_integral_type_from_bitlength_t<Nbits>;
 
     /// @brief construct the `modint`
     /// @{
@@ -494,6 +493,14 @@ class modint
         return val & modulo_mask;
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type data() const noexcept
+    {
+        return val;
+    }
+
     template <typename CharT,
               class Traits = std::char_traits<CharT>,
               class Allocator = std::allocator<CharT>>
@@ -521,7 +528,7 @@ class modint
 
   private:
     /// @brief bitmask used for performing reductions modulo `2^Nbits`
-    static constexpr integral_type modulo_mask = (integral_type{1} << Nbits)-1;
+    static constexpr integral_type modulo_mask = ~integral_type{0} >> utils::bitlength_of_v<integral_type> - Nbits;
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;

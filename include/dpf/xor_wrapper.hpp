@@ -28,6 +28,9 @@ struct xor_wrapper
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
 
+    static constexpr std::size_t bits = utils::bitlength_of_v<value_type>;
+    using integral_type = utils::integral_type_from_bitlength_t<bits>;
+
     /// @{
         
     /// @brief Default c'tor
@@ -121,6 +124,23 @@ struct xor_wrapper
     constexpr bool operator>=(xor_wrapper rhs) const noexcept
     {
         return value >= rhs.value;
+    }
+
+    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr explicit operator integral_type() const noexcept
+    {
+        return static_cast<integral_type>(value);
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr value_type data() const noexcept
+    {
+        return value;
     }
 
   private:

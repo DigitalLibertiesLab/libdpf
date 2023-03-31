@@ -698,76 +698,10 @@ struct countl_zero_symmmetric_difference<dpf::fixedpoint<FractionalBits, Integra
     }
 };
 
-}  // namespace utils
+}  // namespace dpf::utils
 
-}  // namespace dpf
-
-using dpf::precision_cast;
-
-namespace std
+namespace literals
 {
-
-template <unsigned FractionalBits,
-          typename IntegralType>
-class numeric_limits<dpf::fixedpoint<FractionalBits, IntegralType>>
-  : private std::numeric_limits<IntegralType>
-{
-  public:
-    using T = dpf::fixedpoint<FractionalBits, IntegralType>;
-    using integral_limits = std::numeric_limits<IntegralType>;
-
-    using integral_limits::is_specialized;
-    using integral_limits::is_signed;
-    static constexpr bool is_integer = !FractionalBits;
-    using integral_limits::is_exact;
-    using integral_limits::has_infinity;
-    using integral_limits::has_quiet_NaN;
-    using integral_limits::has_signaling_NaN;
-    using integral_limits::has_denorm;
-    using integral_limits::has_denorm_loss;
-    using integral_limits::round_style;
-    using integral_limits::is_iec559;
-    using integral_limits::is_bounded;
-    using integral_limits::is_modulo;
-    using integral_limits::digits;
-    using integral_limits::digits10;
-    using integral_limits::max_digits10;
-    using integral_limits::radix;
-    // static constexpr int min_exponent = -FractionalBits;
-    using integral_limits::min_exponent;
-    // static constexpr int min_exponent10 = -FractionalBits * 0.3;
-    using integral_limits::min_exponent10;
-    // static constexpr int min_exponent = digits - FractionalBits;
-    using integral_limits::max_exponent;
-    // static constexpr int min_exponent = (digits - FractionalBits)*0.3;
-    using integral_limits::max_exponent10;
-    using integral_limits::traps;
-    using integral_limits::tinyness_before;
-
-    static constexpr T min() noexcept { return std::ldexp(IntegralType(1), -FractionalBits); }
-    static constexpr T lowest() noexcept { return std::ldexp(integral_limits::lowest(), -FractionalBits); }
-    static constexpr T max() noexcept { return std::ldexp(integral_limits::max(), -FractionalBits); }
-    static constexpr T epsilon() noexcept { return is_integer ? T(0.0) : T(1.0) + min(); }
-    static constexpr T round_error() noexcept { return T(is_integer ? 0.0 : 0.5); }
-    static constexpr T infinity() noexcept { return T(0); }
-    static constexpr T quiet_NaN() noexcept { return T(0); }
-    static constexpr T signalling_NaN() noexcept { return T(0); }
-    static constexpr T denorm_min() noexcept { return T(0); }
-};
-
-template <unsigned F, typename T>
-struct numeric_limits<dpf::fixedpoint<F, T> const>
-  : public numeric_limits<dpf::fixedpoint<F, T>> {};
-
-template <unsigned F, typename T>
-struct numeric_limits<dpf::fixedpoint<F, T> volatile>
-  : public numeric_limits<dpf::fixedpoint<F, T>> {};
-
-template <unsigned F, typename T>
-struct numeric_limits<dpf::fixedpoint<F, T> const volatile>
-  : public numeric_limits<dpf::fixedpoint<F, T>> {};
-
-}  // namespace std
 
 constexpr auto operator "" _fixed0(long double val)
 {
@@ -1062,5 +996,76 @@ constexpr auto operator "" _fixed64(long double val)
 {
     return dpf::make_fixed<64>(val);
 }
+
+}  // namespace dpf::literals
+
+}  // namespace dpf
+
+using dpf::precision_cast;
+
+namespace std
+{
+
+template <unsigned FractionalBits,
+          typename IntegralType>
+class numeric_limits<dpf::fixedpoint<FractionalBits, IntegralType>>
+  : private std::numeric_limits<IntegralType>
+{
+  public:
+    using T = dpf::fixedpoint<FractionalBits, IntegralType>;
+    using integral_limits = std::numeric_limits<IntegralType>;
+
+    using integral_limits::is_specialized;
+    using integral_limits::is_signed;
+    static constexpr bool is_integer = !FractionalBits;
+    using integral_limits::is_exact;
+    using integral_limits::has_infinity;
+    using integral_limits::has_quiet_NaN;
+    using integral_limits::has_signaling_NaN;
+    using integral_limits::has_denorm;
+    using integral_limits::has_denorm_loss;
+    using integral_limits::round_style;
+    using integral_limits::is_iec559;
+    using integral_limits::is_bounded;
+    using integral_limits::is_modulo;
+    using integral_limits::digits;
+    using integral_limits::digits10;
+    using integral_limits::max_digits10;
+    using integral_limits::radix;
+    // static constexpr int min_exponent = -FractionalBits;
+    using integral_limits::min_exponent;
+    // static constexpr int min_exponent10 = -FractionalBits * 0.3;
+    using integral_limits::min_exponent10;
+    // static constexpr int min_exponent = digits - FractionalBits;
+    using integral_limits::max_exponent;
+    // static constexpr int min_exponent = (digits - FractionalBits)*0.3;
+    using integral_limits::max_exponent10;
+    using integral_limits::traps;
+    using integral_limits::tinyness_before;
+
+    static constexpr T min() noexcept { return std::ldexp(IntegralType(1), -FractionalBits); }
+    static constexpr T lowest() noexcept { return std::ldexp(integral_limits::lowest(), -FractionalBits); }
+    static constexpr T max() noexcept { return std::ldexp(integral_limits::max(), -FractionalBits); }
+    static constexpr T epsilon() noexcept { return is_integer ? T(0.0) : T(1.0) + min(); }
+    static constexpr T round_error() noexcept { return T(is_integer ? 0.0 : 0.5); }
+    static constexpr T infinity() noexcept { return T(0); }
+    static constexpr T quiet_NaN() noexcept { return T(0); }
+    static constexpr T signalling_NaN() noexcept { return T(0); }
+    static constexpr T denorm_min() noexcept { return T(0); }
+};
+
+template <unsigned F, typename T>
+struct numeric_limits<dpf::fixedpoint<F, T> const>
+  : public numeric_limits<dpf::fixedpoint<F, T>> {};
+
+template <unsigned F, typename T>
+struct numeric_limits<dpf::fixedpoint<F, T> volatile>
+  : public numeric_limits<dpf::fixedpoint<F, T>> {};
+
+template <unsigned F, typename T>
+struct numeric_limits<dpf::fixedpoint<F, T> const volatile>
+  : public numeric_limits<dpf::fixedpoint<F, T>> {};
+
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_FIXEDPOINT_HPP__
