@@ -83,7 +83,7 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
     std::size_t leaf_index = 0;//*begin/outputs_per_leaf < *(begin+1)/outs_per_leaf;
     for (auto curr = begin, prev = curr; curr != end; prev = curr++)
     {
-        leaf_index += *prev/dpf_type::outputs_per_leaf < *curr/dpf_type::outputs_per_leaf;
+        leaf_index += *prev >> dpf_type::lg_outputs_per_leaf < *curr >> dpf_type::lg_outputs_per_leaf;
         output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + (*curr % dpf_type::outputs_per_leaf));
     }
 
