@@ -37,22 +37,22 @@ template <typename Iterator> struct extract_bit<simde__m256i, Iterator> : public
 template <typename WrappedIteratorType>
 class advice_bit_iterable_const_iterator;
 
-template <typename Iterator>
+template <typename Iterable>
 class advice_bit_iterable
 {
   public:
-    using iterator_type = Iterator;
-    using const_iterator = advice_bit_iterable_const_iterator<Iterator>;
+    using wrapped_iterator_type = typename Iterable::iterator_type;
+    using const_iterator = advice_bit_iterable_const_iterator<wrapped_iterator_type>;
 
-    explicit advice_bit_iterable(const iterator_type it, std::size_t length)
-      : it_{it}, length_{length}
+    explicit advice_bit_iterable(const Iterable & iterable)
+      : begin_{std::begin(iterable)}, end_{std::end(iterable)}
     { }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return const_iterator(it_);
+        return const_iterator(begin_);
     }
 
     HEDLEY_NO_THROW
@@ -66,7 +66,7 @@ class advice_bit_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator(it_ + length_);
+        return const_iterator(end_);
     }
 
     HEDLEY_NO_THROW
@@ -77,8 +77,7 @@ class advice_bit_iterable
     }
 
   private:
-    const iterator_type it_;
-    const std::size_t length_;
+    const wrapped_iterator_type begin_, end_;
 };  // class dpf::advice_bit_iterable
 
 template <typename WrappedIteratorType>
@@ -223,22 +222,16 @@ class advice_bit_iterable_const_iterator
         return !(*this < rhs);
     }
 
-    private:
+  private:
     wrapped_type it_;
     static constexpr auto bit = detail::extract_bit<node_type, wrapped_type>{};
 };  // class dpf::advice_bit_iterable_const_iterator
 
 
-template <typename Iterator>
-dpf::advice_bit_iterable<Iterator> advice_bits_of(Iterator first, Iterator last)
+template <typename Iterable>
+dpf::advice_bit_iterable<Iterable> advice_bits_of(const Iterable & iterable)
 {
-    return advice_bit_iterable<Iterator>{first, std::distance(first, last)};
-}
-
-template <typename Iterator>
-dpf::advice_bit_iterable<Iterator> advice_bits_of(Iterator it, std::size_t length)
-{
-    return advice_bit_iterable<Iterator>{it, length};
+    return advice_bit_iterable<Iterable>{iterable};
 }
 
 template <typename Iterator,
