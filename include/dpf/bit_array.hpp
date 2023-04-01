@@ -685,7 +685,7 @@ class bit_array_base
             assert(psnip_builtin_popcount64(mask_) == 1);
         }
 
-        friend class bit_array_base;       //< access to c'tor
+        friend class bit_array_base;      //< access to c'tor
         friend class bit_iterator_base;   //< access to c'tor
         friend class bit_iterator;        //< access to c'tor
         friend class const_bit_iterator;  //< access to c'tor

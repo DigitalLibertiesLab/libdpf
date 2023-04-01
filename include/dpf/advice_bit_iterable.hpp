@@ -224,6 +224,21 @@ class advice_bit_iterable
 
 };  // class dpf::advice_bit_iterable
 
+template <typename InputIt>  // typename advice_bit_iterable<Iterator>::const_iterator
+auto bitstring_from_advice_bits(InputIt first, InputIt last)
+{
+    std::size_t bits = last - first;
+    auto ret = dynamic_bit_array(bits);
+
+    auto curbit = ret.begin();
+    for (; first != last; ++first)
+    {
+        (*curbit++).assign(*first);
+    }
+
+    return ret;
+}
+
 }  // namespace dpf
 
 // namespace std
