@@ -224,6 +224,25 @@ class advice_bit_iterable
 
 };  // class dpf::advice_bit_iterable
 
+template <typename Iterator>
+dpf::advice_bit_iterable<Iterator> advice_bits_of(Iterator first, Iterator last)
+{
+    return advice_bit_iterable<Iterator>{first, last - first};
+}
+
+template <typename Iterator>
+dpf::advice_bit_iterable<Iterator> advice_bits_of(Iterator it, std::size_t length)
+{
+    return advice_bit_iterable<Iterator>{it, length};
+}
+
+template <typename Iterator,
+          class UnaryFunction>
+void for_each_advice_bit(const dpf::advice_bit_iterable<Iterator> it, UnaryFunction f)
+{
+    for (auto i : it) f(i);
+}
+
 template <typename InputIt>  // typename advice_bit_iterable<Iterator>::const_iterator
 auto bit_array_from_advice_bits(InputIt first, InputIt last)
 {
