@@ -24,7 +24,7 @@ template <typename T>
 struct xor_wrapper
 {
   public:
-    using value_type = std::make_unsigned_t<T>;
+    using value_type = T;
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
 
@@ -188,13 +188,14 @@ struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
 {
     using parent = to_integral_type_base<T>;
     using typename parent::integral_type;
+    static constexpr auto to_integral_type_cast = to_integral_type<T> {};
 
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr integral_type operator()(xor_wrapper<T> & input) const noexcept
     {
-        return static_cast<integral_type>(input.value);
+        return to_integral_type_cast(input.value);
     }
 };
 

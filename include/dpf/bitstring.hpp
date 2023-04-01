@@ -323,7 +323,8 @@ namespace utils
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::bitstring`
 template <std::size_t Nbits>
 struct bitlength_of<dpf::bitstring<Nbits>>
-  : public std::integral_constant<std::size_t, Nbits> { };
+  : public std::integral_constant<std::size_t, Nbits>
+{ };
 
 /// @brief specializes `dpf::utils::msb_of` for `dpf::bitstring`
 template <std::size_t Nbits>
