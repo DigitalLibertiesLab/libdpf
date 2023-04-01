@@ -97,28 +97,32 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         using leaf_type = leaf_node_t<exterior_node, OutputT_>;
         auto & leaf = std::get<I>(mutable_exterior_cw);
         auto & beaver = std::get<I>(mutable_beaver_tuple);
-        
+        leaf_type lleaf;
+
         if (beaver.is_locked->test_and_set())
         {
             throw std::logic_error("already locked");
         }
 
-        OutputT_ aa, a = OutputT_{output + beaver.output_blind};
-        leaf_type lleaf;
-        dpf::write(peer_out, make_const_buffer_sequence(a));
-        dpf::read(peer_in, make_mutable_buffer_sequence(aa));
-        leaf = add<OutputT_, exterior_node>(leaf,
-            subtract<OutputT_, exterior_node>(
+        if constexpr(dpf::outputs_per_leaf_v<concrete_type_t<OutputT_>, exterior_node> > 1)
+        {
+            OutputT_ aa, a = OutputT_{output + beaver.output_blind};
+            dpf::write(peer_out, make_const_buffer_sequence(a));
+            dpf::read(peer_in, make_mutable_buffer_sequence(aa));
+            lleaf = subtract<OutputT_, exterior_node>(
                 multiply<OutputT_, exterior_node>(beaver.blinded_vector, output),
                 multiply<OutputT_, exterior_node>(beaver.vector_blind, aa)
-            )
-        );
+            );
+        }
+        else
+        {
+            std::memcpy(&lleaf, &output, sizeof(leaf_type));
+        }
+        leaf = add<OutputT_, exterior_node>(leaf, lleaf);
         dpf::write(peer_out, make_const_buffer_sequence(leaf));
         dpf::read(peer_in, make_mutable_buffer_sequence(lleaf));
         leaf = add<OutputT_, exterior_node>(leaf, lleaf);
-        std::cout << I << ":" << is_wildcard(I) << "->";
         this->wildcard_mask[I] = false;
-        std::cout << is_wildcard(I) << "\n";
     }
 
     HEDLEY_ALWAYS_INLINE
