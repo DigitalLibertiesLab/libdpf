@@ -232,7 +232,7 @@ class advice_bit_iterable_const_iterator
 template <typename Iterator>
 dpf::advice_bit_iterable<Iterator> advice_bits_of(Iterator first, Iterator last)
 {
-    return advice_bit_iterable<Iterator>{first, last - first};
+    return advice_bit_iterable<Iterator>{first, std::distance(first, last)};
 }
 
 template <typename Iterator>
@@ -251,7 +251,7 @@ void for_each_advice_bit(const dpf::advice_bit_iterable<Iterator> it, UnaryFunct
 template <typename InputIt>  // typename advice_bit_iterable<Iterator>::const_iterator
 auto bit_array_from_advice_bits(InputIt first, InputIt last)
 {
-    std::size_t bits = last - first;
+    std::size_t bits = std::distance(first, last);
     auto ret = dynamic_bit_array(bits);
 
     auto curbit = ret.begin();
