@@ -15,17 +15,24 @@
 namespace dpf
 {
 
-template <typename DpfKey>
+template <typename DpfKey,
+          typename ReturnT = typename DpfKey::interior_node_t *>
 struct interval_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
     using integral_type = typename DpfKey::integral_type;
     using node_type = typename DpfKey::interior_node;
+    using return_type = ReturnT;
+    using iterator_type = return_type;
 
     // level 0 should access the root
     // level goes up to (and including) depth
-    virtual node_type * operator[](std::size_t) const noexcept = 0;
+    virtual return_type operator[](std::size_t) const noexcept = 0;
+
+    // iterators should access most recently completed level
+    virtual return_type begin() const noexcept = 0;
+    virtual return_type end() const noexcept = 0;
 
     virtual std::size_t assign_interval(const dpf_type & dpf, integral_type new_from, integral_type new_to)
     {
@@ -60,6 +67,11 @@ struct interval_memoizer_base
         return get_nodes_at_level(level_index, from_.value_or(0), to_.value_or(0));
     }
 
+    std::size_t get_nodes_at_level(std::size_t level) const
+    {
+        return get_nodes_at_level(level, from_.value_or(0), to_.value_or(0));
+    }
+
     static std::size_t get_nodes_at_level(std::size_t level, integral_type from_node, integral_type to_node)
     {
         // Algorithm explanation:
@@ -90,6 +102,7 @@ struct interval_memoizer_base
   protected:
     static constexpr auto depth = dpf_type::depth;
     const std::size_t output_length;
+    std::size_t level_index;  // indicates current level being built
 
     explicit interval_memoizer_base(std::size_t output_len)
       : dpf_{std::nullopt},
@@ -103,7 +116,6 @@ struct interval_memoizer_base
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     std::optional<integral_type> from_;
     std::optional<integral_type> to_;
-    std::size_t level_index;
 };
 
 template <typename DpfKey,
@@ -113,11 +125,11 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
-    using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
+    using return_type = typename DpfKey::interior_node_t *;
     using parent::depth;
-    using parent::output_length;
+    using parent::level_index;
+    using parent::get_nodes_at_level;
 
     // See comment for full_tree_interval_memoizer::initialize_endpoints() for
     //   general explanation of derivation for "nodes at previous level".
@@ -146,10 +158,24 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept override
+    return_type operator[](std::size_t level) const noexcept override
     {
         bool b = (depth ^ level) & 1;
         return Allocator::assume_aligned(&buf[b*pivot]);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type begin() const noexcept override
+    {
+        return this->operator[](level_index - 1);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type end() const noexcept override
+    {
+        return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
     }
 
    private:
@@ -168,8 +194,10 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using dpf_type = DpfKey;
     using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
+    using return_type = node_type *;
     using parent::depth;
-    using parent::output_length;
+    using parent::level_index;
+    using parent::get_nodes_at_level;
 
     explicit full_tree_interval_memoizer(std::size_t output_len,
         Allocator alloc = Allocator{})
@@ -180,9 +208,23 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept override
+    return_type operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[level_endpoints[level]]);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type begin() const noexcept override
+    {
+        return this->operator[](level_index - 1);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type end() const noexcept override
+    {
+        return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
     }
 
    private:

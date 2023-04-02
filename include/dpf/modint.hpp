@@ -666,12 +666,43 @@ namespace std
 /// @details specializes `std::numeric_limits` for `dpf::modint<Nbits>`
 template<std::size_t Nbits>
 class numeric_limits<dpf::modint<Nbits>>
-  : public numeric_limits<typename dpf::modint<Nbits>::integral_type>
 {
   public:
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = false;
+    static constexpr bool is_integer = true;
+    static constexpr bool is_exact = true;
+    static constexpr bool has_infinity = false;
+    static constexpr bool has_quiet_NaN = false;
+    static constexpr bool has_signaling_NaN = false;
+    static constexpr std::float_denorm_style has_denorm = std::denorm_absent;
+    static constexpr bool has_denorm_loss = false;
+    static constexpr std::float_round_style round_style = std::round_toward_zero;
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = true;
     static constexpr int digits = Nbits;
     static constexpr int digits10 = Nbits * std::log10(2);  //< correct if `Nbits<129`
-    static constexpr bool is_integral = false;
+    static constexpr int max_digits10 = 0;
+    static constexpr int radix = 2;
+    static constexpr int min_exponent = 0;
+    static constexpr int max_exponent = 0;
+    static constexpr int min_exponent10 = 0;
+    static constexpr int max_exponent10 = 0;
+    static constexpr bool traps
+        = std::numeric_limits<typename dpf::modint<Nbits>::integral_type>::traps;
+    static constexpr bool tinyness_before = false;
+
+    static constexpr dpf::modint<Nbits> min() noexcept { return dpf::modint<Nbits>{0}; }
+    static constexpr dpf::modint<Nbits> lowest() noexcept { return dpf::modint<Nbits>{0}; }
+    static constexpr dpf::modint<Nbits> max() noexcept { return dpf::modint<Nbits>{-1}; }
+    static constexpr dpf::modint<Nbits> epsilon() noexcept { return 0; }
+    static constexpr dpf::modint<Nbits> round_error() noexcept { return 0; }
+    static constexpr dpf::modint<Nbits> infinity() noexcept { return 0; }
+    static constexpr dpf::modint<Nbits> quiet_NaN() noexcept { return 0; }
+    static constexpr dpf::modint<Nbits> signaling_NaN() noexcept { return 0; }
+    static constexpr dpf::modint<Nbits> denorm_min() noexcept { return 0; }
+
 };
 /// @details specializes `std::numeric_limits` for `dpf::modint<Nbits> const`
 template<std::size_t Nbits>
