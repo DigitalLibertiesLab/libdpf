@@ -22,10 +22,6 @@ struct interval_memoizer_base
   public:
     using dpf_type = DpfKey;
     using integral_type = typename DpfKey::integral_type;
-<<<<<<< HEAD
-=======
-    using node_type = typename DpfKey::interior_node;
->>>>>>> assign_leaf
     using return_type = ReturnT;
     using iterator_type = return_type;
 
@@ -194,16 +190,9 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
-<<<<<<< HEAD
     using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = std::add_pointer_t<node_type>;
-=======
-    using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node;
-    using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = node_type *;
->>>>>>> assign_leaf
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
