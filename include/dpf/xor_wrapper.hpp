@@ -184,6 +184,9 @@ struct bitlength_of<xor_wrapper<T>>
 { };
 
 template <typename T>
+struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
+
+template <typename T>
 struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
 {
     using parent = to_integral_type_base<T>;

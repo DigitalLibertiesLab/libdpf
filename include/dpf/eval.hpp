@@ -57,8 +57,8 @@ template <typename Output,
           typename Node>
 auto make_dpf_output(const Node & node, Input x)
 {
-    return dpf_output<Output, Node>{node,
-        offset_within_block<Output, Node>(x)};
+    return dpf_output<concrete_type_t<Output>, Node>{node,
+        offset_within_block<concrete_type_t<Output>, Node>(x)};
 }
 
 template <std::size_t I = 0,

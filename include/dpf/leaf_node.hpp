@@ -15,6 +15,7 @@
 #include <cstring>
 #include <functional>
 #include <tuple>
+#include <shared_mutex>
 
 #include "simde/simde/x86/avx2.h"
 
@@ -140,13 +141,15 @@ template <bool isWildcard,
           std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
 struct beaver final { };
 
+
 template <typename NodeT,
           typename OutputT>
-struct beaver<true, NodeT, OutputT, 1> 
+struct beaver<true, NodeT, OutputT, 1> final
 {
     static_assert(1 == outputs_per_leaf_v<OutputT, NodeT>);
-    beaver() : is_locked{ATOMIC_FLAG_INIT} { }
-    std::atomic_flag is_locked;
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
+    beaver(beaver &&) = default;
+    std::unique_ptr<std::atomic_flag> is_locked;
 };
 
 template <typename NodeT,
@@ -155,9 +158,9 @@ template <typename NodeT,
 struct beaver<true, NodeT, OutputT, outputs_per_leaf> final
 {
     static_assert(outputs_per_leaf == outputs_per_leaf_v<OutputT, NodeT>);
-    beaver() : is_locked{ATOMIC_FLAG_INIT} { }
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
 
-    std::atomic_flag is_locked;
+    std::unique_ptr<std::atomic_flag> is_locked;
     OutputT output_blind;
     NodeT vector_blind;
     NodeT blinded_vector;
@@ -168,8 +171,8 @@ template <typename NodeT,
           typename ...OutputTs>
 struct beaver_tuple
 {
-    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, OutputT>,
-                            beaver<is_wildcard_v<OutputTs>, NodeT, OutputTs>...>;
+    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, concrete_type_t<OutputT>>,
+                            beaver<is_wildcard_v<OutputTs>, NodeT, concrete_type_t<OutputTs>>...>;
 };
 template <typename NodeT,
           typename OutputT,

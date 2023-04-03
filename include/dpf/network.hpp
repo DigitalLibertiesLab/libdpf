@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <array>
-#include <initializer_list>
 
 #include <hedley/hedley.h>
 
@@ -132,23 +131,9 @@ auto read(F fd, buffer_sequence<MutableBuffer, N> && buffers)
     return bytes_read;
 }
 
-// #include asio_support.hpp for the following defintions
-template <typename MutableBuffer, typename ReadHandler>
-auto async_read(struct asio_fd fd, MutableBuffer buffer, ReadHandler handler);
-// {
-//     auto [io_context, fd_] = fd;
-//     asio::post(io_context, &read, fp_, std::ref(buffers), handler);
-// }
-
-template <typename MutableBuffer, typename ReadHandler>
-auto async_read(struct asio_fp fp, MutableBuffer buffer, ReadHandler handler);
-
-template <typename MutableBuffer, typename ReadHandler>
-auto async_read(struct asio_is is, MutableBuffer buffer, ReadHandler handler);
-
-
 template <typename ConstBuffer>
 // [[no_discard]]
+HEDLEY_WARN_UNUSED_RESULT
 auto write_some(int fd, ConstBuffer buffer)
 {
     ssize_t bytes_written = ::write(fd, reinterpret_cast<const char *>(buffer.data()),
@@ -162,6 +147,7 @@ auto write_some(int fd, ConstBuffer buffer)
 
 template <typename MutableBuffer>
 // [[no_discard]]
+HEDLEY_WARN_UNUSED_RESULT
 auto write_some(FILE * fp, MutableBuffer buffer)
 {
     ssize_t bytes_written = fwrite(buffer.data(), 1, buffer.size(), fp);
@@ -171,6 +157,7 @@ auto write_some(FILE * fp, MutableBuffer buffer)
 
 template <typename ConstBuffer>
 // [[no_discard]]
+HEDLEY_WARN_UNUSED_RESULT
 auto write_some(std::ostream & os, ConstBuffer buffer)
 {
     os.write(reinterpret_cast<char *>(buffer.data()), buffer.size());
@@ -184,6 +171,7 @@ auto write_some(std::ostream & os, ConstBuffer buffer)
 
 template <typename F, typename ConstBuffer>
 // [[no_discard]]
+HEDLEY_WARN_UNUSED_RESULT
 auto write(F fd, ConstBuffer buffer)
 {
     std::size_t total_bytes_written = 0;
@@ -199,6 +187,7 @@ auto write(F fd, ConstBuffer buffer)
 
 template <typename F, typename ConstBuffer, std::size_t N>
 // [[no_discard]]
+HEDLEY_WARN_UNUSED_RESULT
 auto write(F fd, buffer_sequence<ConstBuffer, N> && buffers)
 {
     std::size_t bytes_written = 0;
@@ -208,15 +197,5 @@ auto write(F fd, buffer_sequence<ConstBuffer, N> && buffers)
     }
     return bytes_written;
 }
-
-// #include asio_support.hpp for the following defintions
-template <typename ConstBuffer, typename WriteHandler>
-auto async_write(struct asio_fd fd, ConstBuffer buffer, WriteHandler handler);
-
-template <typename ConstBuffer, typename WriteHandler>
-auto async_write(struct asio_fp fp, ConstBuffer buffer, WriteHandler handler);
-
-template <typename ConstBuffer, typename WriteHandler>
-auto async_write(struct asio_os os, ConstBuffer buffer, WriteHandler handler);
 
 }  // namespace dpf
