@@ -309,32 +309,12 @@ class bitstring : public bit_array_base
             rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
     }
 
-    template <std::enable_if_t<!std::is_void_v<integral_type>, bool> = false>
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr explicit operator integral_type() const noexcept
-    {
-        if constexpr(Nbits <= bits_per_word)
-        {
-            return integral_type(arr[0]);
-        }
-        else
-        {
-            integral_type ret(0);
-            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
-            {
-                ret <<= bits_per_word;
-                ret += arr[i-1];
-            }
-            return ret;
-        }
-    }
-
     /// @}
 
   private:
     std::array<word_type, 1+(Nbits-1)/bits_per_word> arr;
+
+    friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
 };  // class dpf::bitstring
 
 namespace utils
@@ -343,7 +323,8 @@ namespace utils
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::bitstring`
 template <std::size_t Nbits>
 struct bitlength_of<dpf::bitstring<Nbits>>
-  : public std::integral_constant<std::size_t, Nbits> { };
+  : public std::integral_constant<std::size_t, Nbits>
+{ };
 
 /// @brief specializes `dpf::utils::msb_of` for `dpf::bitstring`
 template <std::size_t Nbits>
@@ -380,6 +361,37 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
             }
         }
         return prefix_len - adjust;
+    }
+};
+
+
+template <std::size_t Nbits>
+struct to_integral_type<dpf::bitstring<Nbits>> : public to_integral_type_base<dpf::bitstring<Nbits>>
+{
+    using parent = to_integral_type_base<dpf::bitstring<Nbits>>;
+    using typename parent::integral_type;
+
+    static constexpr auto bits_per_word = dpf::bitstring<Nbits>::bits_per_word;
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type operator()(dpf::bitstring<Nbits> & input) const noexcept
+    {
+        if constexpr(Nbits <= bits_per_word)
+        {
+            return integral_type(input.arr[0]);
+        }
+        else
+        {
+            integral_type ret(0);
+            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+            {
+                ret <<= bits_per_word;
+                ret += input.arr[i-1];
+            }
+            return ret;
+        }
     }
 };
 

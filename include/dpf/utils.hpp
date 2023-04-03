@@ -169,7 +169,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <std::size_t Nbits, std::size_t MinBits = Nbits>
 struct integral_type_from_bitlength
 {
-    // static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
     static constexpr auto effective_Nbits = std::max(Nbits, MinBits);
     static constexpr auto less_equal = std::less_equal<void>{};
     using type = std::conditional_t<less_equal(effective_Nbits, 128),
@@ -198,15 +197,26 @@ template <std::size_t Nbits, std::size_t MinBits = Nbits>
 using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
 
 template <typename T>
-struct to_integral_type
+struct to_integral_type_base
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
-    using T_integral_type = integral_type_from_bitlength_t<bits>;
     using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
+    static_assert(!std::is_void_v<integral_type>, "cannot convert to void type");
+};
+
+template <typename T>
+struct to_integral_type : public to_integral_type_base<T>
+{
+    using parent = to_integral_type_base<T>;
+    using parent::bits;
+    using typename parent::integral_type;
+
+    using T_integral_type = integral_type_from_bitlength_t<bits>;
 
     HEDLEY_CONST
+    HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(T input) const noexcept
+    constexpr integral_type operator()(T & input) const noexcept
     {
         return static_cast<integral_type>(static_cast<T_integral_type>(input));
     }
