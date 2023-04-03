@@ -93,26 +93,28 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <std::size_t I = 0,
           typename StreamT,
-          typename DpfKey,
           typename OutputT_,
           typename CompletionToken,
           std::enable_if_t<std::is_same_v<concrete_type_t<OutputT_>, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>, bool> = true>
-auto async_assign_leaf(StreamT & peer, DpfKey & dpf, OutputT_ & output,
+auto async_assign_leaf(StreamT & peer, OutputT_ & output,
     CompletionToken && token)
 {
     using leaf_type = std::tuple_element_t<I, leaf_nodes>;
-    constexpr auto & leaf = std::get<I>(dpf.mutable_exterior_cw);
-    constexpr auto & beaver = std::get<I>(dpf.mutable_beaver_tuple);
+    auto my_out = std::make_unique<OutputT_>();
+    auto peer_out = std::make_unique<OutputT_>();
+    auto leaf_buf = std::make_unique<leaf_type>();
 
     return asio::async_compose<
         CompletionToken, void(asio::error_code)>(
-           [
+            [
                 &peer,
-                &dpf,
-                output,
-                my_out = OutputT_{},
-                peer_out = OutputT_{},
-                leaf_buf = leaf_type{},
+                &dpf = *this,
+                &output,
+                &leaf = std::get<I>(this->mutable_exterior_cw),
+                &beaver = std::get<I>(this->mutable_beaver_tuple),
+                my_out = std::move(my_out),
+                peer_out = std::move(peer_out),
+                leaf_buf = std::move(leaf_buf),
                 coro = asio::coroutine()
             ]
             (
@@ -132,32 +134,32 @@ auto async_assign_leaf(StreamT & peer, DpfKey & dpf, OutputT_ & output,
                     {
                         throw std::logic_error("already locked");
                     }
-                    if constexpr(true)
-                    {
-                        my_out = output + beaver.output_blind;
-                        yield asio::async_write(peer, asio::buffer(my_out),
+                    // if constexpr(true)
+                    // {
+                        *my_out = output + beaver.output_blind;
+                        yield asio::async_write(peer, asio::buffer(my_out.get(), sizeof(OutputT_)),
                             std::move(self));
                         if (error) break;
-                        yield asio::async_read(peer, asio::buffer(peer_out),
+                        yield asio::async_read(peer, asio::buffer(peer_out.get(), sizeof(OutputT_)),
                             std::move(self));
                         if (error) break;
-                        leaf_buf = subtract<OutputT_>(
-                            multiply<OutputT_>(beaver.blinded_vector, output),
-                            multiply<OutputT_>(beaver.vector_blind, peer_out)
+                        *leaf_buf = subtract<OutputT_, exterior_node>(
+                            multiply<OutputT_, exterior_node>(beaver.blinded_vector, output),
+                            multiply<OutputT_, exterior_node>(beaver.vector_blind, *peer_out)
                         );
-                    }
-                    else
-                    {
-                        std::memcpy(&leaf_buf, &output, sizeof(leaf_type));
-                    }
-                    leaf = add<OutputT_>(leaf, leaf_buf);
-                    yield asio::async_write(peer, asio::buffer(leaf),
+                    // }
+                    // else
+                    // {
+                    //     std::memcpy(&leaf_buf, &output, sizeof(leaf_type));
+                    // }
+                    leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
+                    yield asio::async_write(peer, asio::buffer(&leaf, sizeof(leaf_type)),
                         std::move(self));
                     if (error) break;
-                    yield asio::async_read(peer, asio::buffer(leaf_buf),
+                    yield asio::async_read(peer, asio::buffer(leaf_buf.get(), sizeof(leaf_type)),
                         std::move(self));
                     if (error) break;
-                    leaf = add<OutputT_>(leaf, leaf_buf);
+                    leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
                     dpf.wildcard_mask[I] = false;
                 }
                 self.complete(error);
@@ -165,8 +167,6 @@ auto async_assign_leaf(StreamT & peer, DpfKey & dpf, OutputT_ & output,
         token, peer);
     }
 #include <asio/unyield.hpp>
-
-
 
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const

@@ -79,7 +79,7 @@ struct nonmemoizing_path_memoizer final
   public:
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
     using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
     using iterator_type = return_type;
 
