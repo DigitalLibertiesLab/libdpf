@@ -90,28 +90,6 @@ struct add2x64_t
     }
 };
 
-<<<<<<< HEAD
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-struct add_array_t
-{
-    template <typename T, std::size_t N>
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
-    HEDLEY_CONST
-    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
-    {
-        std::array<simde__m128i, N> c;
-        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
-            [](const T & a, const T & b)
-            {
-                return std::bit_xor<>{}(a, b);
-            });
-        return c;
-    }
-};
-HEDLEY_PRAGMA(GCC diagnostic pop)
-=======
 /// @brief Function object for adding vectors of `32x8`-bit integral types
 struct add32x8_t
 {
@@ -159,7 +137,27 @@ struct add4x64_t
         return simde_mm256_add_epi64(a, b);
     }
 };
->>>>>>> assorted
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+struct add_array_t
+{
+    template <typename T, std::size_t N>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
+    {
+        std::array<simde__m128i, N> c;
+        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
+            [](const T & a, const T & b)
+            {
+                return std::bit_xor<>{}(a, b);
+            });
+        return c;
+    }
+};
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace detail
 
@@ -316,25 +314,6 @@ struct sub2x64_t
     }
 };
 
-<<<<<<< HEAD
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-struct sub_array_t
-{
-    template <typename T, std::size_t N>
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
-    HEDLEY_CONST
-    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
-    {
-        std::array<T, N> c;
-        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
-            [](const T & a, const T & b) { return std::bit_xor<>{}(a, b); });
-        return c;
-    }
-};
-HEDLEY_PRAGMA(GCC diagnostic pop)
-=======
 /// @brief Function object for subtracting vectors of `32x8`-bit integral types
 struct sub32x8_t
 {
@@ -382,7 +361,24 @@ struct sub4x64_t
         return simde_mm256_sub_epi64(a, b);
     }
 };
->>>>>>> assorted
+
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+struct sub_array_t
+{
+    template <typename T, std::size_t N>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const std::array<T, N> & a, const std::array<T, N> & b) const
+    {
+        std::array<T, N> c;
+        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(c),
+            [](const T & a, const T & b) { return std::bit_xor<>{}(a, b); });
+        return c;
+    }
+};
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace detail
 
