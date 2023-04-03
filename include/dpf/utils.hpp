@@ -166,16 +166,16 @@ struct bitlength_of<std::array<T, N>>
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
 /// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits>
+template <std::size_t Nbits, std::size_t MinBits = Nbits>
 struct integral_type_from_bitlength
 {
-    // static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    static constexpr auto effective_Nbits = std::max(Nbits, MinBits);
     static constexpr auto less_equal = std::less_equal<void>{};
-    using type = std::conditional_t<less_equal(Nbits, 128),
-        std::conditional_t<less_equal(Nbits, 64),
-            std::conditional_t<less_equal(Nbits, 32),
-                std::conditional_t<less_equal(Nbits, 16),
-                    std::conditional_t<less_equal(Nbits, 8), psnip_uint8_t,
+    using type = std::conditional_t<less_equal(effective_Nbits, 128),
+        std::conditional_t<less_equal(effective_Nbits, 64),
+            std::conditional_t<less_equal(effective_Nbits, 32),
+                std::conditional_t<less_equal(effective_Nbits, 16),
+                    std::conditional_t<less_equal(effective_Nbits, 8), psnip_uint8_t,
                     psnip_uint16_t>,
                 psnip_uint32_t>,
             psnip_uint64_t>,
@@ -183,20 +183,42 @@ struct integral_type_from_bitlength
     void>;
 };
 
-template <std::size_t Nbits>
-using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits>::type;
+template <std::size_t Nbits, std::size_t MinBits = Nbits>
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits>::type;
+
+/// @brief the primitive integral type used to represent non integral types
+template <std::size_t Nbits, std::size_t MinBits = Nbits>
+struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
+{
+    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+};
+
+template <std::size_t Nbits, std::size_t MinBits = Nbits>
+using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
 
 template <typename T>
-struct to_integral_type
+struct to_integral_type_base
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
-    using integral_type = integral_type_from_bitlength_t<bits>;
+    using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
+    static_assert(!std::is_void_v<integral_type>, "cannot convert to void type");
+};
+
+template <typename T>
+struct to_integral_type : public to_integral_type_base<T>
+{
+    using parent = to_integral_type_base<T>;
+    using parent::bits;
+    using typename parent::integral_type;
+
+    using T_integral_type = integral_type_from_bitlength_t<bits>;
 
     HEDLEY_CONST
+    HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(T input) const noexcept
+    constexpr integral_type operator()(T & input) const noexcept
     {
-        return static_cast<integral_type>(input);
+        return static_cast<integral_type>(static_cast<T_integral_type>(input));
     }
 };
 
@@ -216,14 +238,14 @@ template <typename DpfKey,
 static constexpr IntegralT get_to_node(InputT to)
 {
     constexpr auto to_int = to_integral_type<InputT>{};
-    return quotient_ceiling(to_int(to+1),
+    return quotient_ceiling(to_int(to)+1,
         static_cast<IntegralT>(DpfKey::outputs_per_leaf));
 }
 
 template <typename IntegralT>
 static constexpr std::size_t get_nodes_in_interval_impl(IntegralT from_node, IntegralT to_node)
 {
-    return static_cast<std::size_t>(to_node) - static_cast<std::size_t>(from_node);
+    return static_cast<std::size_t>(to_node - from_node);
 }
 
 template <typename DpfKey,

@@ -22,6 +22,8 @@ basic_path_memoizer final
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
+    using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
+    using iterator_type = return_type;
     static constexpr auto depth = DpfKey::depth;
 
     basic_path_memoizer()
@@ -49,6 +51,23 @@ basic_path_memoizer final
         return 1;
     }
 
+    return_type begin() const noexcept
+    {
+        if (x_.has_value() == true)
+        {
+            return &this->operator[](dpf_type::depth);
+        }
+        else
+        {
+            return end();
+        }
+    }
+
+    return_type end() const noexcept
+    {
+        return &this->operator[](dpf_type::depth+1);
+    }
+
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     std::optional<input_type> x_;
@@ -59,8 +78,10 @@ struct nonmemoizing_path_memoizer final
 {
   public:
     using dpf_type = DpfKey;
-    using input_type = typename dpf_type::input_type;
-    using node_type = typename dpf_type::interior_node;
+    using input_type = typename DpfKey::input_type;
+    using node_type = typename DpfKey::interior_node;
+    using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
+    using iterator_type = return_type;
 
     nonmemoizing_path_memoizer()
       : dpf_{std::nullopt} { }
@@ -86,6 +107,16 @@ struct nonmemoizing_path_memoizer final
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     node_type & operator[](std::size_t) noexcept { return v; }
+
+    return_type begin() const noexcept
+    {
+        return std::addressof(v);
+    }
+
+    return_type end() const noexcept
+    {
+        return std::addressof(v) + 1;
+    }
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;

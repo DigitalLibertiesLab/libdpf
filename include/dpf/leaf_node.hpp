@@ -364,34 +364,36 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                 using output_type = typename std::remove_reference_t<decltype(type)>;
                                 if constexpr(dpf::is_wildcard_v<output_type>)
                                 {
+                                    using concrete_type = dpf::concrete_type_t<output_type>;
                                     // secret share the value
                                     dpf::uniform_fill(leaf0);
-                                    leaf1 = dpf::subtract<output_type, node_type>(leaf, leaf0);
-                                    if constexpr(dpf::is_wildcard_v<output_type>)
+                                    leaf1 = dpf::subtract<concrete_type, node_type>(leaf, leaf0);
+                                    // also initialize the beavers
+                                    if constexpr(dpf::outputs_per_leaf_v<concrete_type, node_type> > 1)
                                     {
-                                        // secret share the value
-                                        dpf::uniform_fill(leaf0);
-                                        leaf1 = dpf::subtract<output_type, node_type>(leaf, leaf0);
-                                        // also initialize the beavers
-                                        if constexpr(dpf::outputs_per_leaf_v<output_type, node_type> > 1)
+                                        dpf::leaf_node_t<node_type, concrete_type> vector;
+                                        if constexpr(utils::is_xor_wrapper_v<decltype(x)> == true)
                                         {
-                                            // todo: value should be ~0 when the output_type is an xor_wrapper<T>
-                                            auto vector = make_naked_leaf<node_type>(x, output_type(1));
-
-                                            uniform_fill(beaver0.output_blind);
-                                            uniform_fill(beaver0.vector_blind);
-
-                                            uniform_fill(beaver1.output_blind);
-                                            uniform_fill(beaver1.vector_blind);
-
-                                            beaver0.blinded_vector = dpf::add<output_type, node_type>(vector, beaver1.vector_blind);
-                                            beaver1.blinded_vector = dpf::add<output_type, node_type>(vector, beaver0.vector_blind);
-
-                                            leaf0= dpf::add<output_type, node_type>(leaf0,
-                                                dpf::multiply<output_type, node_type>(beaver0.vector_blind, beaver1.output_blind));
-                                            leaf1= dpf::add<output_type, node_type>(leaf1,
-                                                dpf::multiply<output_type, node_type>(beaver1.vector_blind, beaver0.output_blind));
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(~0));
                                         }
+                                        else
+                                        {
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(1));
+                                        }
+
+                                        uniform_fill(beaver0.output_blind);
+                                        uniform_fill(beaver0.vector_blind);
+
+                                        uniform_fill(beaver1.output_blind);
+                                        uniform_fill(beaver1.vector_blind);
+
+                                        beaver0.blinded_vector = dpf::add<output_type, node_type>(vector, beaver1.vector_blind);
+                                        beaver1.blinded_vector = dpf::add<output_type, node_type>(vector, beaver0.vector_blind);
+
+                                        leaf0= dpf::add<output_type, node_type>(leaf0,
+                                            dpf::multiply<output_type, node_type>(beaver0.vector_blind, beaver1.output_blind));
+                                        leaf1= dpf::add<output_type, node_type>(leaf1,
+                                            dpf::multiply<output_type, node_type>(beaver1.vector_blind, beaver0.output_blind));
                                     }
                                 }
                                 else

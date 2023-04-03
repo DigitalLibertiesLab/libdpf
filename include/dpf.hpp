@@ -20,6 +20,8 @@
 
 #include "dpf/fixedpoint.hpp"
 
+#include "dpf/advice_bit_iterable.hpp"
+
 #include "dpf/setbit_index_iterable.hpp"
 
 #include "dpf/parallel_bit_iterable.hpp"
