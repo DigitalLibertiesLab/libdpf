@@ -1,13 +1,39 @@
 /// @file dpf/advice_bit_iterable.hpp
-/// @brief
-/// @details
-/// @author
+/// @brief defines `dpf::advice_bit_iterable` and associated helpers
+/// @details A `dpf::advice_bit_iterable` is a convenience class that wraps an
+///          existing iterable type to provide a new iterable over advice bits
+///          (i.e., over the least-significant bit of each element). The `begin`
+///          and `end` member functions of the `dpf::advice_bit_iterable` class
+///          each return `LegacyForwardIterator`s compatible with standard
+///          library algorithms and range-based loops.
+///
+///          In addition to `dpf::advice_bit_iterable`, this file defines the
+///          following helper functions:
+///            - `advice_bits_of`: wraps an iterable type to simplify notation
+///              for range-based loops. For example, it lets you write
+///               ```cpp
+///               for (auto b : advice_bits_of(my_iterable)) foo(b);
+///               ```
+///               instead of
+///               ```cpp
+///               advice_bit_iterable advice_bits{my_iterable};
+///               for (auto b : advice_bits) foo(b);
+///               ```
+///            - `for_each_advice_bit`: iterate through and apply a given
+///              function to each advice bit
+///            - `bit_array_from_advice_bits`: constructs a
+///              `dpf::dynamic_bit_array` that holds the advice bits of the
+///              underlying iterable.
+/// @author Ryan Henry <ryan.henry@ucalgary.ca>
+/// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_ADVICE_BIT_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_ADVICE_BIT_ITERABLE_HPP__
+
+#include <algorithm>
 
 #include "simde/simde/x86/avx2.h"
 
@@ -20,17 +46,26 @@ namespace detail
 template <typename Iterator>
 struct extract_bit_simde_node
 {
-    bool operator()(const Iterator it) const
+    bool operator()(Iterator it) const
     {
         auto buf = reinterpret_cast<const char *>(&*it);
         return buf[0] & 1;
     }
 };
 
-template <typename NodeT, typename Iterator> struct extract_bit;
+template <typename NodeT, typename Iterator>
+struct extract_bit;
 
-template <typename Iterator> struct extract_bit<simde__m128i, Iterator> : public extract_bit_simde_node<Iterator> {};
-template <typename Iterator> struct extract_bit<simde__m256i, Iterator> : public extract_bit_simde_node<Iterator> {};
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+template <typename Iterator>
+struct extract_bit<simde__m128i, Iterator>
+  : public extract_bit_simde_node<Iterator> { };
+
+template <typename Iterator>
+struct extract_bit<simde__m256i, Iterator>
+  : public extract_bit_simde_node<Iterator> { };
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 }  // namespace detail
 
@@ -42,7 +77,8 @@ class advice_bit_iterable
 {
   public:
     using wrapped_iterator_type = typename Iterable::iterator_type;
-    using const_iterator = advice_bit_iterable_const_iterator<wrapped_iterator_type>;
+    using const_iterator
+        = advice_bit_iterable_const_iterator<wrapped_iterator_type>;
 
     explicit advice_bit_iterable(const Iterable & iterable)
       : begin_{std::begin(iterable)}, end_{std::end(iterable)}
@@ -83,29 +119,40 @@ class advice_bit_iterable
 template <typename WrappedIteratorType>
 class advice_bit_iterable_const_iterator
 {
-    public:
+  public:
+    using iterator_traits = std::iterator_traits<WrappedIteratorType>;
     using wrapped_type = WrappedIteratorType;
     using value_type = bool;
     using reference = value_type;
     using const_reference = reference;
     using pointer = std::add_pointer_t<reference>;
-    using iterator_category = typename std::iterator_traits<WrappedIteratorType>::iterator_category;
+    using iterator_category = typename iterator_traits::iterator_category;
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
-    using node_type = typename std::iterator_traits<WrappedIteratorType>::value_type;
+    using node_type = typename iterator_traits::value_type;
 
     HEDLEY_ALWAYS_INLINE
-    constexpr advice_bit_iterable_const_iterator(const wrapped_type it) noexcept
+    constexpr
+    explicit advice_bit_iterable_const_iterator(wrapped_type && it) noexcept
         : it_{it}
     { }
 
     HEDLEY_ALWAYS_INLINE
-    constexpr advice_bit_iterable_const_iterator(advice_bit_iterable_const_iterator &&) = default;
-    HEDLEY_ALWAYS_INLINE
-    constexpr advice_bit_iterable_const_iterator(const advice_bit_iterable_const_iterator &) = default;
+    constexpr
+    advice_bit_iterable_const_iterator(advice_bit_iterable_const_iterator &&)
+        = default;
 
-    advice_bit_iterable_const_iterator & operator=(const advice_bit_iterable_const_iterator &) = default;
-    advice_bit_iterable_const_iterator & operator=(advice_bit_iterable_const_iterator &&) = default;
+    HEDLEY_ALWAYS_INLINE
+    constexpr
+    advice_bit_iterable_const_iterator(
+        const advice_bit_iterable_const_iterator &) = default;
+
+    advice_bit_iterable_const_iterator & operator=(
+        const advice_bit_iterable_const_iterator &) = default;
+
+    advice_bit_iterable_const_iterator & operator=(
+        advice_bit_iterable_const_iterator &&) = default;
+
     ~advice_bit_iterable_const_iterator() = default;
 
     HEDLEY_CONST
@@ -170,7 +217,8 @@ class advice_bit_iterable_const_iterator
         return advice_bit_iterable_const_iterator(it_ - n);
     }
 
-    difference_type operator-(advice_bit_iterable_const_iterator rhs) const noexcept
+    difference_type
+    operator-(advice_bit_iterable_const_iterator rhs) const noexcept
     {
         return it_ - rhs.it_;
     }
@@ -182,42 +230,48 @@ class advice_bit_iterable_const_iterator
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator==(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator==(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return it_ == rhs.it_;
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator<(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator<(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return it_ < rhs.it_;
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator!=(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator!=(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return !(*this == rhs);
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator>(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator>(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return rhs < *this;
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator<=(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator<=(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return !(rhs < *this);
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator>=(const advice_bit_iterable_const_iterator & rhs) const noexcept
+    constexpr bool
+    operator>=(const advice_bit_iterable_const_iterator & rhs) const noexcept
     {
         return !(*this < rhs);
     }
@@ -244,7 +298,8 @@ namespace detail
 {
 
 template <typename Iterator>
-auto bit_array_from_advice_bits_small(Iterator first, Iterator last, std::size_t bits)
+auto bit_array_from_advice_bits_small(Iterator first, Iterator last,
+    std::size_t bits)
 {
     auto ret = dynamic_bit_array(bits);
 
@@ -258,7 +313,8 @@ auto bit_array_from_advice_bits_small(Iterator first, Iterator last, std::size_t
 }
 
 template <typename Iterator>
-auto bit_array_from_advice_bits_simde(Iterator first, Iterator last, std::size_t bits)
+auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
+    std::size_t bits)
 {
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
@@ -284,11 +340,13 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last, std::size_t
             {
                 in[j] = *first++;
             }
-            simde = simde_mm256_or_si256(simde_mm256_slli_epi64(simde, 1),
-                simde_mm256_loadu_si256(reinterpret_cast<simde_ptr>(std::data(in))));
+            auto tmp = reinterpret_cast<simde_ptr>(std::data(in));
+            simde = simde_mm256_or_si256(
+                simde_mm256_slli_epi64(simde, 1),
+                simde_mm256_loadu_si256(tmp));
         }
 
-        // algorithm expects "first bit" to be MSB in each 8-bit block at next step
+        // algorithm expects "first bit" to be MSB in each 8-bit block below
         for (std::size_t j = i; j < 8; ++j)
         {
             simde = simde_mm256_slli_epi64(simde, 1);
@@ -300,8 +358,10 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last, std::size_t
             simde = simde_mm256_slli_epi64(simde, 1);
         }
 
-        std::memcpy(reinterpret_cast<char *>(std::addressof(ret.data(pos++ * words_per_simde))),
-            reinterpret_cast<char *>(std::data(out)), std::min(bytes_per_simde, bytes));
+        auto dst = reinterpret_cast<char *>(
+            std::addressof(ret.data(pos++ * words_per_simde)));
+        auto src = reinterpret_cast<char *>(std::data(out));
+        std::memcpy(dst, src, std::min(bytes_per_simde, bytes));
         bytes -= bytes_per_simde;
     }
 
@@ -310,14 +370,15 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last, std::size_t
 
 }  // namespace detail
 
-template <std::size_t NbitsCross = 1 << 4,
+template <std::size_t NbitsCrossover = 1 << 4,
           typename Iterator>
-auto bit_array_from_advice_bits(const advice_bit_iterable<Iterator> & advice_bits)
+auto
+bit_array_from_advice_bits(const advice_bit_iterable<Iterator> & advice_bits)
 {
     auto first = std::begin(advice_bits), last = std::end(advice_bits);
     std::size_t bits = std::distance(first, last);
 
-    if (bits < NbitsCross)
+    if (bits < NbitsCrossover)
     {
         return detail::bit_array_from_advice_bits_small(first, last, bits);
     }
