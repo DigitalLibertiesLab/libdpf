@@ -24,11 +24,39 @@ namespace dpf
 template <typename OutputT, typename NodeT> struct add_t;
 template <typename OutputT, typename NodeT> struct subtract_t;
 
-template <typename OutputT, typename NodeT>
-static constexpr auto add = add_t<OutputT, NodeT>{};
+template <typename OutputT>
+static constexpr auto add = add_t<OutputT, void>{};
 
-template <typename OutputT, typename NodeT>
-static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, NodeT>{};
+template <typename OutputT>
+static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, void>{};
+
+template <typename OutputT>
+struct add_t<OutputT, void>
+{
+    template <typename NodeT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, const NodeT & b) const
+    {
+        static constexpr auto adder = add_t<OutputT, NodeT>{};
+        return adder(a, b);
+    }
+};
+
+template <typename OutputT>
+struct subtract_t<OutputT, void>
+{
+    template <typename NodeT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, const NodeT & b) const
+    {
+        static constexpr auto subtracter = subtract_t<OutputT, NodeT>{};
+        return subtracter(a, b);
+    }
+};
 
 namespace detail
 {
