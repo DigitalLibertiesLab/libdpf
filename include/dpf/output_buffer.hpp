@@ -71,7 +71,7 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
     std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
 
@@ -84,7 +84,7 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
     std::size_t nodes_in_sequence = std::distance(begin, end);
 
     return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
@@ -96,7 +96,7 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_tuple>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
     std::size_t nodes_in_sequence = recipe.num_leaf_nodes;
 

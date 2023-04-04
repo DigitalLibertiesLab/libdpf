@@ -22,17 +22,60 @@ namespace dpf
 {
 
 template <typename OutputT, typename NodeT> struct add_t;
+
+template <typename OutputT>
+struct add_t<OutputT, void>
+{
+    template <typename NodeT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, const NodeT & b) const
+    {
+        static constexpr auto adder = add_t<OutputT, NodeT>{};
+        return adder(a, b);
+    }
+};
+
+template <typename OutputT>
+static constexpr auto add = add_t<dpf::concrete_type_t<OutputT>, void>{};
+
 template <typename OutputT, typename NodeT> struct subtract_t;
+
+template <typename OutputT>
+struct subtract_t<OutputT, void>
+{
+    template <typename NodeT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, const NodeT & b) const
+    {
+        static constexpr auto subtracter = subtract_t<OutputT, NodeT>{};
+        return subtracter(a, b);
+    }
+};
+
+template <typename OutputT>
+static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, void>{};
+
 template <typename OutputT, typename NodeT> struct multiply_t;
 
-template <typename OutputT, typename NodeT>
-static constexpr auto add = add_t<dpf::concrete_type_t<OutputT>, NodeT>{};
+template <>
+struct multiply_t<void, void>
+{
+    template <typename NodeT, typename OutputT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, OutputT b) const
+    {
+        static constexpr auto multiplier = multiply_t<OutputT, NodeT>{};
+        return multiplier(a, b);
+    }
+};
 
-template <typename OutputT, typename NodeT>
-static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, NodeT>{};
-
-template <typename OutputT, typename NodeT>
-static constexpr auto multiply = multiply_t<dpf::concrete_type_t<OutputT>, NodeT>{};
+static constexpr auto multiply = multiply_t<void, void>{};
 
 namespace detail
 {
@@ -365,6 +408,7 @@ struct sub4x64_t
         return simde_mm256_sub_epi64(a, b);
     }
 };
+
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 struct sub_array_t

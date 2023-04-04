@@ -20,7 +20,8 @@
 #include "portable-snippets/exact-int/exact-int.h"
 #include "portable-snippets/builtin/builtin.h"
 
-#define DPF_UNROLL_LOOPS __attribute__((optimize("O3", "unroll-loops")))
+#define DPF_UNROLL_LOOP_N(N) HEDLEY_PRAGMA(GCC unroll N)
+#define DPF_UNROLL_LOOP DPF_UNROLL_LOOP_N(16)
 #define DPF_ALWAYS_VECTORIZE (#pragma GCC ivdep)
 
 namespace dpf

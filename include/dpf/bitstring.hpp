@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <bitset>
 
 #include "dpf/bit.hpp"
@@ -95,43 +96,64 @@ class bitstring : public bit_array_base
     constexpr explicit bitstring(uint64_t val) noexcept
       : bit_array_base{Nbits, &arr[0]}, arr{val} { }
 
-    // /// @brief Constructs a `dpf::bitstring` using the characters in the
-    // ///        `std::basic_string` `str`. An optional starting position `pos`
-    // ///        and length `len` can be provided, as well as characters
-    // ///        denoting alternate values for set (`one`) and unset (`zero`)
-    // ///        bits.
-    // /// @param str `string` used to initialize the `dpf::bitstring`
-    // /// @param pos a starting offset into `str`
-    // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `0` (default: `CharT('0')`)
-    // /// @param one character used to represent `1` (default: `CharT('1')`)
-    // template <class CharT,
-    //           class Traits,
-    //           class Alloc>
-    // explicit bitstring(
-    //     const std::basic_string<CharT, Traits, Alloc> & str,
-    //     typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
-    //     typename std::basic_string<CharT, Traits, Alloc>::size_type len
-    //         = std::basic_string<CharT, Traits, Alloc>::npos,
-    //     CharT zero = CharT('0'),
-    //     CharT one = CharT('1'))
-    //   : bit_array_base(str, pos, len, zero, one) { }
+    /// @brief Constructs a `dpf::bitstring` using the characters in the
+    ///        `std::basic_string` `str`. An optional starting position `pos`
+    ///        and length `len` can be provided, as well as characters
+    ///        denoting alternate values for set (`one`) and unset (`zero`)
+    ///        bits.
+    /// @param str `string` used to initialize the `dpf::bitstring`
+    /// @param pos a starting offset into `str`
+    /// @param len number of characters to use from `str`
+    /// @param zero character used to represent `0` (default: `CharT('0')`)
+    /// @param one character used to represent `1` (default: `CharT('1')`)
+    template <class CharT,
+              class Traits,
+              class Alloc>
+    explicit bitstring(
+        const std::basic_string<CharT, Traits, Alloc> & str,
+        typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
+        typename std::basic_string<CharT, Traits, Alloc>::size_type len
+            = std::basic_string<CharT, Traits, Alloc>::npos,
+        CharT zero = CharT('0'),
+        CharT one = CharT('1'))
+      : bit_array_base{Nbits, &arr[0]}, arr{}
+    {
+        if (pos > str.size())
+        {
+            std::stringstream ss;
+            ss << "dpf::bitstring: pos (which is " << pos
+               << ") > str.size() (which is " << str.size() << ")";
+            throw std::out_of_range(ss.str());
+        }
+        len = std::min(len, str.size() - pos);
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            this->set(i, dpf::to_bit(str[pos+i]));
+        }
+    }
 
-    // /// @brief Constructs a `dpf::bitstring` using the characters in the
-    // ///        `CharT *` `str`. An optional starting position `pos` and length
-    // ///        `len` can be provided, as well as characters denoting alternate
-    // ///        values for set (`one`) and unset (`zero`) bits.
-    // /// @param str string used to initialize the `dpf::bitstring`
-    // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
-    // /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
-    // template <class CharT>
-    // explicit bitstring(const CharT * str,
-    //     typename std::basic_string<CharT>::size_type len
-    //         = std::basic_string<CharT>::npos,
-    //     CharT zero = CharT('0'),
-    //     CharT one = CharT('1'))
-    //   : base(str, len, zero, one) { }
+    /// @brief Constructs a `dpf::bitstring` using the characters in the
+    ///        `CharT *` `str`. An optional starting position `pos` and length
+    ///        `len` can be provided, as well as characters denoting alternate
+    ///        values for set (`one`) and unset (`zero`) bits.
+    /// @param str string used to initialize the `dpf::bitstring`
+    /// @param len number of characters to use from `str`
+    /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
+    /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
+    template <class CharT>
+    explicit bitstring(const CharT * str,
+        typename std::basic_string<CharT>::size_type len
+            = std::basic_string<CharT>::npos,
+        CharT zero = CharT('0'),
+        CharT one = CharT('1'))
+      : bit_array_base{Nbits, &arr[0]}, arr{}
+    {
+        len = std::min(len, std::strlen(str));
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            this->set(i, dpf::to_bit(str[i]));
+        }
+    }
 
     /// @}
 
@@ -317,6 +339,12 @@ class bitstring : public bit_array_base
     friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
 };  // class dpf::bitstring
 
+template <std::size_t Nbits>
+inline std::ostream & operator<<(std::ostream & os, bitstring<Nbits> b)
+{
+    return os << b.to_string();
+}
+
 namespace utils
 {
 
@@ -363,7 +391,6 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
         return prefix_len - adjust;
     }
 };
-
 
 template <std::size_t Nbits>
 struct to_integral_type<dpf::bitstring<Nbits>> : public to_integral_type_base<dpf::bitstring<Nbits>>
