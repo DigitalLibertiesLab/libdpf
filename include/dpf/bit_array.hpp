@@ -81,7 +81,7 @@ class bit_array_base
     /// @note guaranteed (via `static_assert`) to be `64`
     static constexpr size_type bits_per_word =
         std::numeric_limits<word_type>::digits;
-    static_assert(bits_per_word == 64);
+    static_assert(bits_per_word == 64, "bits_per_word not equal to 64");
 
     bit_array_base() = delete;
 
