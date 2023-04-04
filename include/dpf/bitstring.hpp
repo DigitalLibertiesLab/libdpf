@@ -364,7 +364,6 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
     }
 };
 
-
 template <std::size_t Nbits>
 struct to_integral_type<dpf::bitstring<Nbits>> : public to_integral_type_base<dpf::bitstring<Nbits>>
 {

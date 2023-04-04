@@ -99,7 +99,6 @@ template <std::size_t I, typename N, typename OutputsT>
 inline constexpr std::size_t block_offset_of_leaf_v
     = block_offset_of_leaf<I, N, 0, OutputsT>::value;
 
-
 template <typename NodeT,
           typename OutputT,
           std::size_t block_len = block_length_of_leaf_v<OutputT, NodeT>>
