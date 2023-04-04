@@ -148,7 +148,6 @@ class parallel_const_bit_iterator
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    DPF_UNROLL_LOOPS
     parallel_const_bit_iterator & operator++() noexcept
     {
         if (HEDLEY_UNLIKELY(!(word_mask_ <<= 1)))
@@ -188,7 +187,6 @@ class parallel_const_bit_iterator
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    DPF_UNROLL_LOOPS
     parallel_const_bit_iterator & operator--() noexcept
     {
         if (HEDLEY_UNLIKELY(!(word_mask_ >>= 1)))

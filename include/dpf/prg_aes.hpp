@@ -37,7 +37,6 @@ struct aes final
 
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    DPF_UNROLL_LOOPS
     static block_t eval(block_t seed, uint32_t pos) noexcept
     {
         block_t rd_key0 = simde_mm_xor_si128(key.rd_key[0],
@@ -56,7 +55,6 @@ struct aes final
 
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    DPF_UNROLL_LOOPS
     static auto eval01(block_t seed) noexcept
     {
         block_t rd_key00 = key.rd_key[0];
@@ -66,6 +64,7 @@ struct aes final
         block_t output0 = simde_mm_xor_si128(seed, rd_key00);
         block_t output1 = simde_mm_xor_si128(seed, rd_key01);
 
+HEDLEY_PRAGMA(GCC unroll (14))
         for (std::size_t j = 1; j < key.rounds; ++j)
         {
             output0 = simde_mm_aesenc_si128(output0, key.rd_key[j]);
@@ -82,7 +81,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
     HEDLEY_NO_THROW
-    DPF_UNROLL_LOOPS
     static void eval(block_t seed, block_t * HEDLEY_RESTRICT output,
         uint32_t count, uint32_t pos = 0) noexcept
     {
@@ -91,10 +89,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         block_t * HEDLEY_RESTRICT out =
             static_cast<block_t *>(__builtin_assume_aligned(output,
             alignof(block_t)));
+        DPF_UNROLL_LOOP
         for (uint32_t i = 0; i < count; ++i)
         {
             out[i] = simde_mm_xor_si128(seed, pos_);
             pos_ = simde_mm_add_epi64(pos_, one);
+            DPF_UNROLL_LOOP
             for (std::size_t j = 1; j < key.rounds; ++j)
             {
                 out[i] = simde_mm_aesenc_si128(out[i], key.rd_key[j]);

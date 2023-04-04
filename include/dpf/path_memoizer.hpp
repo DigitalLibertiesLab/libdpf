@@ -14,13 +14,13 @@ namespace dpf
 {
 
 template <typename DpfKey,
-          typename ReturnT = const typename DpfKey::interior_node_t *>
+          typename ReturnT = const typename DpfKey::interior_node *>
 struct path_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
     using return_type = ReturnT;
     using iterator_type = return_type;
 
@@ -32,15 +32,15 @@ struct path_memoizer_base
 };
 
 template <typename DpfKey>
-struct alignas(alignof(typename DpfKey::interior_node_t))
+struct alignas(alignof(typename DpfKey::interior_node))
 basic_path_memoizer final
     : public path_memoizer_base<DpfKey>
 {
   public:
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
-    using return_type = const typename DpfKey::interior_node_t *;
+    using node_type = typename DpfKey::interior_node;
+    using return_type = const typename DpfKey::interior_node *;
     using iterator_type = return_type;
     static constexpr auto depth = DpfKey::depth;
 
@@ -103,8 +103,8 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
   public:
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
-    using node_type = typename DpfKey::interior_node_t;
-    using return_type = const typename DpfKey::interior_node_t *;
+    using node_type = typename DpfKey::interior_node;
+    using return_type = const typename DpfKey::interior_node *;
     using iterator_type = return_type;
 
     nonmemoizing_path_memoizer()

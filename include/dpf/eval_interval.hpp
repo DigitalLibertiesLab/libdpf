@@ -32,14 +32,13 @@ namespace internal
 template <typename DpfKey,
           class IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
-DPF_UNROLL_LOOPS
 inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     // using integral_type = typename DpfKey::integral_type;
-    using node_type = typename DpfKey::interior_node_t;
+    using node_type = typename DpfKey::interior_node;
 
     // level_index represents the current level being built
     // level_index = 0 => root
@@ -64,6 +63,7 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
             memoizer[level_index][i++] = dpf_type::traverse_interior(memoizer[level_index-1][j++], cw[1], 1);
         }
         // process all nodes which require both a left traversal and a right traversal
+        DPF_UNROLL_LOOP
         for (; i < nodes_at_level - to_offset;)
         {
             auto cur_node = memoizer[level_index-1][j++];
@@ -83,15 +83,14 @@ template <std::size_t I = 0,
           class OutputBuffer,
           class IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
-DPF_UNROLL_LOOPS
 inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     OutputBuffer & outbuf, IntervalMemoizer & memoizer)
 {
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
-    using exterior_node_type = typename DpfKey::exterior_node_t;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using exterior_node_type = typename DpfKey::exterior_node;
 
     std::size_t nodes_in_interval = to_node - from_node;
 
@@ -99,6 +98,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template exterior_cw<I>();
     auto rawbuf = reinterpret_cast<exterior_node_type *>(utils::data(outbuf));
+    DPF_UNROLL_LOOP
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
         k += block_length_of_leaf_v<output_type, exterior_node_type>)
     {
@@ -116,7 +116,6 @@ template <std::size_t I = 0,
           class OutputBuffer,
           class IntervalMemoizer,
           typename InputT>
-DPF_UNROLL_LOOPS
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     OutputBuffer && outbuf, IntervalMemoizer & memoizer)
 {
@@ -124,7 +123,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 
     using dpf_type = DpfKey;
     using integral_type = typename DpfKey::integral_type;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
     integral_type from_node = utils::get_from_node<dpf_type>(from),
         to_node = utils::get_to_node<dpf_type>(to);

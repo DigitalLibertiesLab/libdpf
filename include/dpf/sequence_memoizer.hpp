@@ -16,7 +16,7 @@ namespace dpf
 {
 
 template <typename DpfKey,
-          typename ReturnT = typename DpfKey::interior_node_t *>
+          typename ReturnT = typename DpfKey::interior_node *>
 struct sequence_memoizer_base
 {
   public:
@@ -248,15 +248,15 @@ struct pointer_facade
 }  // namespace dpf::detail
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct inplace_reversing_sequence_memoizer final
   : public sequence_memoizer_base<DpfKey,
-        detail::pointer_facade<typename DpfKey::interior_node_t *, std::reverse_iterator<typename DpfKey::interior_node_t *>>>
+        detail::pointer_facade<typename DpfKey::interior_node *, std::reverse_iterator<typename DpfKey::interior_node *>>>
 {
   public:
     using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
-    using forward_iter = typename DpfKey::interior_node_t *;
+    using forward_iter = typename DpfKey::interior_node *;
     using reverse_iter = std::reverse_iterator<forward_iter>;
     using return_type = detail::pointer_facade<forward_iter, reverse_iter>;
   private:
@@ -344,7 +344,7 @@ struct inplace_reversing_sequence_memoizer final
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct double_space_sequence_memoizer final
   : public sequence_memoizer_base<DpfKey>
 {
@@ -353,7 +353,7 @@ struct double_space_sequence_memoizer final
   public:
     using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = typename DpfKey::interior_node_t *;
+    using return_type = typename DpfKey::interior_node *;
     using parent::recipe;
     using parent::depth;
     using parent::level_index;
@@ -391,7 +391,7 @@ struct double_space_sequence_memoizer final
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct full_tree_sequence_memoizer final
   : public sequence_memoizer_base<DpfKey>
 {
@@ -400,7 +400,7 @@ struct full_tree_sequence_memoizer final
   public:
     using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = typename DpfKey::interior_node_t *;
+    using return_type = typename DpfKey::interior_node *;
     using parent::recipe;
     using parent::level_index;
     using parent::get_nodes_at_level;
