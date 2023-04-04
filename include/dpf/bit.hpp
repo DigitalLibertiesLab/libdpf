@@ -6,7 +6,7 @@
 ///          for a DPF, in which case leaf nodes will be packed in much
 ///          the ways as in an `std::bitset` or `std::vector<bool>`.
 ///
-///          In addition `dpf::bit`, this file defines three overloaded
+///          In addition to `dpf::bit`, this file defines three overloaded
 ///          variants of a `dpf::to_bit` function that respectively convert
 ///          a `bool, a `char`, or (the least significant bit of) an `int` to
 ///          a `dpf::bit`. Likewise, it defines `dpf::to_string` to convert
