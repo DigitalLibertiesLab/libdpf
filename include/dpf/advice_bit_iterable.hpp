@@ -133,7 +133,7 @@ class advice_bit_iterable_const_iterator
 
     HEDLEY_ALWAYS_INLINE
     constexpr
-    explicit advice_bit_iterable_const_iterator(wrapped_type && it) noexcept
+    explicit advice_bit_iterable_const_iterator(const wrapped_type & it) noexcept
         : it_{it}
     { }
 
@@ -281,7 +281,6 @@ class advice_bit_iterable_const_iterator
     static constexpr auto bit = detail::extract_bit<node_type, wrapped_type>{};
 };  // class dpf::advice_bit_iterable_const_iterator
 
-
 template <typename Iterable>
 dpf::advice_bit_iterable<Iterable> advice_bits_of(const Iterable & iterable)
 {
@@ -318,9 +317,11 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
 {
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
+    static_assert(CHAR_BIT == 8, "CHAR_BIT not equal to 8");
 
     auto ret = dynamic_bit_array(bits);
-    std::size_t bytes = (bits-1) / 8 + 1,
+    std::size_t bits_per_byte = CHAR_BIT,
+                bytes = (bits-1)/bits_per_byte + 1,
                 bits_per_word = ret.bits_per_word,
                 bits_per_simde = dpf::utils::bitlength_of_v<simde_type>,
                 bytes_per_simde = sizeof(simde_type),
@@ -334,7 +335,7 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
         simde_type simde = {0, 0, 0, 0};
 
         std::size_t i = 0;
-        for (; i < 8 && curbits < bits; ++i)
+        for (; i < bits_per_byte && curbits < bits; ++i)
         {
             for (std::size_t j = 0; j < 32 && curbits < bits; ++j, ++curbits)
             {
@@ -346,8 +347,8 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
                 simde_mm256_loadu_si256(tmp));
         }
 
-        // algorithm expects "first bit" to be MSB in each 8-bit block below
-        for (std::size_t j = i; j < 8; ++j)
+        // algorithm expects "first bit" to be MSB in each 8-bit block at next step
+        for (std::size_t j = i; j < bits_per_byte; ++j)
         {
             simde = simde_mm256_slli_epi64(simde, 1);
         }

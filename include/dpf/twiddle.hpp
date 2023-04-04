@@ -83,9 +83,6 @@ simde__m128i xor_if_lo_bit(simde__m128i a, simde__m128i b, simde__m128i c)
     return simde_mm_xor_si128(a, dpf::get_if_lo_bit(b, c));
 }
 
-
-
-
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
