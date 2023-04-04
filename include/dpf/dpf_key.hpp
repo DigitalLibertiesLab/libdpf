@@ -145,7 +145,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         static_assert(std::is_same_v<OutputType, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>);
 
-        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         auto my_output = std::make_unique<OutputType>(output);
         auto peer_output = std::make_unique<OutputType>();
 
@@ -202,7 +202,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         static_assert(std::is_same_v<OutputType, std::tuple_element_t<I, outputs_tuple>>);
 
-        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
 
         return asio::async_compose<
             CompletionToken, void(leaf_type, asio::error_code)>(
@@ -231,7 +231,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             typename CompletionToken>
     auto async_assign_leaf(StreamT & peer, const OutputType & output, CompletionToken && token)
     {
-        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         using output_type = concrete_type_t<std::tuple_element_t<I, outputs_tuple>>;
         static_assert(std::is_same_v<OutputType, output_type>);
 
