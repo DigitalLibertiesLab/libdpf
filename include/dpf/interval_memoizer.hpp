@@ -16,7 +16,7 @@ namespace dpf
 {
 
 template <typename DpfKey,
-          typename ReturnT = typename DpfKey::interior_node_t *>
+          typename ReturnT = typename DpfKey::interior_node *>
 struct interval_memoizer_base
 {
   public:
@@ -118,14 +118,14 @@ struct interval_memoizer_base
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
     using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = typename DpfKey::interior_node_t *;
+    using return_type = typename DpfKey::interior_node *;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
@@ -184,14 +184,14 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
     using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = typename DpfKey::interior_node_t *;
+    using return_type = typename DpfKey::interior_node *;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;

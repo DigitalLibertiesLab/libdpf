@@ -34,23 +34,24 @@ template <class InteriorPRG,
 struct dpf_key
 {
   public:
-    using interior_prg_t = InteriorPRG;
-    using interior_node_t = typename InteriorPRG::block_t;
-    using exterior_prg_t = ExteriorPRG;
-    using exterior_node_t = typename ExteriorPRG::block_t;
+    using interior_prg = InteriorPRG;
+    using interior_node = typename InteriorPRG::block_t;
+    using exterior_prg = ExteriorPRG;
+    using exterior_node = typename ExteriorPRG::block_t;
     using input_type = InputT;
     using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>, utils::bitlength_of_v<std::size_t>>;
-    using outputs_t = std::tuple<OutputT, OutputTs...>;
+    using outputs_tuple = std::tuple<OutputT, OutputTs...>;
+    using concrete_outputs_tuple
+        = std::tuple<concrete_type_t<OutputT>, concrete_type_t<OutputTs>...>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using leaf_nodes_t = dpf::leaf_tuple_t<exterior_node_t,
-        OutputT, OutputTs...>;
+    using leaf_tuple = dpf::leaf_tuple_t<exterior_node, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    static constexpr std::size_t depth = utils::bitlength_of_v<input_type>
-        - dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
+    static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node>;
+    static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node>;
+    static constexpr std::size_t depth
+        = utils::bitlength_of_v<input_type> - lg_outputs_per_leaf;
     static constexpr input_type msb_mask = utils::msb_of_v<input_type>;
-    static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node_t>;
-    static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node_t>;
 
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
@@ -58,10 +59,10 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static_assert(std::has_unique_object_representations_v<input_type>);
 
     HEDLEY_ALWAYS_INLINE
-    constexpr dpf_key(interior_node_t root_,
-                      const std::array<interior_node_t, depth> & interior_cws_,
+    constexpr dpf_key(interior_node root_,
+                      const std::array<interior_node, depth> & interior_cws_,
                       const std::array<uint8_t, depth> & correction_advice_,
-                      const leaf_nodes_t & exterior_cw_,
+                      const leaf_tuple & exterior_cw_,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
       : wildcard_mask{wild_mask_},
         mutable_exterior_cw{exterior_cw_},
@@ -72,13 +73,13 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
   private:
     std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
-    leaf_nodes_t mutable_exterior_cw;
+    leaf_tuple mutable_exterior_cw;
 
   public:
-    const interior_node_t root;
+    const interior_node root;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    const std::array<interior_node_t, depth> interior_cws;
+    const std::array<interior_node, depth> interior_cws;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
@@ -98,26 +99,26 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
-    static auto traverse_interior(const interior_node_t & node,
-        const interior_node_t & cw, bool dir) noexcept
+    static auto traverse_interior(const interior_node & node,
+        const interior_node & cw, bool dir) noexcept
     {
         return dpf::xor_if_lo_bit(
-            interior_prg_t::eval(unset_lo_2bits(node), dir), cw, node);
+            interior_prg::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
     template <std::size_t I,
-              typename LeafT = std::tuple_element_t<I, leaf_nodes_t>>
+              typename LeafT = std::tuple_element_t<I, leaf_tuple>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
-    static auto traverse_exterior(const interior_node_t & node,
+    static auto traverse_exterior(const interior_node & node,
         const LeafT & cw) noexcept
     {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        using output_t = std::tuple_element_t<I, outputs_t>;
+        using output_t = std::tuple_element_t<I, outputs_tuple>;
         return dpf::subtract<output_t>(
-            make_leaf_mask_inner<exterior_prg_t, I, outputs_t>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg, I, outputs_tuple>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
@@ -141,23 +142,23 @@ auto make_dpf(InputT x, OutputT y, OutputTs... ys)
 {
     using specialization = dpf_key<InteriorPRG, ExteriorPRG, InputT,
                                    OutputT, OutputTs...>;
-    using interior_node_t = typename specialization::interior_node_t;
+    using interior_node = typename specialization::interior_node;
 
     constexpr auto depth = specialization::depth;
     InputT mask = specialization::msb_mask;
 
-    const interior_node_t root[2] = {
+    const interior_node root[2] = {
         dpf::unset_lo_bit(RootSampler()),
         dpf::set_lo_bit(RootSampler())
     };
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    std::array<interior_node_t, depth> correction_word;
+    std::array<interior_node, depth> correction_word;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     std::array<uint8_t, depth> correction_advice;
 
-    interior_node_t parent[2] = { root[0], root[1] };
+    interior_node parent[2] = { root[0], root[1] };
     bool advice[2];
 
     for (std::size_t level = 0; level < depth; ++level, mask >>= 1)
@@ -169,7 +170,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
         auto child0 = InteriorPRG::eval01(parent[0]);
         auto child1 = InteriorPRG::eval01(parent[1]);
-        interior_node_t child[2] = {
+        interior_node child[2] = {
             child0[0] ^ child1[0],
             child0[1] ^ child1[1]
         };

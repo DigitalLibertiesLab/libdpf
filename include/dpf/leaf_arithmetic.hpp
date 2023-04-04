@@ -15,7 +15,6 @@
 #include "simde/simde/x86/avx2.h"
 
 #include "dpf/bit.hpp"
-#include "dpf/wildcard.hpp"
 #include "dpf/xor_wrapper.hpp"
 
 namespace dpf
@@ -28,7 +27,7 @@ template <typename OutputT>
 static constexpr auto add = add_t<OutputT, void>{};
 
 template <typename OutputT>
-static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, void>{};
+static constexpr auto subtract = subtract_t<OutputT, void>{};
 
 template <typename OutputT>
 struct add_t<OutputT, void>
