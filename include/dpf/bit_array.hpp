@@ -81,6 +81,8 @@ class bit_array_base
     /// @note guaranteed (via `static_assert`) to be `64`
     static constexpr size_type bits_per_word =
         std::numeric_limits<word_type>::digits;
+    static constexpr size_type lg_bits_per_word =
+        std::log2(bits_per_word);
     static_assert(bits_per_word == 64, "bits_per_word not equal to 64");
 
     bit_array_base() = delete;
@@ -198,19 +200,19 @@ class bit_array_base
     /// @complexity `O(1)`
     constexpr iterator begin() noexcept
     {
-        return iterator{arr_};
+        return iterator{arr_, word_type(1)};
     }
     /// @returns iterator to the first element
     /// @complexity `O(1)`
     constexpr const_iterator begin() const noexcept
     {
-        return const_iterator{arr_};
+        return const_iterator{arr_, word_type(1)};
     }
     /// @returns iterator to the first element
     /// @complexity `O(1)`
     constexpr const_iterator cbegin() const noexcept
     {
-        return const_iterator{arr_};
+        return const_iterator{arr_, word_type(1)};
     }
     /// @}
 
@@ -220,19 +222,22 @@ class bit_array_base
     /// @complexity `O(1)`
     constexpr iterator end() noexcept
     {
-        return bit_iterator{arr_ + data_length_};
+        return bit_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
+            word_type(1) << num_bits_ % bits_per_word};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator end() const noexcept
     {
-        return const_iterator{arr_ + data_length_};
+        return const_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
+            word_type(1) << num_bits_ % bits_per_word};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator cend() const noexcept
     {
-        return const_iterator{arr_ + data_length_};
+        return const_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
+            word_type(1) << num_bits_ % bits_per_word};
     }
     /// @}
 
@@ -856,6 +861,12 @@ class bit_array_base
         inline constexpr explicit bit_iterator(word_pointer word_ptr) noexcept
           : bit_iterator_base{word_ptr} { }
 
+        HEDLEY_NO_THROW
+        HEDLEY_NON_NULL()
+        inline constexpr explicit bit_iterator(word_pointer word_ptr,
+            word_type mask) noexcept
+          : bit_iterator_base{word_ptr, mask} { }
+
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW
         bit_iterator & operator=(const bit_iterator &) noexcept = default;
@@ -968,6 +979,12 @@ class bit_array_base
         HEDLEY_NON_NULL()
         inline constexpr explicit const_bit_iterator(word_pointer word_ptr)
           : bit_iterator_base{word_ptr} { }
+
+        HEDLEY_NO_THROW
+        HEDLEY_NON_NULL()
+        inline constexpr explicit const_bit_iterator(word_pointer word_ptr,
+            word_type mask)
+          : bit_iterator_base{word_ptr, mask} { }
 
         HEDLEY_ALWAYS_INLINE
         HEDLEY_NO_THROW

@@ -133,7 +133,7 @@ class advice_bit_iterable_const_iterator
 
     HEDLEY_ALWAYS_INLINE
     constexpr
-    explicit advice_bit_iterable_const_iterator(wrapped_type && it) noexcept
+    explicit advice_bit_iterable_const_iterator(const wrapped_type & it) noexcept
         : it_{it}
     { }
 
