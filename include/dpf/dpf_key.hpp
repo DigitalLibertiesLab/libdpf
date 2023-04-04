@@ -88,29 +88,22 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
-
-    template <std::size_t I = 0,
-            typename OutputT_,
-            typename StreamT,
-            typename CompletionToken,
-            std::enable_if_t<std::equal_to{}(dpf::outputs_per_leaf_v<OutputT_, exterior_node>, 1), bool> = true>
-    auto async_assign_leaf(StreamT & peer, const OutputT_ & output, CompletionToken && token)
+    template <typename OutputType,
+              typename PeerT,
+              typename LeafT,
+              typename CompletionToken>
+    static auto async_exchange_and_reconstruct_leaf_shares(PeerT & peer,
+        const LeafT & share, CompletionToken && token)
     {
-        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
-        using output_type = std::tuple_element_t<I, outputs_tuple>;
-        static_assert(std::is_same_v<OutputT_, dpf::concrete_type_t<output_type>>);
-        auto leaf_buf = std::make_unique<leaf_type>();
+        auto peer_share = std::make_unique<LeafT>();
 
 #include <asio/yield.hpp>
         return asio::async_compose<
-            CompletionToken, void(asio::error_code)>(
+            CompletionToken, void(LeafT, asio::error_code)>(
                 [
                     &peer,
-                    &dpf = *this,
-                    &output,
-                    &leaf = std::get<I>(this->mutable_exterior_cw),
-                    &beaver = std::get<I>(this->mutable_beaver_tuple),
-                    leaf_buf = std::move(leaf_buf),
+                    my_share = share,
+                    peer_share = std::move(peer_share),
                     coro = asio::coroutine()
                 ]
                 (
@@ -122,60 +115,49 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                 {
                     reenter (coro)
                     {
-                        if (dpf.wildcard_mask.test(I) == false)
-                        {
-                            throw std::logic_error("not a wildcard");
-                        }
-                        if (beaver.is_locked->test_and_set())
-                        {
-                            throw std::logic_error("already locked");
-                        }
-
-                        std::memcpy(&leaf_buf, &output, sizeof(leaf_type));
-
-                        leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
-                        yield asio::async_write(peer, asio::buffer(&leaf, sizeof(leaf_type)),
+                        yield asio::async_write(peer,
+                            asio::buffer(&my_share, sizeof(LeafT)),
                             std::move(self));
-                        if (error) break;
-                        yield asio::async_read(peer, asio::buffer(leaf_buf.get(), sizeof(leaf_type)),
+
+                        yield asio::async_read(peer,
+                            asio::buffer(peer_share.get(), sizeof(LeafT)),
                             std::move(self));
-                        if (error) break;
-                        leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
-                        dpf.wildcard_mask[I] = false;
+
+                        self.complete(
+                            add<OutputType>(my_share, *peer_share),
+                            error);
                     }
-                    self.complete(error);
                 },
             token, peer);
 #include <asio/unyield.hpp>
     }
 
-    template <std::size_t I = 0,
-            typename OutputT_,
-            typename StreamT,
-            typename CompletionToken,
-            std::enable_if_t<std::greater{}(dpf::outputs_per_leaf_v<OutputT_, exterior_node>, 1), bool> = true>
-    auto async_assign_leaf(StreamT & peer, OutputT_ output, CompletionToken && token)
+    template <std::size_t I,
+              typename PeerT,
+              typename OutputType,
+              typename BeaverT,
+              typename CompletionToken,
+              std::enable_if_t<std::greater{}(outputs_per_leaf_v<OutputType, exterior_node>, 1), bool> = true>
+    static auto async_compute_naked_leaf_share(PeerT & peer,
+        OutputType output, const BeaverT & beaver, CompletionToken && token)
     {
-        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
-        using output_type = std::tuple_element_t<I, outputs_tuple>;
-        static_assert(std::is_same_v<OutputT_, dpf::concrete_type_t<output_type>>);
+        static_assert(std::is_same_v<OutputType, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>);
 
-        auto my_out = std::make_unique<OutputT_>();
-        auto peer_out = std::make_unique<OutputT_>();
-        auto leaf_buf = std::make_unique<leaf_type>();
+        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+        auto my_output = std::make_unique<OutputType>(output);
+        auto peer_output = std::make_unique<OutputType>();
 
 #include <asio/yield.hpp>
         return asio::async_compose<
-            CompletionToken, void(asio::error_code)>(
+            CompletionToken, void(leaf_type, asio::error_code)>(
                 [
                     &peer,
-                    &dpf = *this,
-                    &output,
-                    &leaf = std::get<I>(this->mutable_exterior_cw),
-                    &beaver = std::get<I>(this->mutable_beaver_tuple),
-                    my_out = std::move(my_out),
-                    peer_out = std::move(peer_out),
-                    leaf_buf = std::move(leaf_buf),
+                    output,
+                    &output_blind = beaver.output_blind,
+                    &blinded_vector = beaver.blinded_vector,
+                    &vector_blind = beaver.vector_blind,
+                    my_output = std::move(my_output),
+                    peer_output = std::move(peer_output),
                     coro = asio::coroutine()
                 ]
                 (
@@ -187,38 +169,109 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                 {
                     reenter (coro)
                     {
-                        if (dpf.wildcard_mask.test(I) == false)
+                        *my_output += output_blind;
+                        yield asio::async_write(peer,
+                            asio::buffer(my_output.get(), sizeof(OutputType)),
+                            std::move(self));
+
+                        yield asio::async_read(peer,
+                            asio::buffer(peer_output.get(), sizeof(OutputType)),
+                            std::move(self));
+
+                        self.complete(
+                            subtract<OutputType>(
+                                multiply(blinded_vector, output),
+                                multiply(vector_blind, *peer_output)),
+                            error);
+                    }
+                },
+            token, peer);
+#include <asio/unyield.hpp>
+    }
+
+    template <std::size_t I,
+              typename PeerT,
+              typename OutputType,
+              typename BeaverT,
+              typename CompletionToken,
+              std::enable_if_t<std::equal_to(outputs_per_leaf_v<OutputType, exterior_node>, 1), bool> = true>
+    static auto async_compute_naked_leaf_share(PeerT & peer,
+        const OutputType & output, const BeaverT & beaver, CompletionToken && token)
+    {
+        static_assert(std::is_same_v<OutputType, std::tuple_element_t<I, outputs_tuple>>);
+
+        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+
+        return asio::async_compose<
+            CompletionToken, void(leaf_type, asio::error_code)>(
+                [
+                    &output,
+                    coro = asio::coroutine()
+                ]
+                (
+                    auto & self,
+                    const asio::error_code & error = {},
+                    std::size_t = 0
+                )
+                mutable
+                {
+                    leaf_type out;
+                    std::memcpy(&out, &output, sizeof(leaf_type));
+                    self.complete(out, error);
+                },
+            token, peer);
+    }
+
+
+    template <std::size_t I = 0,
+            typename OutputType,
+            typename StreamT,
+            typename CompletionToken>
+    auto async_assign_leaf(StreamT & peer, const OutputType & output, CompletionToken && token)
+    {
+        using leaf_type = std::tuple_element_t<I, leaf_nodes>;
+        using output_type = concrete_type_t<std::tuple_element_t<I, outputs_tuple>>;
+        static_assert(std::is_same_v<OutputType, output_type>);
+
+#include <asio/yield.hpp>
+        return asio::async_compose<
+            CompletionToken, void(asio::error_code)>(
+                [
+                    &peer,
+                    &wildcard_mask = this->wildcard_mask,
+                    &output,
+                    &leaf = std::get<I>(this->mutable_exterior_cw),
+                    &beaver = std::get<I>(this->mutable_beaver_tuple),
+                    coro = asio::coroutine()
+                ]
+                (
+                    auto & self,
+                    leaf_type && leaf_buf = leaf_type{},
+                    const asio::error_code & error = {}
+                )
+                mutable
+                {
+                    reenter (coro)
+                    {
+                        if (wildcard_mask.test(I) == false)
                         {
                             throw std::logic_error("not a wildcard");
                         }
                         if (beaver.is_locked->test_and_set())
                         {
+                            // once locked, *never* locked
+                            // (even in event of failure)
                             throw std::logic_error("already locked");
                         }
 
-                        *my_out = output + beaver.output_blind;
-                        yield asio::async_write(peer, asio::buffer(my_out.get(), sizeof(OutputT_)),
-                            std::move(self));
-                        if (error) break;
-                        yield asio::async_read(peer, asio::buffer(peer_out.get(), sizeof(OutputT_)),
-                            std::move(self));
-                        if (error) break;
-                        *leaf_buf = subtract<OutputT_, exterior_node>(
-                            multiply<OutputT_, exterior_node>(beaver.blinded_vector, output),
-                            multiply<OutputT_, exterior_node>(beaver.vector_blind, *peer_out)
-                        );
+                        yield async_compute_naked_leaf_share<I>(peer, output, beaver, std::move(self));
+                        leaf = add<OutputType>(leaf, leaf_buf);
+                        yield async_exchange_and_reconstruct_leaf_shares<OutputType>(peer, leaf, std::move(self));
+                        leaf = leaf_buf;
+                        wildcard_mask[I] = false;
 
-                        leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
-                        yield asio::async_write(peer, asio::buffer(&leaf, sizeof(leaf_type)),
-                            std::move(self));
-                        if (error) break;
-                        yield asio::async_read(peer, asio::buffer(leaf_buf.get(), sizeof(leaf_type)),
-                            std::move(self));
-                        if (error) break;
-                        leaf = add<OutputT_, exterior_node>(leaf, *leaf_buf);
-                        dpf.wildcard_mask[I] = false;
+                        self.complete(error);
                     }
-                    self.complete(error);
                 },
             token, peer);
 #include <asio/unyield.hpp>
@@ -276,7 +329,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using output_type = std::tuple_element_t<I, outputs_tuple>;
         return dpf::subtract<output_type>(
-            make_leaf_mask_inner<exterior_prg_t, I, outputs_t>(unset_lo_2bits(node)),
+            make_leaf_mask_inner<exterior_prg_type, I, outputs_tuple>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
