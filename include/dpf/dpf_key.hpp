@@ -140,12 +140,12 @@ template <class InteriorPRG = dpf::prg::aes128,
           typename... OutputTs>
 auto make_dpf(InputT x, OutputT y, OutputTs... ys)
 {
-    using specialization = dpf_key<InteriorPRG, ExteriorPRG, InputT,
+    using dpf_type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
                                    OutputT, OutputTs...>;
-    using interior_node = typename specialization::interior_node;
+    using interior_node = typename dpf_type::interior_node;
 
-    constexpr auto depth = specialization::depth;
-    InputT mask = specialization::msb_mask;
+    constexpr auto depth = dpf_type::depth;
+    InputT mask = dpf_type::msb_mask;
 
     const interior_node root[2] = {
         dpf::unset_lo_bit(RootSampler()),
@@ -154,7 +154,7 @@ auto make_dpf(InputT x, OutputT y, OutputTs... ys)
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    std::array<interior_node, depth> correction_word;
+    std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     std::array<uint8_t, depth> correction_advice;
 
@@ -183,7 +183,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         parent[0] = dpf::xor_if(child0[bit], cw, advice[0]);
         parent[1] = dpf::xor_if(child1[bit], cw, advice[1]);
 
-        correction_word[level] = child[!bit];
+        correction_words[level] = child[!bit];
         correction_advice[level] = uint_fast8_t(t[1] << 1) | t[0];
     }
     auto mutable_wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
@@ -196,9 +196,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         unset_lo_2bits(parent[1]), sign0, y, ys...);
 
     return std::make_pair(
-        specialization{root[0], correction_word, correction_advice,
+        dpf_type{root[0], correction_words, correction_advice,
             leaves.first, mutable_wildcard_mask},
-        specialization{root[1], correction_word, correction_advice,
+        dpf_type{root[1], correction_words, correction_advice,
             leaves.second, mutable_wildcard_mask});
 }  // make_dpf
 
