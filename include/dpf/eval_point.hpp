@@ -58,7 +58,7 @@ inline auto eval_point_exterior(const DpfKey & dpf, PathMemoizer & path)
     assert_not_wildcard<I>(dpf);
 
     auto interior = path[dpf.depth];
-    auto ext = dpf.template exterior_cw<I>();
+    auto ext = dpf.template leaf<I>();
     return DpfKey::template traverse_exterior<I>(interior, ext);
 }
 

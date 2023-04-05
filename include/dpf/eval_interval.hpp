@@ -96,7 +96,7 @@ inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node, Inte
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    auto cw = dpf.template exterior_cw<I>();
+    auto cw = dpf.template leaf<I>();
     auto rawbuf = reinterpret_cast<exterior_node_type *>(utils::data(outbuf));
     DPF_UNROLL_LOOP
     for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
