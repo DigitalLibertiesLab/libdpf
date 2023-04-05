@@ -91,7 +91,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     template <std::size_t I>
     HEDLEY_ALWAYS_INLINE
-    const auto & exterior_cw() const
+    const auto & leaf() const
     {
         return std::get<I>(mutable_leaf_tuple);
     }

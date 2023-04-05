@@ -172,7 +172,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
-    auto cw = dpf.template exterior_cw<I>();
+    auto cw = dpf.template leaf<I>();
     auto buf = memo[0];
 
     auto curr = begin, prev = curr;
@@ -263,7 +263,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
-    auto cw = dpf.template exterior_cw<I>();
+    auto cw = dpf.template leaf<I>();
     auto buf = memoizer[dpf.depth];
     DPF_UNROLL_LOOP
     for (std::size_t j = 0; j < nodes_in_interval; ++j)
@@ -291,7 +291,7 @@ inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequenc
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
-    auto cw = dpf.template exterior_cw<I>();
+    auto cw = dpf.template leaf<I>();
     using node_type = typename DpfKey::exterior_node;
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto buf = memoizer[dpf.depth];
