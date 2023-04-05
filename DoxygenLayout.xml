@@ -24,7 +24,7 @@
     </tab>
     <tab type="usergroup" visible="yes" title="Examples" intro="">
     </tab>
-    <tab type="user" url="http://grotto.com" title="Grotto"/>
+    <tab type="user" url="../grotto" title="Grotto"/>
   </navindex>
 
   <!-- Layout definition for a class page -->

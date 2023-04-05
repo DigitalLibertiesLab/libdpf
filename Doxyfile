@@ -238,8 +238,8 @@ TAB_SIZE               = 4
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES += "license=@par License:\n"
-ALIASES += "complexity=@par Complexity:\n"
+ALIASES += "license=@par License:^^"
+ALIASES += "complexity=@par Complexity:^^"
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"
@@ -1237,7 +1237,8 @@ HTML_EXTRA_FILES       = thirdparty/doxygen-awesome-css/doxygen-awesome-darkmode
                          doc/libdpf.png \
                          doc/libdpf.svg \
                          doc/libdpf-wordmark.png \
-                         doc/doxygen-custom/libdpf-wordmark2.png
+#                         doc/doxygen-custom/libdpf-wordmark2.png \
+                         doc/doxygen-custom/grotto-wordmark.png
 
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.
@@ -1527,6 +1528,8 @@ DISABLE_INDEX          = YES
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 GENERATE_TREEVIEW      = YES
+
+FULL_SIDEBAR           = YES
 
 # The ENUM_VALUES_PER_LINE tag can be used to set the number of enum values that
 # doxygen will group on one line in the generated HTML documentation.
@@ -2147,7 +2150,7 @@ SEARCH_INCLUDES        = YES
 # preprocessor.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           = thirdparty include
+INCLUDE_PATH           = include
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
