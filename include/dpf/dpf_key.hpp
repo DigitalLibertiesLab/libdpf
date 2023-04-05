@@ -23,8 +23,8 @@
 namespace dpf
 {
 
-template <typename I>
-using root_sampler_t = std::add_pointer_t<typename I::block_t()>;
+template <typename InteriorPRG>
+using root_sampler_t = std::add_pointer_t<typename InteriorPRG::block_type()>;
 
 template <class InteriorPRG,
           class ExteriorPRG,
@@ -35,9 +35,9 @@ struct dpf_key
 {
   public:
     using interior_prg = InteriorPRG;
-    using interior_node = typename InteriorPRG::block_t;
+    using interior_node = typename InteriorPRG::block_type;
     using exterior_prg = ExteriorPRG;
-    using exterior_node = typename ExteriorPRG::block_t;
+    using exterior_node = typename ExteriorPRG::block_type;
     using input_type = InputT;
     using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>, utils::bitlength_of_v<std::size_t>>;
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
@@ -60,40 +60,40 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node root_,
-                      const std::array<interior_node, depth> & interior_cws_,
+                      const std::array<interior_node, depth> & correction_words_,
                       const std::array<uint8_t, depth> & correction_advice_,
-                      const leaf_tuple & exterior_cw_,
+                      const leaf_tuple & leaves,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_)
-      : wildcard_mask{wild_mask_},
-        mutable_exterior_cw{exterior_cw_},
+      : mutable_wildcard_mask{wild_mask_},
+        mutable_leaf_tuple{leaves},
         root{root_},
-        interior_cws{interior_cws_},
+        correction_words{correction_words_},
         correction_advice{correction_advice_}
     { }
 
   private:
-    std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
-    leaf_tuple mutable_exterior_cw;
+    std::bitset<sizeof...(OutputTs)+1> mutable_wildcard_mask;
+    leaf_tuple mutable_leaf_tuple;
 
   public:
     const interior_node root;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    const std::array<interior_node, depth> interior_cws;
+    const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const
     {
-        return wildcard_mask.test(i);
+        return mutable_wildcard_mask.test(i);
     }
 
     template <std::size_t I>
     HEDLEY_ALWAYS_INLINE
     const auto & exterior_cw() const
     {
-        return std::get<I>(mutable_exterior_cw);
+        return std::get<I>(mutable_leaf_tuple);
     }
 
     HEDLEY_NO_THROW
@@ -186,7 +186,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         correction_word[level] = child[!bit];
         correction_advice[level] = uint_fast8_t(t[1] << 1) | t[0];
     }
-    auto wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
+    auto mutable_wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
         dpf::is_wildcard_v<OutputTs>...);
 
     bool sign0 = dpf::get_lo_bit(parent[0]);
@@ -197,9 +197,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return std::make_pair(
         specialization{root[0], correction_word, correction_advice,
-            leaves.first, wildcard_mask},
+            leaves.first, mutable_wildcard_mask},
         specialization{root[1], correction_word, correction_advice,
-            leaves.second, wildcard_mask});
+            leaves.second, mutable_wildcard_mask});
 }  // make_dpf
 
 }  // namespace dpf

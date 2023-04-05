@@ -180,7 +180,7 @@ template <typename ExteriorPRG,
           typename InteriorBlock>
 auto make_leaf_mask_inner(const InteriorBlock & seed)
 {
-    using node_type = typename ExteriorPRG::block_t;
+    using node_type = typename ExteriorPRG::block_type;
     using output_type = std::tuple_element_t<I, OutputsTuple>;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -213,7 +213,7 @@ auto make_leaf_mask(const InteriorBlock & seed0, const InteriorBlock & seed1)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_type = typename ExteriorPRG::block_t;
+    using node_type = typename ExteriorPRG::block_type;
     using output_type = concrete_type_t<std::tuple_element_t<I, OutputsTuple>>;
 
     auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, OutputsTuple>(seed0);
@@ -238,7 +238,7 @@ auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    using node_type = typename ExteriorPRG::block_t;
+    using node_type = typename ExteriorPRG::block_type;
     return sign ? dpf::subtract<concrete_type_t<output_type>>(
                     make_naked_leaf<node_type>(x, Y),
                     make_leaf_mask<ExteriorPRG, I, output_tuple_type>(seed0, seed1))
@@ -267,7 +267,7 @@ template <typename ExteriorPRG,
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
     bool sign, OutputTs... ys)
 {
-    using node_type = typename ExteriorPRG::block_t;
+    using node_type = typename ExteriorPRG::block_type;
     auto tup = make_leaves_impl<ExteriorPRG>(x, seed0, seed1, sign, Indices{}, ys...);
 
     // post-processing to secret-share any wildcard leaves

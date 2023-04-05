@@ -139,8 +139,8 @@ inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterat
     {
         std::size_t i = 0, j = 0;
         const node_type cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
         // `lower` and `upper` are always adjacent elements of `splits` with `lower` < `upper`
         // [lower, upper) = "block"
@@ -221,8 +221,8 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
     for (; level_index <= to_level; level_index = memoizer.advance_level(), nodes_at_level = memoizer.get_nodes_at_level(level_index-1))
     {
         const node_type cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
         auto prevbuf = memoizer[level_index-1];

@@ -53,8 +53,8 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
         bool from_offset = mask & from_node,
              to_offset = from_offset ^ (nodes_at_level & 1);
         const node_type cw[2] = {
-            set_lo_bit(dpf.interior_cws[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.interior_cws[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
+            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
         };
 
         // process node which only requires a right traversal
