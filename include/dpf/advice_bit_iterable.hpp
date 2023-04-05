@@ -37,6 +37,8 @@
 
 #include "simde/simde/x86/avx2.h"
 
+#include "dpf/bit_array.hpp"
+
 namespace dpf
 {
 
