@@ -33,16 +33,15 @@ namespace prg
 template <typename AesKey>
 struct aes final
 {
-    using block_t = simde__m128i;
+    using block_type = simde__m128i;
 
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    DPF_UNROLL_LOOPS
-    static block_t eval(block_t seed, uint32_t pos) noexcept
+    static block_type eval(block_type seed, uint32_t pos) noexcept
     {
-        block_t rd_key0 = simde_mm_xor_si128(key.rd_key[0],
+        block_type rd_key0 = simde_mm_xor_si128(key.rd_key[0],
             simde_mm_set_epi64x(0, pos));
-        block_t output = simde_mm_xor_si128(seed, rd_key0);
+        block_type output = simde_mm_xor_si128(seed, rd_key0);
 
         for (std::size_t j = 1; j < key.rounds; ++j)
         {
@@ -56,16 +55,16 @@ struct aes final
 
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    DPF_UNROLL_LOOPS
-    static auto eval01(block_t seed) noexcept
+    static auto eval01(block_type seed) noexcept
     {
-        block_t rd_key00 = key.rd_key[0];
-        block_t rd_key01 = simde_mm_xor_si128(rd_key00,
+        block_type rd_key00 = key.rd_key[0];
+        block_type rd_key01 = simde_mm_xor_si128(rd_key00,
             simde_mm_set_epi64x(0, 1));
 
-        block_t output0 = simde_mm_xor_si128(seed, rd_key00);
-        block_t output1 = simde_mm_xor_si128(seed, rd_key01);
+        block_type output0 = simde_mm_xor_si128(seed, rd_key00);
+        block_type output1 = simde_mm_xor_si128(seed, rd_key01);
 
+HEDLEY_PRAGMA(GCC unroll (14))
         for (std::size_t j = 1; j < key.rounds; ++j)
         {
             output0 = simde_mm_aesenc_si128(output0, key.rd_key[j]);
@@ -77,24 +76,25 @@ struct aes final
         output1 = simde_mm_xor_si128(output1, seed);
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        return std::array<block_t, 2>{output0, output1};
+        return std::array<block_type, 2>{output0, output1};
 HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
     HEDLEY_NO_THROW
-    DPF_UNROLL_LOOPS
-    static void eval(block_t seed, block_t * HEDLEY_RESTRICT output,
+    static void eval(block_type seed, block_type * HEDLEY_RESTRICT output,
         uint32_t count, uint32_t pos = 0) noexcept
     {
-        static constexpr block_t one{1, 0};
+        static constexpr block_type one{1, 0};
         auto pos_ = simde_mm_set_epi64x(0, pos);
-        block_t * HEDLEY_RESTRICT out =
-            static_cast<block_t *>(__builtin_assume_aligned(output,
-            alignof(block_t)));
+        block_type * HEDLEY_RESTRICT out =
+            static_cast<block_type *>(__builtin_assume_aligned(output,
+            alignof(block_type)));
+        DPF_UNROLL_LOOP
         for (uint32_t i = 0; i < count; ++i)
         {
             out[i] = simde_mm_xor_si128(seed, pos_);
             pos_ = simde_mm_add_epi64(pos_, one);
+            DPF_UNROLL_LOOP
             for (std::size_t j = 1; j < key.rounds; ++j)
             {
                 out[i] = simde_mm_aesenc_si128(out[i], key.rd_key[j]);

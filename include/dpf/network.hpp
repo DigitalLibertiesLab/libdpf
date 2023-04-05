@@ -146,7 +146,6 @@ auto async_read(struct asio_fp fp, MutableBuffer buffer, ReadHandler handler);
 template <typename MutableBuffer, typename ReadHandler>
 auto async_read(struct asio_is is, MutableBuffer buffer, ReadHandler handler);
 
-
 template <typename ConstBuffer>
 // [[no_discard]]
 auto write_some(int fd, ConstBuffer buffer)

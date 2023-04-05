@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <bitset>
 
 #include "dpf/bit.hpp"
@@ -53,6 +54,9 @@ template <std::size_t Nbits>
 class bitstring : public bit_array_base
 {
   public:
+    /// @brief the primitive integral type used to represent the string
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
+
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
     ///        is stateless, the constructors have no visible effect.
@@ -92,43 +96,64 @@ class bitstring : public bit_array_base
     constexpr explicit bitstring(uint64_t val) noexcept
       : bit_array_base{Nbits, &arr[0]}, arr{val} { }
 
-    // /// @brief Constructs a `dpf::bitstring` using the characters in the
-    // ///        `std::basic_string` `str`. An optional starting position `pos`
-    // ///        and length `len` can be provided, as well as characters
-    // ///        denoting alternate values for set (`one`) and unset (`zero`)
-    // ///        bits.
-    // /// @param str `string` used to initialize the `dpf::bitstring`
-    // /// @param pos a starting offset into `str`
-    // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `0` (default: `CharT('0')`)
-    // /// @param one character used to represent `1` (default: `CharT('1')`)
-    // template <class CharT,
-    //           class Traits,
-    //           class Alloc>
-    // explicit bitstring(
-    //     const std::basic_string<CharT, Traits, Alloc> & str,
-    //     typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
-    //     typename std::basic_string<CharT, Traits, Alloc>::size_type len
-    //         = std::basic_string<CharT, Traits, Alloc>::npos,
-    //     CharT zero = CharT('0'),
-    //     CharT one = CharT('1'))
-    //   : bit_array_base(str, pos, len, zero, one) { }
+    /// @brief Constructs a `dpf::bitstring` using the characters in the
+    ///        `std::basic_string` `str`. An optional starting position `pos`
+    ///        and length `len` can be provided, as well as characters
+    ///        denoting alternate values for set (`one`) and unset (`zero`)
+    ///        bits.
+    /// @param str `string` used to initialize the `dpf::bitstring`
+    /// @param pos a starting offset into `str`
+    /// @param len number of characters to use from `str`
+    /// @param zero character used to represent `0` (default: `CharT('0')`)
+    /// @param one character used to represent `1` (default: `CharT('1')`)
+    template <class CharT,
+              class Traits,
+              class Alloc>
+    explicit bitstring(
+        const std::basic_string<CharT, Traits, Alloc> & str,
+        typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
+        typename std::basic_string<CharT, Traits, Alloc>::size_type len
+            = std::basic_string<CharT, Traits, Alloc>::npos,
+        CharT zero = CharT('0'),
+        CharT one = CharT('1'))
+      : bit_array_base{Nbits, &arr[0]}, arr{}
+    {
+        if (pos > str.size())
+        {
+            std::stringstream ss;
+            ss << "dpf::bitstring: pos (which is " << pos
+               << ") > str.size() (which is " << str.size() << ")";
+            throw std::out_of_range(ss.str());
+        }
+        len = std::min(len, str.size() - pos);
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            this->set(i, dpf::to_bit(str[pos+i]));
+        }
+    }
 
-    // /// @brief Constructs a `dpf::bitstring` using the characters in the
-    // ///        `CharT *` `str`. An optional starting position `pos` and length
-    // ///        `len` can be provided, as well as characters denoting alternate
-    // ///        values for set (`one`) and unset (`zero`) bits.
-    // /// @param str string used to initialize the `dpf::bitstring`
-    // /// @param len number of characters to use from `str`
-    // /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
-    // /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
-    // template <class CharT>
-    // explicit bitstring(const CharT * str,
-    //     typename std::basic_string<CharT>::size_type len
-    //         = std::basic_string<CharT>::npos,
-    //     CharT zero = CharT('0'),
-    //     CharT one = CharT('1'))
-    //   : base(str, len, zero, one) { }
+    /// @brief Constructs a `dpf::bitstring` using the characters in the
+    ///        `CharT *` `str`. An optional starting position `pos` and length
+    ///        `len` can be provided, as well as characters denoting alternate
+    ///        values for set (`one`) and unset (`zero`) bits.
+    /// @param str string used to initialize the `dpf::bitstring`
+    /// @param len number of characters to use from `str`
+    /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
+    /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
+    template <class CharT>
+    explicit bitstring(const CharT * str,
+        typename std::basic_string<CharT>::size_type len
+            = std::basic_string<CharT>::npos,
+        CharT zero = CharT('0'),
+        CharT one = CharT('1'))
+      : bit_array_base{Nbits, &arr[0]}, arr{}
+    {
+        len = std::min(len, std::strlen(str));
+        for (std::size_t i = 0; i < len; ++i)
+        {
+            this->set(i, dpf::to_bit(str[i]));
+        }
+    }
 
     /// @}
 
@@ -169,6 +194,18 @@ class bitstring : public bit_array_base
         constexpr bit_mask & operator>>=(int shift_by) noexcept
         {
             which_bit_ -= shift_by;
+            return *this;
+        }
+
+        /// @brief shifts the bit mask to the left by the given number of
+        ///        bits
+        /// @param shift_by number of bits to shift the mask to the left
+        /// @return a reference to the modified `dpf::bitstring::bit_mask`
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        constexpr bit_mask & operator<<=(int shift_by) noexcept
+        {
+            which_bit_ += shift_by;
             return *this;
         }
 
@@ -298,7 +335,15 @@ class bitstring : public bit_array_base
 
   private:
     std::array<word_type, 1+(Nbits-1)/bits_per_word> arr;
+
+    friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
 };  // class dpf::bitstring
+
+template <std::size_t Nbits>
+inline std::ostream & operator<<(std::ostream & os, bitstring<Nbits> b)
+{
+    return os << b.to_string();
+}
 
 namespace utils
 {
@@ -306,7 +351,8 @@ namespace utils
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::bitstring`
 template <std::size_t Nbits>
 struct bitlength_of<dpf::bitstring<Nbits>>
-  : public std::integral_constant<std::size_t, Nbits> { };
+  : public std::integral_constant<std::size_t, Nbits>
+{ };
 
 /// @brief specializes `dpf::utils::msb_of` for `dpf::bitstring`
 template <std::size_t Nbits>
@@ -346,29 +392,62 @@ struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
     }
 };
 
-}  // namespace utils
+template <std::size_t Nbits>
+struct to_integral_type<dpf::bitstring<Nbits>> : public to_integral_type_base<dpf::bitstring<Nbits>>
+{
+    using parent = to_integral_type_base<dpf::bitstring<Nbits>>;
+    using typename parent::integral_type;
+
+    static constexpr auto bits_per_word = dpf::bitstring<Nbits>::bits_per_word;
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type operator()(dpf::bitstring<Nbits> & input) const noexcept
+    {
+        if constexpr(Nbits <= bits_per_word)
+        {
+            return integral_type(input.arr[0]);
+        }
+        else
+        {
+            integral_type ret(0);
+            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+            {
+                ret <<= bits_per_word;
+                ret += input.arr[i-1];
+            }
+            return ret;
+        }
+    }
+};
+
+}  // namespace dpf::utils
+
+namespace literals
+{
+    /// @brief user-defined numeric literal for creating `dpf::bitstring` objects
+    /// @details A user-defined literal that provides syntactic sugar for defining
+    ///          compile-time constant `dpf::bitstring` instances. For example,
+    ///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
+    ///          defines a `dpf::bitstring<40>` representing the same bits as the
+    ///          literal, in the same order. The length of the resulting `dpf::bitstring`
+    ///          is equal to `sizeof...(bits)`.
+    /// @tparam bits the bits comprising the bitstring
+    /// @throws std::domain_error if one or more character in the literal is
+    ///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
+    ///          suffix itsef.
+    /// @return the `dpf::bitstring`
+    template <char... bits>
+    constexpr static auto operator "" _bitstring()
+    {
+        dpf::bitstring<sizeof...(bits)> bs;
+        std::size_t i = 0;
+        (bs.set(i++, dpf::to_bit(bits)), ...);
+        return bs;
+    }
+}  // namespace dpf::literals
 
 }  // namespace dpf
-
-/// @brief user-defined numeric literal for creating `dpf::bitstring` objects
-/// @details A user-defined literal that provides syntactic sugar for defining
-///          compile-time constant `dpf::bitstring` instances. For example,
-///          \code{.cpp}auto foo = 1010011101000001011110111010100011101010_bitstring;\endcode
-///          defines a `dpf::bitstring<40>` representing the same bits as the
-///          literal, in the same order. The length of the resulting `dpf::bitstring`
-///          is equal to `sizeof...(bits)`.
-/// @tparam bits the bits comprising the bitstring
-/// @throws std::domain_error if one or more character in the literal is
-///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
-///          suffix itsef.
-/// @return the `dpf::bitstring`
-template <char... bits>
-constexpr static auto operator "" _bitstring()
-{
-    dpf::bitstring<sizeof...(bits)> bs;
-    std::size_t i = 0;
-    (bs.set(i++, dpf::to_bit(bits)), ...);
-    return bs;
-}
 
 #endif  // LIBDPF_INCLUDE_DPF_BITSTRING_HPP__

@@ -112,7 +112,8 @@ class parallel_const_bit_iterator
     using simde_type = typename helper::type;
     static constexpr auto bits_per_word = bit_array_base::bits_per_word;
     static constexpr auto bits_per_element = helper::bits_per_element;
-    static constexpr auto bytes_per_batch = N * (bits_per_element/8);
+    static constexpr auto bytes_per_batch = N * (bits_per_element/CHAR_BIT);
+    static_assert(CHAR_BIT == 8, "CHAR_BIT not equal to 8");
     static constexpr auto elements_per_word = helper::elements_per_word;
     using simde_array = typename helper::array;
 
@@ -147,7 +148,6 @@ class parallel_const_bit_iterator
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    DPF_UNROLL_LOOPS
     parallel_const_bit_iterator & operator++() noexcept
     {
         if (HEDLEY_UNLIKELY(!(word_mask_ <<= 1)))
@@ -187,7 +187,6 @@ class parallel_const_bit_iterator
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    DPF_UNROLL_LOOPS
     parallel_const_bit_iterator & operator--() noexcept
     {
         if (HEDLEY_UNLIKELY(!(word_mask_ >>= 1)))

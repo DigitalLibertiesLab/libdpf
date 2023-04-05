@@ -24,9 +24,12 @@ template <typename T>
 struct xor_wrapper
 {
   public:
-    using value_type = std::make_unsigned_t<T>;
+    using value_type = T;
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
+
+    static constexpr std::size_t bits = utils::bitlength_of_v<value_type>;
+    using integral_type = utils::integral_type_from_bitlength_t<bits>;
 
     /// @{
         
@@ -123,8 +126,18 @@ struct xor_wrapper
         return value >= rhs.value;
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr value_type data() const noexcept
+    {
+        return value;
+    }
+
   private:
     value_type value;
+
+    friend struct utils::to_integral_type<xor_wrapper<T>>;
 };
 
 template <typename T>
@@ -169,6 +182,22 @@ template <typename T>
 struct bitlength_of<xor_wrapper<T>>
   : public bitlength_of<T>
 { };
+
+template <typename T>
+struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
+{
+    using parent = to_integral_type_base<T>;
+    using typename parent::integral_type;
+    static constexpr auto to_integral_type_cast = to_integral_type<T> {};
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type operator()(xor_wrapper<T> & input) const noexcept
+    {
+        return to_integral_type_cast(input.value);
+    }
+};
 
 }  // namespace utils
 

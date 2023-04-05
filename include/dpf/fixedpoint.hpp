@@ -379,7 +379,7 @@ template <unsigned FractionalBits,
           typename IntegralType = LIBDPF_FIXED_DEFAULT_INTEGRAL_REPRESENTATION>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
-static auto make_fixed(double d)
+static constexpr auto make_fixed(double d)
 {
     return fixedpoint<FractionalBits, IntegralType>(d);
 }
@@ -387,7 +387,7 @@ static auto make_fixed(double d)
 template <typename FixedType>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
-static auto make_fixed(double d)
+static constexpr auto make_fixed(double d)
 {
     return fixedpoint<FixedType::fractional_bits, typename FixedType::integral_type>(d);
 }
@@ -698,7 +698,306 @@ struct countl_zero_symmmetric_difference<dpf::fixedpoint<FractionalBits, Integra
     }
 };
 
-}  // namespace utils
+}  // namespace dpf::utils
+
+namespace literals
+{
+
+constexpr auto operator "" _fixed0(long double val)
+{
+    return dpf::make_fixed<0>(val);
+}
+
+constexpr auto operator "" _fixed1(long double val)
+{
+    return dpf::make_fixed<1>(val);
+}
+
+constexpr auto operator "" _fixed2(long double val)
+{
+    return dpf::make_fixed<2>(val);
+}
+
+constexpr auto operator "" _fixed3(long double val)
+{
+    return dpf::make_fixed<3>(val);
+}
+
+constexpr auto operator "" _fixed4(long double val)
+{
+    return dpf::make_fixed<4>(val);
+}
+
+constexpr auto operator "" _fixed5(long double val)
+{
+    return dpf::make_fixed<5>(val);
+}
+
+constexpr auto operator "" _fixed6(long double val)
+{
+    return dpf::make_fixed<6>(val);
+}
+
+constexpr auto operator "" _fixed7(long double val)
+{
+    return dpf::make_fixed<7>(val);
+}
+
+constexpr auto operator "" _fixed8(long double val)
+{
+    return dpf::make_fixed<8>(val);
+}
+
+constexpr auto operator "" _fixed9(long double val)
+{
+    return dpf::make_fixed<9>(val);
+}
+
+constexpr auto operator "" _fixed10(long double val)
+{
+    return dpf::make_fixed<10>(val);
+}
+
+constexpr auto operator "" _fixed11(long double val)
+{
+    return dpf::make_fixed<11>(val);
+}
+
+constexpr auto operator "" _fixed12(long double val)
+{
+    return dpf::make_fixed<12>(val);
+}
+
+constexpr auto operator "" _fixed13(long double val)
+{
+    return dpf::make_fixed<13>(val);
+}
+
+constexpr auto operator "" _fixed14(long double val)
+{
+    return dpf::make_fixed<14>(val);
+}
+
+constexpr auto operator "" _fixed15(long double val)
+{
+    return dpf::make_fixed<15>(val);
+}
+
+constexpr auto operator "" _fixed16(long double val)
+{
+    return dpf::make_fixed<16>(val);
+}
+
+constexpr auto operator "" _fixed17(long double val)
+{
+    return dpf::make_fixed<17>(val);
+}
+
+constexpr auto operator "" _fixed18(long double val)
+{
+    return dpf::make_fixed<18>(val);
+}
+
+constexpr auto operator "" _fixed19(long double val)
+{
+    return dpf::make_fixed<19>(val);
+}
+
+constexpr auto operator "" _fixed20(long double val)
+{
+    return dpf::make_fixed<20>(val);
+}
+
+constexpr auto operator "" _fixed21(long double val)
+{
+    return dpf::make_fixed<21>(val);
+}
+
+constexpr auto operator "" _fixed22(long double val)
+{
+    return dpf::make_fixed<22>(val);
+}
+
+constexpr auto operator "" _fixed23(long double val)
+{
+    return dpf::make_fixed<23>(val);
+}
+
+constexpr auto operator "" _fixed24(long double val)
+{
+    return dpf::make_fixed<24>(val);
+}
+
+constexpr auto operator "" _fixed25(long double val)
+{
+    return dpf::make_fixed<25>(val);
+}
+
+constexpr auto operator "" _fixed26(long double val)
+{
+    return dpf::make_fixed<26>(val);
+}
+
+constexpr auto operator "" _fixed27(long double val)
+{
+    return dpf::make_fixed<27>(val);
+}
+
+constexpr auto operator "" _fixed28(long double val)
+{
+    return dpf::make_fixed<28>(val);
+}
+
+constexpr auto operator "" _fixed29(long double val)
+{
+    return dpf::make_fixed<29>(val);
+}
+
+constexpr auto operator "" _fixed30(long double val)
+{
+    return dpf::make_fixed<30>(val);
+}
+
+constexpr auto operator "" _fixed31(long double val)
+{
+    return dpf::make_fixed<31>(val);
+}
+
+constexpr auto operator "" _fixed32(long double val)
+{
+    return dpf::make_fixed<32>(val);
+}
+
+constexpr auto operator "" _fixed33(long double val)
+{
+    return dpf::make_fixed<33>(val);
+}
+constexpr auto operator "" _fixed34(long double val)
+{
+    return dpf::make_fixed<34>(val);
+}
+constexpr auto operator "" _fixed35(long double val)
+{
+    return dpf::make_fixed<35>(val);
+}
+constexpr auto operator "" _fixed36(long double val)
+{
+    return dpf::make_fixed<36>(val);
+}
+constexpr auto operator "" _fixed37(long double val)
+{
+    return dpf::make_fixed<37>(val);
+}
+constexpr auto operator "" _fixed38(long double val)
+{
+    return dpf::make_fixed<38>(val);
+}
+constexpr auto operator "" _fixed39(long double val)
+{
+    return dpf::make_fixed<39>(val);
+}
+constexpr auto operator "" _fixed40(long double val)
+{
+    return dpf::make_fixed<40>(val);
+}
+constexpr auto operator "" _fixed41(long double val)
+{
+    return dpf::make_fixed<41>(val);
+}
+constexpr auto operator "" _fixed42(long double val)
+{
+    return dpf::make_fixed<42>(val);
+}
+constexpr auto operator "" _fixed43(long double val)
+{
+    return dpf::make_fixed<43>(val);
+}
+constexpr auto operator "" _fixed44(long double val)
+{
+    return dpf::make_fixed<44>(val);
+}
+constexpr auto operator "" _fixed45(long double val)
+{
+    return dpf::make_fixed<45>(val);
+}
+constexpr auto operator "" _fixed46(long double val)
+{
+    return dpf::make_fixed<46>(val);
+}
+constexpr auto operator "" _fixed47(long double val)
+{
+    return dpf::make_fixed<47>(val);
+}
+constexpr auto operator "" _fixed48(long double val)
+{
+    return dpf::make_fixed<48>(val);
+}
+constexpr auto operator "" _fixed49(long double val)
+{
+    return dpf::make_fixed<49>(val);
+}
+constexpr auto operator "" _fixed50(long double val)
+{
+    return dpf::make_fixed<50>(val);
+}
+constexpr auto operator "" _fixed51(long double val)
+{
+    return dpf::make_fixed<51>(val);
+}
+constexpr auto operator "" _fixed52(long double val)
+{
+    return dpf::make_fixed<52>(val);
+}
+constexpr auto operator "" _fixed53(long double val)
+{
+    return dpf::make_fixed<53>(val);
+}
+constexpr auto operator "" _fixed54(long double val)
+{
+    return dpf::make_fixed<54>(val);
+}
+constexpr auto operator "" _fixed55(long double val)
+{
+    return dpf::make_fixed<55>(val);
+}
+constexpr auto operator "" _fixed56(long double val)
+{
+    return dpf::make_fixed<56>(val);
+}
+constexpr auto operator "" _fixed57(long double val)
+{
+    return dpf::make_fixed<57>(val);
+}
+constexpr auto operator "" _fixed58(long double val)
+{
+    return dpf::make_fixed<58>(val);
+}
+constexpr auto operator "" _fixed59(long double val)
+{
+    return dpf::make_fixed<59>(val);
+}
+constexpr auto operator "" _fixed60(long double val)
+{
+    return dpf::make_fixed<60>(val);
+}
+constexpr auto operator "" _fixed61(long double val)
+{
+    return dpf::make_fixed<61>(val);
+}
+constexpr auto operator "" _fixed62(long double val)
+{
+    return dpf::make_fixed<62>(val);
+}
+constexpr auto operator "" _fixed63(long double val)
+{
+    return dpf::make_fixed<63>(val);
+}
+constexpr auto operator "" _fixed64(long double val)
+{
+    return dpf::make_fixed<64>(val);
+}
+
+}  // namespace dpf::literals
 
 }  // namespace dpf
 

@@ -15,18 +15,25 @@
 namespace dpf
 {
 
-template <typename DpfKey>
+template <typename DpfKey,
+          typename ReturnT = typename DpfKey::interior_node *>
 struct interval_memoizer_base
 {
   public:
     using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
+    using integral_type = typename DpfKey::integral_type;
+    using return_type = ReturnT;
+    using iterator_type = return_type;
 
     // level 0 should access the root
     // level goes up to (and including) depth
-    virtual node_type * operator[](std::size_t) const noexcept = 0;
+    virtual return_type operator[](std::size_t) const noexcept = 0;
 
-    virtual std::size_t assign_interval(const dpf_type & dpf, std::size_t new_from, std::size_t new_to)
+    // iterators should access most recently completed level
+    virtual return_type begin() const noexcept = 0;
+    virtual return_type end() const noexcept = 0;
+
+    virtual std::size_t assign_interval(const dpf_type & dpf, integral_type new_from, integral_type new_to)
     {
         static constexpr auto complement_of = std::bit_not{};
         if (dpf_.has_value() == false
@@ -54,12 +61,17 @@ struct interval_memoizer_base
         return ++level_index;
     }
 
+    std::size_t get_nodes_at_level() const
+    {
+        return get_nodes_at_level(level_index, from_.value_or(0), to_.value_or(0));
+    }
+
     std::size_t get_nodes_at_level(std::size_t level) const
     {
         return get_nodes_at_level(level, from_.value_or(0), to_.value_or(0));
     }
 
-    static std::size_t get_nodes_at_level(std::size_t level, std::size_t from_node, std::size_t to_node)
+    static std::size_t get_nodes_at_level(std::size_t level, integral_type from_node, integral_type to_node)
     {
         // Algorithm explanation:
         //   Input:
@@ -89,6 +101,7 @@ struct interval_memoizer_base
   protected:
     static constexpr auto depth = dpf_type::depth;
     const std::size_t output_length;
+    std::size_t level_index;  // indicates current level being built
 
     explicit interval_memoizer_base(std::size_t output_len)
       : dpf_{std::nullopt},
@@ -100,90 +113,140 @@ struct interval_memoizer_base
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
-    std::optional<std::size_t> from_;
-    std::optional<std::size_t> to_;
-    std::size_t level_index;
+    std::optional<integral_type> from_;
+    std::optional<integral_type> to_;
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
-    using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
+    using return_type = typename DpfKey::interior_node *;
     using parent::depth;
-    using parent::output_length;
+    using parent::level_index;
+    using parent::get_nodes_at_level;
 
+    // See comment for full_tree_interval_memoizer::initialize_endpoints() for
+    //   general explanation of derivation for "nodes at previous level".
+    // When creating the final level of interior nodes from the previous level,
+    //   care must be taken not to overwrite the previous level until the relevant
+    //   nodes have been used to generate the new level. This means the pivot must
+    //   be selected to push the previous level as far to the end of the buffer as
+    //   possible.
+    // For n nodes in the final level:
+    //     n odd => (n+1)/2 nodes on previous level
+    //           => pivot = n-(n+1)/2 = (n-1)/2 = n/2-1/2 = floor(n/2)
+    //     n even => n/2 OR (n+2)/2 nodes on previous level
+    //            => pivot = n-(n+2)/2 = (n-2)/2 = n/2-1
+    //     unified => floor(n/2)-1+(n%2) = (n>>1)+(n&1)-1
+    // In general, each previous level has roughly one half the nodes, but this is
+    //   not true for some small n, which can stay constant up to the root.
+    //   To handle this, take the maximum between the unified calculation shown
+    //   and the number of nodes two levels up from the final level.
+    // For n nodes in the final level:
+    //     at most ((n+2)/2+2)/2 = n+6>>2 nodes two levels up
     explicit basic_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
       : parent::interval_memoizer_base(output_len),
-        pivot{(dpf::utils::msb_of_v<std::size_t> >> clz(output_len))/2},
-        length{std::max(3*pivot, output_len)},
-        buf{alloc.allocate_unique_ptr(length)}
-    {
-        // check that `pivot` will be 32-byte aligned, as its asserted as such
-        // (for optimization reasons) in `operator[]`
-        if (pivot * sizeof(node_type) < dpf::utils::max_align_v)
-        {
-            throw std::domain_error("output must be at least 64 bytes");
-        }
-    }
+        pivot{std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2)},
+        buf{alloc.allocate_unique_ptr(pivot+((output_len+2)>>1))}
+    { }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept override
+    return_type operator[](std::size_t level) const noexcept override
     {
         bool b = (depth ^ level) & 1;
         return Allocator::assume_aligned(&buf[b*pivot]);
     }
 
-  private:
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type begin() const noexcept override
+    {
+        return this->operator[](level_index - 1);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type end() const noexcept override
+    {
+        return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
+    }
+
+   private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
     const std::size_t pivot;
-    const std::size_t length;
     unique_ptr buf;
 };
 
 template <typename DpfKey,
-          typename Allocator = aligned_allocator<typename DpfKey::interior_node_t>>
+          typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
-    using dpf_type = DpfKey;
-    using node_type = typename DpfKey::interior_node_t;
     using unique_ptr = typename Allocator::unique_ptr;
+    using return_type = typename DpfKey::interior_node *;
     using parent::depth;
-    using parent::output_length;
+    using parent::level_index;
+    using parent::get_nodes_at_level;
 
     explicit full_tree_interval_memoizer(std::size_t output_len,
         Allocator alloc = Allocator{})
       : parent::interval_memoizer_base(output_len),
-        level_endpoints{initialize_endpoints()},
+        level_endpoints{initialize_endpoints(output_len)},
         buf{alloc.allocate_unique_ptr(level_endpoints[depth] + output_len)}
     { }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    node_type * operator[](std::size_t level) const noexcept override
+    return_type operator[](std::size_t level) const noexcept override
     {
         return Allocator::assume_aligned(&buf[level_endpoints[level]]);
     }
 
-  private:
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type begin() const noexcept override
+    {
+        return this->operator[](level_index - 1);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    return_type end() const noexcept override
+    {
+        return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
+    }
+
+   private:
     const std::array<std::size_t, depth+1> level_endpoints;
     unique_ptr buf;
 
-    constexpr auto initialize_endpoints()
+    // For n nodes on a given level, there are the following cases:
+    //     n odd => (n+1)/2 nodes on previous level
+    //         ex. 5 nodes on current level grouped as
+    //             |..|..|.| or |.|..|..|
+    //             where both give 3 nodes on previous level
+    //     n even => n/2 OR (n+2)/2 nodes on previous level
+    //         ex. 6 nodes on current level grouped as
+    //             |..|..|..| or |.|..|..|.|
+    //             gives either 3 or 4 nodes on previous level
+    // Clearly (n+2)/2 is the worst case, so this is used in the derivation
+    //   for the number of nodes on each level.
+    // Also note that at depth (from the root) i, there can't be more than 2^i
+    //   nodes hence the `min()` function call.
+    static constexpr auto initialize_endpoints(std::size_t len)
     {
         std::array<std::size_t, depth+1> level_endpoints{0};
-        for (std::size_t level=depth, len=output_length; level > 0; --level)
+        for (std::size_t level=depth; level > 0; --level)
         {
-            len = std::min(len/2 + 1, std::size_t(1) << (level - 1));
+            len = std::min(len+2 >> 1, std::size_t(1) << level-1);
             level_endpoints[level] = len;
         }
 
@@ -206,21 +269,13 @@ HEDLEY_ALWAYS_INLINE
 auto make_interval_memoizer(InputT from, InputT to)
 {
     using dpf_type = DpfKey;
-    using input_type = InputT;
 
     if (from > to)
     {
         throw std::domain_error("from cannot be greater than to");
     }
 
-    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
-        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
-    auto nodes_in_interval = to_node - from_node;
-
-    if (nodes_in_interval*sizeof(typename dpf_type::interior_node_t) < 64)
-    {
-        throw std::out_of_range("intervals must span at least 64 bytes");
-    }
+    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
 
     return MemoizerT(nodes_in_interval);
 }

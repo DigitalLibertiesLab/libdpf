@@ -22,12 +22,13 @@
 namespace dpf
 {
 
-template <typename T>
+template <typename T,
+          std::size_t Alignment = utils::max_align_v>
 class output_buffer final
-  : private std::vector<T, dpf::aligned_allocator<T>>
+  : private std::vector<T, dpf::aligned_allocator<T, Alignment>>
 {
   private:
-    using vector = std::vector<T, dpf::aligned_allocator<T>>;
+    using vector = std::vector<T, dpf::aligned_allocator<T, Alignment>>;
   public:
     using value_type = typename vector::value_type;
     using iterator = typename vector::iterator;
@@ -70,12 +71,9 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
     using dpf_type = DpfKey;
-    using input_type = InputT;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
-    std::size_t from_node = utils::quotient_floor(from, (input_type)dpf_type::outputs_per_leaf),
-        to_node = utils::quotient_ceiling((input_type)(to+1), (input_type)dpf_type::outputs_per_leaf);
-    std::size_t nodes_in_interval = to_node - from_node;
+    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
 
     return dpf::output_buffer<output_type>(nodes_in_interval*dpf_type::outputs_per_leaf);
 }
@@ -86,7 +84,7 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
     std::size_t nodes_in_sequence = std::distance(begin, end);
 
     return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
@@ -98,7 +96,7 @@ template <std::size_t I = 0,
 auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::outputs_t>;
+    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
     std::size_t nodes_in_sequence = recipe.num_leaf_nodes;
 
