@@ -24,8 +24,8 @@
 namespace dpf
 {
 
-template <typename I>
-using root_sampler_t = std::add_pointer_t<typename I::block_t()>;
+template <typename InteriorPRG>
+using root_sampler_t = std::add_pointer_t<typename InteriorPRG::block_type()>;
 
 template <class InteriorPRG,
           class ExteriorPRG,
@@ -36,9 +36,9 @@ struct dpf_key
 {
   public:
     using interior_prg = InteriorPRG;
-    using interior_node = typename InteriorPRG::block_t;
+    using interior_node = typename InteriorPRG::block_type;
     using exterior_prg = ExteriorPRG;
-    using exterior_node = typename ExteriorPRG::block_t;
+    using exterior_node = typename ExteriorPRG::block_type;
     using input_type = InputT;
     using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>, utils::bitlength_of_v<std::size_t>>;
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
@@ -62,24 +62,24 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node root_,
-                      const std::array<interior_node, depth> & interior_cws_,
+                      const std::array<interior_node, depth> & correction_words_,
                       const std::array<uint8_t, depth> & correction_advice_,
-                      const leaf_tuple & exterior_cw_,
+                      const leaf_tuple & leaves,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
                       beaver_tuple && beavers_)
-      : wildcard_mask{wild_mask_},
-        mutable_exterior_cw{exterior_cw_},
+      : mutable_wildcard_mask{wild_mask_},
+        mutable_leaf_tuple{leaves},
         mutable_beaver_tuple{std::forward<beaver_tuple>(beavers_)},
         root{root_},
-        correction_words{interior_cws_},
+        correction_words{correction_words_},
         correction_advice{correction_advice_}
     { }
     dpf_key(const dpf_key &) = delete;
     dpf_key(dpf_key &&) = default;
 
   private:
-    std::bitset<sizeof...(OutputTs)+1> wildcard_mask;
-    leaf_tuple mutable_exterior_cw;
+    std::bitset<sizeof...(OutputTs)+1> mutable_wildcard_mask;
+    leaf_tuple mutable_leaf_tuple;
     beaver_tuple mutable_beaver_tuple;
 
   public:
@@ -282,25 +282,25 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const
     {
-        return wildcard_mask.test(i);
+        return mutable_wildcard_mask.test(i);
     }
 
     std::string wildcard_bitmask() const
     {
-        return wildcard_mask.to_string();
+        return mutable_wildcard_mask.to_string();
     }
 
     template <std::size_t I>
     HEDLEY_ALWAYS_INLINE
-    const auto & exterior_cw() const
+    const auto & leaf() const
     {
-        return std::get<I>(mutable_exterior_cw);
+        return std::get<I>(mutable_leaf_tuple);
     }
 
     HEDLEY_ALWAYS_INLINE
-    const auto & exterior_cws() const
+    const auto & leaves() const
     {
-        return mutable_exterior_cw;
+        return mutable_leaf_tuple;
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -399,7 +399,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         correction_words[level] = child[!bit];
         correction_advice[level] = uint_fast8_t(t[1] << 1) | t[0];
     }
-    auto wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
+    auto mutable_wildcard_mask = dpf::utils::make_bitset(dpf::is_wildcard_v<OutputT>,
         dpf::is_wildcard_v<OutputTs>...);
 
     bool sign0 = dpf::get_lo_bit(parent[0]);
@@ -412,9 +412,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return std::make_pair(
         dpf_type{root[0], correction_words, correction_advice,
-            leaves0, wildcard_mask, std::move(beavers0)},
+            leaves0, mutable_wildcard_mask, std::move(beavers0)},
         dpf_type{root[1], correction_words, correction_advice,
-            leaves1, wildcard_mask, std::move(beavers1)});
+            leaves1, mutable_wildcard_mask, std::move(beavers1)});
 }  // make_dpf
 
 }  // namespace dpf
