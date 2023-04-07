@@ -43,6 +43,3 @@
 
 # Meta
   - node and pair type "traits"
-
-# Tag file
-  - automagically fetch the tagfile from cppreference.org
