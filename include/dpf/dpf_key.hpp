@@ -68,8 +68,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         mutable_leaf_tuple{leaves},
         root{root_},
         correction_words{correction_words_},
-        correction_advice{correction_advice_}
-    { }
+        correction_advice{correction_advice_} { }
 
   private:
     std::bitset<sizeof...(OutputTs)+1> mutable_wildcard_mask;
@@ -84,12 +83,18 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
     HEDLEY_ALWAYS_INLINE
-    bool is_wildcard(std::size_t i) const
+    bool is_wildcard(std::size_t i = 0) const
     {
         return mutable_wildcard_mask.test(i);
     }
 
-    template <std::size_t I>
+    template <std::size_t I = 0>
+    std::string wildcard_bitmask() const
+    {
+        return mutable_wildcard_mask.to_string();
+    }
+
+    template <std::size_t I = 0>
     HEDLEY_ALWAYS_INLINE
     const auto & leaf() const
     {
@@ -106,7 +111,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             interior_prg::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
-    template <std::size_t I,
+    template <std::size_t I = 0,
               typename LeafT = std::tuple_element_t<I, leaf_tuple>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
@@ -117,7 +122,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using output_t = std::tuple_element_t<I, outputs_tuple>;
-        return dpf::subtract<output_t>(
+        return dpf::subtract_leaf<output_t>(
             make_leaf_mask_inner<exterior_prg, I, outputs_tuple>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)

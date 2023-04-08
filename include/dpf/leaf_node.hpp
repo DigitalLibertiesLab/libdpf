@@ -219,7 +219,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto mask0 = make_leaf_mask_inner<ExteriorPRG, I, OutputsTuple>(seed0);
     auto mask1 = make_leaf_mask_inner<ExteriorPRG, I, OutputsTuple>(seed1);
 
-    return dpf::subtract<output_type>(mask1, mask0);
+    return dpf::subtract_leaf<output_type>(mask1, mask0);
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
@@ -239,10 +239,10 @@ auto make_leaf(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_type = typename ExteriorPRG::block_type;
-    return sign ? dpf::subtract<concrete_type_t<output_type>>(
+    return sign ? dpf::subtract_leaf<concrete_type_t<output_type>>(
                     make_naked_leaf<node_type>(x, Y),
                     make_leaf_mask<ExteriorPRG, I, output_tuple_type>(seed0, seed1))
-                : dpf::subtract<concrete_type_t<output_type>>(
+                : dpf::subtract_leaf<concrete_type_t<output_type>>(
                     make_leaf_mask<ExteriorPRG, I, output_tuple_type>(seed0, seed1),
                     make_naked_leaf<node_type>(x, Y));
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -304,7 +304,7 @@ auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & se
                         {
                             // secret share the value
                             dpf::uniform_fill(arg1);
-                            arg2 = dpf::subtract<concrete_type_t<auto_type>>(arg0, arg1);
+                            arg2 = dpf::subtract_leaf<concrete_type_t<auto_type>>(arg0, arg1);
                         }
                         else
                         {
