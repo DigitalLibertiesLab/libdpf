@@ -20,6 +20,8 @@
 #include <hedley/hedley.h>
 
 #include "dpf/dpf_key.hpp"
+#include "dpf/eval_common.hpp"
+#include "dpf/output_buffer.hpp"
 #include "dpf/interval_memoizer.hpp"
 #include "dpf/subinterval_iterable.hpp"
 

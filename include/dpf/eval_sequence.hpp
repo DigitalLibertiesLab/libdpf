@@ -21,6 +21,7 @@
 #include <hedley/hedley.h>
 
 #include "dpf/dpf_key.hpp"
+#include "dpf/eval_common.hpp"
 #include "dpf/eval_point.hpp"
 #include "dpf/path_memoizer.hpp"
 #include "dpf/sequence_memoizer.hpp"

@@ -22,6 +22,7 @@
 #include <hedley/hedley.h>
 
 #include "dpf/dpf_key.hpp"
+#include "dpf/eval_common.hpp"
 #include "dpf/path_memoizer.hpp"
 
 namespace dpf

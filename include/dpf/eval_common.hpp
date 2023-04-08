@@ -73,8 +73,4 @@ void assert_not_wildcard(const DpfKey & dpf)
 
 }  // namespace dpf
 
-#include "eval_point.hpp"
-#include "eval_interval.hpp"
-#include "eval_sequence.hpp"
-
 #endif  // LIBDPF_INCLUDE_DPF_EVAL_HPP__

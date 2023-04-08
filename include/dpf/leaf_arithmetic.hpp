@@ -21,7 +21,12 @@
 namespace dpf
 {
 
+namespace leaf_arithmetic
+{
+
 template <typename OutputT, typename NodeT> struct add_t;
+template <typename OutputT, typename NodeT> struct subtract_t;
+template <typename OutputT, typename NodeT> struct multiply_t;
 
 template <typename OutputT>
 struct add_t<OutputT, void>
@@ -38,11 +43,6 @@ struct add_t<OutputT, void>
 };
 
 template <typename OutputT>
-static constexpr auto add = add_t<dpf::concrete_type_t<OutputT>, void>{};
-
-template <typename OutputT, typename NodeT> struct subtract_t;
-
-template <typename OutputT>
 struct subtract_t<OutputT, void>
 {
     template <typename NodeT>
@@ -55,11 +55,6 @@ struct subtract_t<OutputT, void>
         return subtracter(a, b);
     }
 };
-
-template <typename OutputT>
-static constexpr auto subtract = subtract_t<dpf::concrete_type_t<OutputT>, void>{};
-
-template <typename OutputT, typename NodeT> struct multiply_t;
 
 template <>
 struct multiply_t<void, void>
@@ -75,7 +70,18 @@ struct multiply_t<void, void>
     }
 };
 
-static constexpr auto multiply = multiply_t<void, void>{};
+}
+
+template <typename OutputT>
+static constexpr auto add_leaf = leaf_arithmetic::add_t<OutputT, void>{};
+
+template <typename OutputT>
+static constexpr auto subtract_leaf = leaf_arithmetic::subtract_t<OutputT, void>{};
+
+static constexpr auto multiply_leaf = leaf_arithmetic::multiply_t<void, void>{};
+
+namespace leaf_arithmetic
+{
 
 namespace detail
 {
@@ -296,6 +302,7 @@ template <> struct add_t<simde_uint128, simde__m256i> final
 
 template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
+template <> struct add_t<dpf::bit, void> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
 template <typename T, typename NodeT> struct add_t<xor_wrapper<T>, NodeT> final : public std::plus<xor_wrapper<T>> {};
 
@@ -519,6 +526,7 @@ template <> struct subtract_t<simde_uint128, simde__m256i> final
 template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
+template <> struct subtract_t<dpf::bit, void> final : public std::bit_xor<> {};
 template <typename T, typename NodeT> struct subtract_t<xor_wrapper<T>, NodeT> final : public std::minus<xor_wrapper<T>> {};
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -703,6 +711,7 @@ template <typename T, typename NodeT> struct multiply_t<xor_wrapper<T>, NodeT> f
 
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
+}  // namespace dpf::leaf_arithmetic
 
 }  // namespace dpf
 

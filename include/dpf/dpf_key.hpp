@@ -72,10 +72,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         mutable_beaver_tuple{std::forward<beaver_tuple>(beavers_)},
         root{root_},
         correction_words{correction_words_},
-        correction_advice{correction_advice_}
-    { }
-    dpf_key(const dpf_key &) = delete;
-    dpf_key(dpf_key &&) = default;
+        correction_advice{correction_advice_} { }
 
   private:
     std::bitset<sizeof...(OutputTs)+1> mutable_wildcard_mask;
@@ -168,7 +165,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                             std::move(self));
 
                         self.complete(
-                            add<OutputType>(my_share, *peer_share),
+                            add_leaf<OutputType>(my_share, *peer_share),
                             error);
                     }
                 },
@@ -223,9 +220,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                             std::move(self));
 
                         self.complete(
-                            subtract<OutputType>(
-                                multiply(blinded_vector, output),
-                                multiply(vector_blind, *peer_output)),
+                            subtract_leaf<OutputType>(
+                                multiply_leaf(blinded_vector, output),
+                                multiply_leaf(vector_blind, *peer_output)),
                             error);
                     }
                 },
@@ -309,7 +306,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                         }
 
                         yield async_compute_naked_leaf_share<I>(peer, output, beaver, std::move(self));
-                        leaf = add<OutputType>(leaf, leaf_buf);
+                        leaf = add_leaf<OutputType>(leaf, leaf_buf);
                         yield async_exchange_and_reconstruct_leaf_shares<OutputType>(peer, leaf, std::move(self));
                         leaf = leaf_buf;
                         wildcard_mask[I] = false;
@@ -322,7 +319,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
     HEDLEY_ALWAYS_INLINE
-    bool is_wildcard(std::size_t i) const
+    bool is_wildcard(std::size_t i = 0) const
     {
         return mutable_wildcard_mask.test(i);
     }
@@ -332,7 +329,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         return mutable_wildcard_mask.to_string();
     }
 
-    template <std::size_t I>
+    template <std::size_t I = 0>
     HEDLEY_ALWAYS_INLINE
     const auto & leaf() const
     {
@@ -343,6 +340,14 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     const auto & leaves() const
     {
         return mutable_leaf_tuple;
+    }
+
+
+    template <std::size_t I = 0>
+    HEDLEY_ALWAYS_INLINE
+    const auto & beaver() const
+    {
+        return std::get<I>(mutable_beaver_tuple);
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -361,7 +366,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             interior_prg::eval(unset_lo_2bits(node), dir), cw, node);
     }
 
-    template <std::size_t I,
+    template <std::size_t I = 0,
               typename LeafT>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
@@ -372,7 +377,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using output_type = std::tuple_element_t<I, outputs_tuple>;
-        return dpf::subtract<output_type>(
+        return dpf::subtract_leaf<output_type>(
             make_leaf_mask_inner<exterior_prg, I, outputs_tuple>(unset_lo_2bits(node)),
             dpf::get_if_lo_bit(cw, node));
 HEDLEY_PRAGMA(GCC diagnostic pop)
