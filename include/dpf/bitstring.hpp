@@ -148,7 +148,7 @@ class bitstring : public bit_array_base
         CharT one = CharT('1'))
       : bit_array_base{Nbits, &arr[0]}, arr{}
     {
-        len = std::min(len, std::strlen(str));
+        len = std::min(len, std::strnlen_s(str, len));
         for (std::size_t i = 0; i < len; ++i)
         {
             this->set(i, dpf::to_bit(str[i]));
@@ -217,7 +217,7 @@ class bitstring : public bit_array_base
         HEDLEY_NO_THROW
         constexpr operator bool() const noexcept
         {
-            return (0 <= which_bit_) && (which_bit_ < Nbits);
+            return which_bit_ < Nbits;
         }
 
         /// @brief returns the ordinal position of the bit being masked out by

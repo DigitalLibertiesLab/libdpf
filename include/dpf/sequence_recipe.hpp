@@ -20,9 +20,9 @@ struct sequence_recipe
 {
   public:
     sequence_recipe(const std::vector<int8_t> & steps,
-                const std::vector<std::size_t> subsequence_indexes,
+                const std::vector<std::size_t> & subsequence_indexes,
                 std::size_t leaf_index,
-                std::vector<std::size_t> level_endpoints)
+                const std::vector<std::size_t> & level_endpoints)
       : recipe_steps_{steps},
         output_indices_{subsequence_indexes},
         num_leaf_nodes_{leaf_index},
