@@ -1,9 +1,10 @@
 /// @file dpf/subsequence_iterable.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines `dpf::subsequence_iterable` and associated helpers
+/// @details
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_SUBSEQUENCE_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SUBSEQUENCE_ITERABLE_HPP__
