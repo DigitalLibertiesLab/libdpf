@@ -82,6 +82,48 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
 
+    template <typename PeerT,
+            typename ValueT,
+            typename CompletionToken>
+    auto async_shift_input(PeerT & peer, ValueT input, ValueT offset, CompletionToken && token)
+    {
+        auto peer_share = std::make_unique<ValueT>();
+
+    #include <asio/yield.hpp>
+        return asio::async_compose<
+            CompletionToken, void(ValueT, asio::error_code)>(
+                [
+                    &peer,
+                    my_share = input - offset,
+                    peer_share = std::move(peer_share),
+                    coro = asio::coroutine()
+                ]
+                (
+                    auto & self,
+                    const asio::error_code & error = {},
+                    std::size_t = 0
+                )
+                mutable
+                {
+                    reenter (coro)
+                    {
+                        yield asio::async_write(peer,
+                            asio::buffer(&my_share, sizeof(ValueT)),
+                            std::move(self));
+                        
+                        yield asio::async_read(peer,
+                            asio::buffer(peer_share.get(), sizeof(ValueT)),
+                            std::move(self));
+
+                        self.complete(
+                            my_share + *peer_share,
+                            error);
+                    }
+                },
+            token, peer);
+    #include <asio/unyield.hpp>
+    }
+
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i = 0) const
     {
