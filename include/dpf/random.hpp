@@ -28,7 +28,7 @@ auto & uniform_fill(T & buf) noexcept  // NOLINT
 template <typename T>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto & uniform_sample() noexcept  // NOLINT
+auto uniform_sample() noexcept  // NOLINT
 {
     T buf;
     return uniform_fill(buf);
@@ -37,7 +37,7 @@ auto & uniform_sample() noexcept  // NOLINT
 template <typename T>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto & additively_share(T && secret) noexcept  // NOLINT
+auto additively_share(T && secret) noexcept  // NOLINT
 {
     T tmp = uniform_sample<T>();
     return std::make_pair(tmp, secret-tmp);

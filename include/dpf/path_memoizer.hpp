@@ -146,7 +146,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return_type end() const noexcept override
     {
-        return std::addressof(v) + 1;
+        return reinterpret_cast<node_type *>(std::addressof(v)) + 1;
     }
 
   private:
