@@ -48,10 +48,10 @@ class subinterval_iterable
     }
 
   private:
-    const output_type * cont_;
-    const std::size_t length_;
-    const std::size_t preclip_;
-    const std::size_t postclip_;
+    output_type * cont_;
+    std::size_t length_;
+    std::size_t preclip_;
+    std::size_t postclip_;
 };  // class dpf::subinterval_iterable
 
 }  // namespace dpf

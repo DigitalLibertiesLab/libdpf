@@ -397,13 +397,13 @@ class recipe_subsequence_iterable
         }
 
       private:
-        const output_type * seq_;
+        output_type * seq_;
         subsequence_iterator_type it_;
     };  // class dpf::recipe_subsequence_iterable::const_iterator
 
   private:
-    const output_type * seq_;
-    const std::vector<std::size_t> & indices_;
+    output_type * seq_;
+    std::vector<std::size_t> & indices_;
 };  // class dpf::recipe_subsequence_iterable
 
 }  // namespace dpf
