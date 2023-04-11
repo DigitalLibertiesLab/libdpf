@@ -3,7 +3,7 @@
 /// @brief defines `dpf::subinterval_iterable` and associated helpers
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
@@ -48,10 +48,10 @@ class subinterval_iterable
     }
 
   private:
-    const output_type * cont_;
-    const std::size_t length_;
-    const std::size_t preclip_;
-    const std::size_t postclip_;
+    output_type * cont_;
+    std::size_t length_;
+    std::size_t preclip_;
+    std::size_t postclip_;
 };  // class dpf::subinterval_iterable
 
 }  // namespace dpf

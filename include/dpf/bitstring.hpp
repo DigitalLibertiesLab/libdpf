@@ -334,7 +334,7 @@ class bitstring : public bit_array_base
     /// @}
 
   private:
-    std::array<word_type, 1+(Nbits-1)/bits_per_word> arr;
+    std::array<word_type, utils::quotient_ceiling(Nbits, bits_per_word)> arr;
 
     friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
 };  // class dpf::bitstring
