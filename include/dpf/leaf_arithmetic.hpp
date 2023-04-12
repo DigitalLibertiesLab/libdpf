@@ -220,10 +220,10 @@ template <> struct add_t<simde_int128, simde__m128i> final
     {
         simde__m128i ret;
         simde_int128 lhs_, rhs_;
-        std::memcpy(&lhs_, &lhs, sizeof(simde_int128));
-        std::memcpy(&rhs_, &rhs, sizeof(simde_int128));
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_int128));
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_int128));
         simde_int128 sum = lhs_ + rhs_;
-        std::memcpy(&ret, &sum, sizeof(simde__m128i));
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i));
         return ret;
     }
 };
@@ -233,10 +233,10 @@ template <> struct add_t<simde_uint128, simde__m128i> final
     {
         simde__m128i ret;
         simde_uint128 lhs_, rhs_;
-        std::memcpy(&lhs_, &lhs, sizeof(simde_uint128));
-        std::memcpy(&rhs_, &rhs, sizeof(simde_uint128));
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_uint128));
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_uint128));
         simde_uint128 sum = lhs_ + rhs_;
-        std::memcpy(&ret, &sum, sizeof(simde__m128i));
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i));
         return ret;
     }
 };
@@ -261,10 +261,10 @@ template <> struct add_t<simde_int128, simde__m256i> final
     {
         simde__m256i ret;
         simde_int128 lhs_[2], rhs_[2];
-        std::memcpy(&lhs_, &lhs, sizeof(simde_int128) * 2);
-        std::memcpy(&rhs_, &rhs, sizeof(simde_int128) * 2);
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_int128) * 2);
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_int128) * 2);
         simde_int128 sum[2] = { lhs_[0] + rhs_[0], lhs_[1] + rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i) * 2);
         return ret;
     }
 };
@@ -274,10 +274,10 @@ template <> struct add_t<simde_uint128, simde__m256i> final
     {
         simde__m256i ret;
         simde_uint128 lhs_[2], rhs_[2];
-        std::memcpy(&lhs_, &lhs, sizeof(simde_uint128) * 2);
-        std::memcpy(&rhs_, &rhs, sizeof(simde_uint128) * 2);
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_uint128) * 2);
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_uint128) * 2);
         simde_uint128 sum[2] = { lhs_[0] + rhs_[0], lhs_[1] + rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i) * 2);
         return ret;
     }
 };
@@ -442,10 +442,10 @@ template <> struct subtract_t<simde_int128, simde__m128i> final
     {
         simde__m128i ret;
         simde_int128 lhs_, rhs_;
-        std::memcpy(&lhs_, &lhs, sizeof(simde_int128));
-        std::memcpy(&rhs_, &rhs, sizeof(simde_int128));
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_int128));
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_int128));
         simde_int128 sum = lhs_ - rhs_;
-        std::memcpy(&ret, &sum, sizeof(simde__m128i));
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i));
         return ret;
     }
 };
@@ -455,10 +455,10 @@ template <> struct subtract_t<simde_uint128, simde__m128i> final
     {
         simde__m128i ret;
         simde_uint128 lhs_, rhs_;
-        std::memcpy(&lhs_, &lhs, sizeof(simde_uint128));
-        std::memcpy(&rhs_, &rhs, sizeof(simde_uint128));
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_uint128));
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_uint128));
         simde_uint128 sum = lhs_ - rhs_;
-        std::memcpy(&ret, &sum, sizeof(simde__m128i));
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i));
         return ret;
     }
 };
@@ -484,10 +484,10 @@ template <> struct subtract_t<simde_int128, simde__m256i> final
     {
         simde__m256i ret;
         simde_int128 lhs_[2], rhs_[2];
-        std::memcpy(&lhs_, &lhs, sizeof(simde_int128) * 2);
-        std::memcpy(&rhs_, &rhs, sizeof(simde_int128) * 2);
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_int128) * 2);
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_int128) * 2);
         simde_int128 sum[2] = { lhs_[0] - rhs_[0], lhs_[1] - rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i) * 2);
         return ret;
     }
 };
@@ -497,10 +497,10 @@ template <> struct subtract_t<simde_uint128, simde__m256i> final
     {
         simde__m256i ret;
         simde_uint128 lhs_[2], rhs_[2];
-        std::memcpy(&lhs_, &lhs, sizeof(simde_uint128) * 2);
-        std::memcpy(&rhs_, &rhs, sizeof(simde_uint128) * 2);
+        std::memcpy_s(&lhs_, sizeof(lhs_), &lhs, sizeof(simde_uint128) * 2);
+        std::memcpy_s(&rhs_, sizeof(rhs_), &rhs, sizeof(simde_uint128) * 2);
         simde_uint128 sum[2] = { lhs_[0] - rhs_[0], lhs_[1] - rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy_s(&ret, sizeof(ret), &sum, sizeof(simde__m128i) * 2);
         return ret;
     }
 };
