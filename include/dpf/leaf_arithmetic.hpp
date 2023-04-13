@@ -286,7 +286,7 @@ template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor
 template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
 template <> struct add_t<dpf::bit, void> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
-template <typename T, typename NodeT> struct add_t<xor_wrapper<T>, NodeT> final : public std::plus<xor_wrapper<T>> {};
+template <typename T> struct add_t<xor_wrapper<T>, void> final : public std::bit_xor<> {};
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
@@ -509,7 +509,7 @@ template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bi
 template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
 template <> struct subtract_t<dpf::bit, void> final : public std::bit_xor<> {};
-template <typename T, typename NodeT> struct subtract_t<xor_wrapper<T>, NodeT> final : public std::minus<xor_wrapper<T>> {};
+template <typename T> struct subtract_t<xor_wrapper<T>, void> final : public std::bit_xor<> {};
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

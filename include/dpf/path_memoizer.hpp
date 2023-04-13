@@ -121,7 +121,7 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
     HEDLEY_CONST
     std::size_t assign_x(const dpf_type & dpf, input_type) noexcept override
     {
-        if (std::addressof(dpf_->get()) != std::addressof(dpf)) v = dpf.root;
+        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf)) v = dpf.root;
         return 1;
     }
 
@@ -139,7 +139,7 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
 
     return_type end() const noexcept override
     {
-        return reinterpret_cast<node_type *>(std::addressof(v)) + 1;
+        return reinterpret_cast<return_type>(std::addressof(v)) + 1;
     }
 
   private:
