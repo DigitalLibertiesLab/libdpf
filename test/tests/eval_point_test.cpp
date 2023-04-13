@@ -10,9 +10,14 @@ template <typename InputT,
           typename OutputT>
 using param_type = std::vector<test_type<InputT, OutputT>>;
 
-static std::tuple<param_type<uint8_t, uint16_t>,
-                  param_type<uint64_t, __int128>,
-                  param_type<__int128, dpf::bit>> allParams
+static std::tuple<
+        param_type<uint8_t, uint16_t>,
+        param_type<uint64_t, __int128>,
+        param_type<uint64_t, dpf::bit>,
+        param_type<uint64_t, dpf::xor_wrapper<uint64_t>>,
+        param_type<dpf::modint<10>, uint64_t>,
+        param_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>
+       > allParams
 {
     {
         std::make_tuple(uint8_t(0x00), uint16_t(0x0001)),
@@ -28,8 +33,26 @@ static std::tuple<param_type<uint8_t, uint16_t>,
         std::make_tuple(~uint64_t(0), ~__int128(0))
     },
     {
-        std::make_tuple(__int128(0), dpf::bit::one),
-        std::make_tuple(~__int128(0), dpf::bit::one)
+        std::make_tuple(uint64_t(0), dpf::bit::one),
+        std::make_tuple(~uint64_t(0), dpf::bit::one)
+    },
+    {
+        std::make_tuple(uint64_t(0), dpf::xor_wrapper<uint64_t>(uint64_t(1))),
+        std::make_tuple(uint64_t(0), dpf::xor_wrapper<uint64_t>(~uint64_t(0))),
+        std::make_tuple(~uint64_t(0), dpf::xor_wrapper<uint64_t>(uint64_t(1))),
+        std::make_tuple(~uint64_t(0), dpf::xor_wrapper<uint64_t>(~uint64_t(0)))
+    },
+    {
+        std::make_tuple(dpf::modint<10>(uint16_t(0)), uint64_t(1)),
+        std::make_tuple(dpf::modint<10>(uint16_t(0)), ~uint64_t(0)),
+        std::make_tuple(dpf::modint<10>(~uint16_t(0)), uint64_t(1)),
+        std::make_tuple(dpf::modint<10>(~uint16_t(0)), ~uint64_t(0))
+    },
+    {
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), uint64_t(1)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), ~uint64_t(0)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), uint64_t(1)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), ~uint64_t(0))
     }
 };
 
@@ -91,7 +114,12 @@ TYPED_TEST_P(EvalPointTest, SurroundingPoints)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(EvalPointTest, DistinguishedPoint, SurroundingPoints);
-using Types = testing::Types<test_type<uint8_t, uint16_t>,
-                             test_type<uint64_t, __int128>,
-                             test_type<__int128, dpf::bit>>;
+using Types = testing::Types<
+                test_type<uint8_t, uint16_t>,
+                test_type<uint64_t, __int128>,
+                test_type<uint64_t, dpf::bit>,
+                test_type<uint64_t, dpf::xor_wrapper<uint64_t>>,
+                test_type<dpf::modint<10>, uint64_t>
+                // test_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>
+              >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalPointTestInstantiation, EvalPointTest, Types);
