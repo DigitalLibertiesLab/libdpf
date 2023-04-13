@@ -8,6 +8,12 @@ cmake ..
 cmake --build .
 ```
 
+# How to run tests
+
+Specific test executables will be placed in the `bin` subdirectory of the build directory. These can be run individually.
+
+Alternatively the `all_test` executable in the build directory can be run which automatically runs all test executables.
+
 # How to generate coverage
 
 First, when building the tests, make sure `COVERAGE=ON` as follows:
