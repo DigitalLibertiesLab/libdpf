@@ -148,7 +148,7 @@ class bitstring : public bit_array_base
         CharT one = CharT('1'))
       : bit_array_base{Nbits, &arr[0]}, arr{}
     {
-        len = std::min(len, std::strnlen(str));
+        len = std::min(len, std::strlen(str));
         for (std::size_t i = 0; i < len; ++i)
         {
             this->set(i, dpf::to_bit(str[i]));
