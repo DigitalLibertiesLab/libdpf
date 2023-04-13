@@ -147,7 +147,7 @@ static OutputT extract_leaf(const leaf_node_t<NodeT, OutputT> & leaf, std::size_
     }
     else
     {
-        std::memcpy_s(&y, sizeof(y), reinterpret_cast<const OutputT *>(&leaf) + off, sizeof(y));
+        std::memcpy(&y, reinterpret_cast<const OutputT *>(&leaf) + off, sizeof(y));
     }
 
     return y;
@@ -168,7 +168,7 @@ auto make_naked_leaf(InputT x, OutputT y)
     }
     else
     {
-        std::memcpy_s(reinterpret_cast<OutputT *>(&Y) + off, sizeof(Y), &y, sizeof(y));
+        std::memcpy(reinterpret_cast<OutputT *>(&Y) + off, &y, sizeof(y));
     }
 
     return Y;

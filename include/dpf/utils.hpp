@@ -279,7 +279,7 @@ struct countl_zero
 };
 
 template <typename T>
-struct countl_zero_symmmetric_difference
+struct countl_zero_symmetric_difference
 {
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
