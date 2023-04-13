@@ -1138,7 +1138,7 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
     /// @brief constructs a `static_bit_array` that holds `num_bits` bits
     inline constexpr static_bit_array()
       : bit_array_base{Nbits, &arr[0]} { arr_[data_length_] = sentinel; }
-    inline constexpr static_bit_array(std::size_t val)
+    inline constexpr explicit static_bit_array(std::size_t val)
       : bit_array_base{Nbits, &arr[0]}
     {
         arr_[0] = val;
@@ -1182,8 +1182,8 @@ class dynamic_bit_array : public bit_array_base
 };
 
 /// @brief
-inline constexpr void swap(bit_array_base::bit_reference lhs,
-    bit_array_base::bit_reference rhs) noexcept
+inline constexpr void swap(bit_array_base::bit_reference & lhs,
+    bit_array_base::bit_reference & rhs) noexcept  // NOLINT (output params)
 {
     bool tmp = lhs;
     lhs = rhs;

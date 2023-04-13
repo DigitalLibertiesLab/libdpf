@@ -55,7 +55,8 @@ basic_path_memoizer final
     std::size_t assign_x(const dpf_type & dpf, input_type new_x) noexcept override
     {
         static constexpr auto clz_xor = utils::countl_zero_symmmetric_difference<input_type>{};
-        if (dpf_.has_value() == true && std::addressof(dpf_->get()) == std::addressof(dpf))
+        if (dpf_.has_value() == true
+            && std::addressof(dpf_->get()) == std::addressof(dpf))
         {
             static constexpr auto complement_of = std::bit_not{};
             input_type old_x = x_.value_or(complement_of(new_x));
@@ -138,7 +139,7 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
 
     return_type end() const noexcept override
     {
-        return std::addressof(v) + 1;
+        return reinterpret_cast<node_type *>(std::addressof(v)) + 1;
     }
 
   private:

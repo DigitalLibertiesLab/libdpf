@@ -102,7 +102,7 @@ struct sequence_memoizer_base
     }
 
   protected:
-    const std::size_t depth;
+    std::size_t depth;
     std::size_t level_index;  // indicates current level being built
 
     explicit sequence_memoizer_base(const sequence_recipe<input_type> & r)
@@ -240,7 +240,7 @@ struct pointer_facade
     }
 
   private:
-    const bool flip_;
+    bool flip_;
     forward_iter it_;
     reverse_iter rit_;
 };
@@ -340,7 +340,7 @@ struct inplace_reversing_sequence_memoizer final
     }
 
   private:
-    const unique_ptr buf;
+    unique_ptr buf;
 };
 
 template <typename DpfKey,
@@ -387,7 +387,7 @@ struct double_space_sequence_memoizer final
     }
 
   private:
-    const unique_ptr buf;
+    unique_ptr buf;
 };
 
 template <typename DpfKey,
@@ -432,7 +432,7 @@ struct full_tree_sequence_memoizer final
     }
 
   private:
-    const unique_ptr buf;
+    unique_ptr buf;
 };
 
 namespace detail

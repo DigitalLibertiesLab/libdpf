@@ -18,20 +18,27 @@ namespace dpf
 template <typename InputT>
 struct sequence_recipe
 {
-    sequence_recipe(const std::vector<int8_t> & steps_,
-                const std::vector<std::size_t> subsequence_indexes_,
-                std::size_t leaf_index_,
-                std::vector<std::size_t> level_endpoints_)
-      : recipe_steps{steps_},
-        output_indices{subsequence_indexes_},
-        num_leaf_nodes{leaf_index_},
-        level_endpoints{level_endpoints_}
+  public:
+    sequence_recipe(const std::vector<int8_t> & steps,
+                const std::vector<std::size_t> & subsequence_indexes,
+                std::size_t leaf_index,
+                const std::vector<std::size_t> & level_endpoints)
+      : recipe_steps_{steps},
+        output_indices_{subsequence_indexes},
+        num_leaf_nodes_{leaf_index},
+        level_endpoints_{level_endpoints}
     { }
 
-    const std::vector<int8_t> recipe_steps;
-    const std::vector<std::size_t> output_indices;
-    const std::size_t num_leaf_nodes;
-    const std::vector<std::size_t> level_endpoints;  // level_endpoints.size() = depth+1
+    const std::vector<int8_t> recipe_steps() { return recipe_steps_; }
+    const std::vector<std::size_t> output_indices() { return output_indices_; }
+    std::size_t num_leaf_nodes() { return num_leaf_nodes_; }
+    const std::vector<std::size_t> level_endpoints() { return level_endpoints_; }
+
+  private:
+    std::vector<int8_t> recipe_steps_;
+    std::vector<std::size_t> output_indices_;
+    std::size_t num_leaf_nodes_;
+    std::vector<std::size_t> level_endpoints_;  // level_endpoints.size() = depth+1
 };
 
 namespace detail

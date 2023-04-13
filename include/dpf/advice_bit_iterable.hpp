@@ -37,6 +37,8 @@
 
 #include "simde/simde/x86/avx2.h"
 
+#include "dpf/bit_array.hpp"
+
 namespace dpf
 {
 
@@ -362,7 +364,7 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
         auto dst = reinterpret_cast<char *>(
             std::addressof(ret.data(pos++ * words_per_simde)));
         auto src = reinterpret_cast<char *>(std::data(out));
-        std::memcpy(dst, src, std::min(bytes_per_simde, bytes));
+        std::memcpy_s(dst, sizeof(dst), src, std::min(bytes_per_simde, bytes));
         bytes -= bytes_per_simde;
     }
 

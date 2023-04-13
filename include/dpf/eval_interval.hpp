@@ -5,7 +5,7 @@
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see `LICENSE` for details.
+///          see [LICENSE.md](@ref GPLv2) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_EVAL_INTERVAL_HPP__
 #define LIBDPF_INCLUDE_DPF_EVAL_INTERVAL_HPP__
@@ -20,6 +20,8 @@
 #include <hedley/hedley.h>
 
 #include "dpf/dpf_key.hpp"
+#include "dpf/eval_common.hpp"
+#include "dpf/output_buffer.hpp"
 #include "dpf/interval_memoizer.hpp"
 #include "dpf/subinterval_iterable.hpp"
 
@@ -104,7 +106,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     {
         auto leaf = dpf_type::template traverse_exterior<I>(memoizer[dpf_type::depth][j],
             get_if_lo_bit(cw, memoizer[dpf_type::depth][j]));
-        std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
+        std::memcpy_s(&rawbuf[k], sizeof(rawbuf[k]), &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }

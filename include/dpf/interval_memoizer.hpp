@@ -100,7 +100,7 @@ struct interval_memoizer_base
 
   protected:
     static constexpr auto depth = dpf_type::depth;
-    const std::size_t output_length;
+    std::size_t output_length;
     std::size_t level_index;  // indicates current level being built
 
     explicit interval_memoizer_base(std::size_t output_len)
@@ -179,7 +179,7 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 
    private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
-    const std::size_t pivot;
+    std::size_t pivot;
     unique_ptr buf;
 };
 

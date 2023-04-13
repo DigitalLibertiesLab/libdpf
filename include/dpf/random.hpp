@@ -25,6 +25,24 @@ auto & uniform_fill(T & buf) noexcept  // NOLINT
     return buf;
 }
 
+template <typename T>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_NO_THROW
+auto uniform_sample() noexcept  // NOLINT
+{
+    T buf;
+    return uniform_fill(buf);
+}
+
+template <typename T>
+HEDLEY_ALWAYS_INLINE
+HEDLEY_NO_THROW
+auto additively_share(T && secret) noexcept  // NOLINT
+{
+    T tmp = uniform_sample<T>();
+    return std::make_pair(tmp, secret-tmp);
+}
+
 }  // namespace dpf
 
 #endif  // LIBDPF_INCLUDE_DPF_RANDOM_HPP__
