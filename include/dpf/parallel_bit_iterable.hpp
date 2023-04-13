@@ -142,7 +142,7 @@ class parallel_const_bit_iterator
     {
         value_type ret;
         simde_type temp = helper::bit_and(all_vecs_[element_cnt_], vec_mask_);
-        std::memcpy_s(ret.data(), sizeof(ret), &temp, bytes_per_batch);
+        std::memcpy(ret.data(), &temp, bytes_per_batch);
         return ret;
     }
 

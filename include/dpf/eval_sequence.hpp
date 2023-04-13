@@ -182,7 +182,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         j += *prev/dpf_type::outputs_per_leaf < *curr/dpf_type::outputs_per_leaf;
         auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
             get_if_lo_bit(cw, buf[j]));
-        std::memcpy_s(&rawbuf[i], sizeof(rawbuf[i]), &leaf, sizeof(leaf));
+        std::memcpy(&rawbuf[i], &leaf, sizeof(leaf));
         prev = curr++;
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -271,7 +271,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     {
         auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
             get_if_lo_bit(cw, buf[j]));
-        std::memcpy_s(&rawbuf[j], sizeof(rawbuf[j]) &leaf, sizeof(leaf));
+        std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
