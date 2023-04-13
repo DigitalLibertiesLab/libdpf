@@ -7,7 +7,7 @@
 ///          comparisons or converting to and from regular C-strings. This type
 ///          is intended for use as an [input type](@ref input_types) for a DPF and, as such,
 ///          specializes `dpf::utils::bitlength_of`, `dpf::utils::msb_of`, and
-///          `dpf::utils::countl_zero_symmmetric_difference`. It also defines an
+///          `dpf::utils::countl_zero_symmetric_difference`. It also defines an
 ///          efficient `dpf::bitstring::bit_mask` facade to simulate the behavior that the
 ///          evaluation functions expect of `dpf::utils::msb_of`.
 ///
@@ -148,7 +148,7 @@ class bitstring : public bit_array_base
         CharT one = CharT('1'))
       : bit_array_base{Nbits, &arr[0]}, arr{}
     {
-        len = std::min(len, std::strnlen_s(str, len));
+        len = std::min(len, std::strnlen(str));
         for (std::size_t i = 0; i < len; ++i)
         {
             this->set(i, dpf::to_bit(str[i]));
@@ -363,10 +363,10 @@ struct msb_of<dpf::bitstring<Nbits>>
             bitlength_of_v<dpf::bitstring<Nbits>>-1ul);
 };
 
-/// @brief specializes `dpf::utils::countl_zero_symmmetric_difference` for
+/// @brief specializes `dpf::utils::countl_zero_symmetric_difference` for
 ///        `dpf::bitstring`
 template <std::size_t Nbits>
-struct countl_zero_symmmetric_difference<dpf::bitstring<Nbits>>
+struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
 {
     using T = dpf::bitstring<Nbits>;
 

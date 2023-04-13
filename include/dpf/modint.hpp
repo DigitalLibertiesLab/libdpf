@@ -627,7 +627,7 @@ struct msb_of<dpf::modint<Nbits>>
 };
 
 template <std::size_t Nbits>
-struct countl_zero_symmmetric_difference<dpf::modint<Nbits>>
+struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
 {
     using T = dpf::modint<Nbits>;
     HEDLEY_CONST

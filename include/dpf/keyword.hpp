@@ -7,7 +7,7 @@
 ///          ordering of the underlying strings. This type is inteded to be
 ///          used as an input type for a DPF and, as such, specializes
 ///          `dpf::utils::bitlength_of`, `dpf::utils::msb_of`, and
-///          `dpf::utils::countl_zero_symmmetric_difference`. When used as a
+///          `dpf::utils::countl_zero_symmetric_difference`. When used as a
 ///          DPF input type, the aforementioned properties of the encoding
 ///          equate to minimizing the DPF tree depth and maximizing the
 ///          potential for effective memoization in the context of
@@ -337,17 +337,17 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
         = U{1} << bitlength_of_v<T> - 1ul;
 };
 
-/// @brief specializes `dpf::countl_zero_symmmetric_difference` for
+/// @brief specializes `dpf::countl_zero_symmetric_difference` for
 ///        `dpf::basic_fixed_length_string`
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
           class Traits,
           class Alloc>
-struct countl_zero_symmmetric_difference<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
-    static constexpr auto clz = dpf::utils::countl_zero_symmmetric_difference<typename T::integral_type>{};
+    static constexpr auto clz = dpf::utils::countl_zero_symmetric_difference<typename T::integral_type>{};
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
