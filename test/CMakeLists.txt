@@ -22,9 +22,17 @@ if(COVERAGE)
     link_libraries(gcov)
 endif()
 
+add_executable(all_test tests/all_test.cpp)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_executable(dpf_key_test tests/dpf_key_test.cpp)
 add_executable(eval_point_test tests/eval_point_test.cpp)
+
+add_executable(value_param_test tests/value_param_test.cpp)
+add_executable(type_param_test tests/type_param_test.cpp)
 
 include(GoogleTest)
 gtest_discover_tests(dpf_key_test)
 gtest_discover_tests(eval_point_test)
+
+gtest_discover_tests(value_param_test)
+gtest_discover_tests(type_param_test)

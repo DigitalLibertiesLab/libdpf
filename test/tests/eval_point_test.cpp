@@ -2,39 +2,96 @@
 
 #include "dpf.hpp"
 
-TEST(EvalPointTest, EvalPoint00) {
-    uint8_t x = 0x00;
-    uint32_t y = 0xAAAAAAAA;
-    auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+template <typename InputT,
+          typename OutputT>
+using test_type = std::tuple<InputT, OutputT>;
 
-    for (int i = 0; i < (1 << 7); ++i) {
-        auto curi = i;
-        uint32_t y0 = dpf::eval_point(dpf0, i),
-                 y1 = dpf::eval_point(dpf1, i);
-        if (curi == x) {
-            EXPECT_EQ(y1 - y0, y);
-        } else {
-            EXPECT_EQ(y1 - y0, 0) << "Error occured at index " << i;
+template <typename InputT,
+          typename OutputT>
+using param_type = std::vector<test_type<InputT, OutputT>>;
+
+static std::tuple<param_type<uint8_t, uint16_t>,
+                  param_type<uint64_t, __int128>,
+                  param_type<__int128, dpf::bit>> allParams
+{
+    {
+        std::make_tuple(uint8_t(0x00), uint16_t(0x0001)),
+        std::make_tuple(uint8_t(0x00), uint16_t(0xFFFF)),
+        std::make_tuple(uint8_t(0x55), uint16_t(0x5555)),
+        std::make_tuple(uint8_t(0xFF), uint16_t(0x0001)),
+        std::make_tuple(uint8_t(0xFF), uint16_t(0xFFFF))
+    },
+    {
+        std::make_tuple(uint64_t(0), __int128(1)),
+        std::make_tuple(uint64_t(0), ~__int128(0)),
+        std::make_tuple(~uint64_t(0), __int128(1)),
+        std::make_tuple(~uint64_t(0), ~__int128(0))
+    },
+    {
+        std::make_tuple(__int128(0), dpf::bit::one),
+        std::make_tuple(~__int128(0), dpf::bit::one)
+    }
+};
+
+template <typename T>
+struct EvalPointTest : public testing::Test
+{
+  protected:
+    EvalPointTest()
+      : params{std::get<std::vector<T>>(allParams)}
+    { }
+
+    void SetUp() override
+    { }
+
+    void TearDown() override
+    { }
+
+    std::vector<T> params;
+};
+
+TYPED_TEST_SUITE_P(EvalPointTest);
+
+TYPED_TEST_P(EvalPointTest, DistinguishedPoint)
+{
+    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    using output_type = typename std::tuple_element_t<1, TypeParam>;
+
+    for (auto [x, y] : this->params)
+    {
+        auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+        output_type y0 = dpf::eval_point(dpf0, x),
+                    y1 = dpf::eval_point(dpf1, x);
+        EXPECT_EQ(static_cast<output_type>(y1 - y0), y);
+    }
+}
+
+TYPED_TEST_P(EvalPointTest, SurroundingPoints)
+{
+    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    using output_type = typename std::tuple_element_t<1, TypeParam>;
+
+    for (auto [x, y] : this->params)
+    {
+        auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+        std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(16)),
+                    range = std::size_t(1) << range_bitlength;
+        for (std::size_t i = 1; i < range >> 1; ++i)
+        {
+            input_type xp = x + i,
+                       xm = x - i;
+            output_type y0p = dpf::eval_point(dpf0, xp),
+                        y1p = dpf::eval_point(dpf1, xp),
+                        y0m = dpf::eval_point(dpf0, xm),
+                        y1m = dpf::eval_point(dpf1, xm);
+            EXPECT_EQ(static_cast<output_type>(y1p - y0p), output_type(0));
+            EXPECT_EQ(static_cast<output_type>(y1m - y0m), output_type(0));
         }
     }
 }
 
-TEST(EvalPointTest, EvalPointFF) {
-    uint8_t x = 0xFF;
-    uint32_t y = 0xAAAAAAAA;
-    auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-
-    for (size_t i = 0; i < (1 << 7); ++i) {
-        uint8_t curi = static_cast<uint8_t>(i);
-        uint32_t y0 = dpf::eval_point(dpf0, curi),
-                 y1 = dpf::eval_point(dpf1, curi);
-        if (curi == x) {
-            EXPECT_EQ(y1 - y0, y);
-        } else {
-            EXPECT_EQ(y1 - y0, 0) << "Error occured at index " << i;
-        }
-    }
-}
-
-// test multiple exterior nodes
-// test modint?
+REGISTER_TYPED_TEST_SUITE_P(EvalPointTest, DistinguishedPoint, SurroundingPoints);
+using Types = testing::Types<test_type<uint8_t, uint16_t>,
+                             test_type<uint64_t, __int128>,
+                             test_type<__int128, dpf::bit>>;
+INSTANTIATE_TYPED_TEST_SUITE_P(EvalPointTestInstantiation, EvalPointTest, Types);

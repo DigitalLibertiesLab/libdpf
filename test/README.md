@@ -16,8 +16,9 @@ First, when building the tests, make sure `COVERAGE=ON` as follows:
 cmake -D COVERAGE=ON ..
 ```
 
-Then after running all tests, run the following:
+Then after running all tests, run the following for `gcovr` coverage report:
 
 ```
-gcovr --root '../..' --filter '\.\./\.\./include/.*' --html-details 'coverage.html' .
+mkdir coverage
+gcovr --root '../..' --filter '\.\./\.\./include/.*' --html-details 'coverage/index.html' .
 ```
