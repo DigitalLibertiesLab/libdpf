@@ -22,37 +22,42 @@ static std::tuple<
     {
         std::make_tuple(uint8_t(0x00), uint16_t(0x0001)),
         std::make_tuple(uint8_t(0x00), uint16_t(0xFFFF)),
-        std::make_tuple(uint8_t(0x55), uint16_t(0x5555)),
+        std::make_tuple(uint8_t(0x55), uint16_t(0x0001)),
         std::make_tuple(uint8_t(0xFF), uint16_t(0x0001)),
         std::make_tuple(uint8_t(0xFF), uint16_t(0xFFFF))
     },
     {
-        std::make_tuple(uint64_t(0), __int128(1)),
-        std::make_tuple(uint64_t(0), ~__int128(0)),
-        std::make_tuple(~uint64_t(0), __int128(1)),
-        std::make_tuple(~uint64_t(0), ~__int128(0))
+        std::make_tuple(uint64_t(0x0000000000000000),  __int128(1)),
+        std::make_tuple(uint64_t(0x0000000000000000), ~__int128(0)),
+        std::make_tuple(uint64_t(0x5555555555555555),  __int128(1)),
+        std::make_tuple(uint64_t(0xFFFFFFFFFFFFFFFF),  __int128(1)),
+        std::make_tuple(uint64_t(0xFFFFFFFFFFFFFFFF), ~__int128(0))
     },
     {
-        std::make_tuple(uint64_t(0), dpf::bit::one),
-        std::make_tuple(~uint64_t(0), dpf::bit::one)
+        std::make_tuple(uint64_t(0x0000000000000000), dpf::bit::one),
+        std::make_tuple(uint64_t(0x5555555555555555), dpf::bit::one),
+        std::make_tuple(uint64_t(0xFFFFFFFFFFFFFFFF), dpf::bit::one)
     },
     {
-        std::make_tuple(uint64_t(0), dpf::xor_wrapper<uint64_t>(uint64_t(1))),
-        std::make_tuple(uint64_t(0), dpf::xor_wrapper<uint64_t>(~uint64_t(0))),
-        std::make_tuple(~uint64_t(0), dpf::xor_wrapper<uint64_t>(uint64_t(1))),
-        std::make_tuple(~uint64_t(0), dpf::xor_wrapper<uint64_t>(~uint64_t(0)))
+        std::make_tuple(uint64_t(0x0000000000000000), dpf::xor_wrapper<uint64_t>(uint64_t(0x0000000000000001))),
+        std::make_tuple(uint64_t(0x0000000000000000), dpf::xor_wrapper<uint64_t>(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint64_t(0x5555555555555555), dpf::xor_wrapper<uint64_t>(uint64_t(0x0000000000000001))),
+        std::make_tuple(uint64_t(0xFFFFFFFFFFFFFFFF), dpf::xor_wrapper<uint64_t>(uint64_t(0x0000000000000001))),
+        std::make_tuple(uint64_t(0xFFFFFFFFFFFFFFFF), dpf::xor_wrapper<uint64_t>(uint64_t(0xFFFFFFFFFFFFFFFF)))
     },
     {
-        std::make_tuple(dpf::modint<10>(uint16_t(0)), uint64_t(1)),
-        std::make_tuple(dpf::modint<10>(uint16_t(0)), ~uint64_t(0)),
-        std::make_tuple(dpf::modint<10>(~uint16_t(0)), uint64_t(1)),
-        std::make_tuple(dpf::modint<10>(~uint16_t(0)), ~uint64_t(0))
+        std::make_tuple(dpf::modint<10>(uint16_t(0x000)), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::modint<10>(uint16_t(0x000)), uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(dpf::modint<10>(uint16_t(0x155)), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::modint<10>(uint16_t(0x355)), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::modint<10>(uint16_t(0x355)), uint64_t(0xFFFFFFFFFFFFFFFF))
     },
     {
-        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), uint64_t(1)),
-        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), ~uint64_t(0)),
-        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), uint64_t(1)),
-        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), ~uint64_t(0))
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("0000"), uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("5555"), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), uint64_t(0x0000000000000001)),
+        std::make_tuple(dpf::keyword<4, dpf::alphabets::hex>("ffff"), uint64_t(0xFFFFFFFFFFFFFFFF))
     }
 };
 
@@ -101,8 +106,9 @@ TYPED_TEST_P(EvalPointTest, SurroundingPoints)
                     range = std::size_t(1) << range_bitlength;
         for (std::size_t i = 1; i < range >> 1; ++i)
         {
-            input_type xp = x + i,
-                       xm = x - i;
+            input_type input_i(i),
+                       xp = x + input_i,
+                       xm = x - input_i;
             output_type y0p = dpf::eval_point(dpf0, xp),
                         y1p = dpf::eval_point(dpf1, xp),
                         y0m = dpf::eval_point(dpf0, xm),
