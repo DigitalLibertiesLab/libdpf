@@ -19,7 +19,6 @@
 #include "dpf/twiddle.hpp"
 #include "dpf/leaf_node.hpp"
 #include "dpf/aligned_allocator.hpp"
-#include "dpf/network.hpp"
 
 namespace dpf
 {
@@ -148,6 +147,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                     my_root = root,
                     my_ca = correction_advice,
                     my_cw = correction_words,
+                    my_bvr = mutable_beaver_tuple,
                     coro = asio::coroutine()
                 ]
                 (
@@ -179,6 +179,10 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                             asio::buffer(my_cw.data(), sizeof(std::array<interior_node, depth>)),
                             std::move(self));
 
+                        yield asio::async_write(peer,
+                            asio::buffer(&my_bvr, sizeof(my_bvr)),
+                            std::move(self));
+
                         self.complete(error);
                     }
                 },
@@ -196,6 +200,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         auto root_val = std::make_unique<interior_node>();
         auto ca_val = std::make_unique<std::array<uint8_t, depth>>();
         auto cw_val = std::make_unique<std::array<interior_node, depth>>();
+        auto bvr_tuple_val = std::make_unique<beaver_tuple>();
 
 #include <asio/yield.hpp>
         return asio::async_compose<
@@ -206,6 +211,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
              root_val = std::move(root_val),
              ca_val = std::move(ca_val),
              cw_val = std::move(cw_val),
+             bvr_tuple_val = std::move(bvr_tuple_val),
              coro = asio::coroutine()](
                 auto &self,
                 const asio::error_code &error = {},
@@ -233,8 +239,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                         asio::buffer(cw_val->data(), sizeof(std::array<interior_node, depth>)),
                         std::move(self));
 
+                    yield asio::async_read(peer,
+                        asio::buffer(bvr_tuple_val.get(), sizeof(beaver_tuple)),
+                        std::move(self));
+
                     self.complete(
-                        dpf_key(*root_val, *cw_val, *ca_val, *leaf_tuple_val, std::bitset<sizeof...(OutputTs)+1>(*wildcard_mask_val)),
+                        dpf_key(*root_val, *cw_val, *ca_val, *leaf_tuple_val, std::bitset<sizeof...(OutputTs)+1>(*wildcard_mask_val), std::move(*bvr_tuple_val)),
                         error);
                 }
             },
