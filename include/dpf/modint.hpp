@@ -103,7 +103,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator+(integral_type rhs) const noexcept
     {
-        return modint{this->val+rhs};
+        return modint{static_cast<integral_type>(this->val+rhs)};
     }
 
     /// @details Performs addition with another `modint`.
@@ -183,7 +183,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator-(integral_type rhs) const noexcept
     {
-        return modint{this->val-rhs};
+        return modint{static_cast<integral_type>(this->val-rhs)};
     }
 
     /// @details Performs subtraction by another `modint`.
@@ -263,7 +263,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator<<(std::size_t shift_amount) const noexcept
     {
-        return modint{this->val << shift_amount};
+        return modint{static_cast<integral_type>(this->val << shift_amount)};
     }
 
     /// @brief bitwise-left-shift-assignment operator
@@ -287,9 +287,9 @@ class modint
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr modint operator>>(int shift_amount) const noexcept
+    constexpr modint operator>>(std::size_t shift_amount) const noexcept
     {
-        return modint{this->val >> shift_amount};
+        return modint{static_cast<integral_type>(this->val >> shift_amount)};
     }
 
     /// @brief bitwise-right-shift-assignment operator
@@ -299,7 +299,7 @@ class modint
     /// @param shift_amount the number of bits to shift by
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr modint & operator>>=(int shift_amount) noexcept
+    constexpr modint & operator>>=(std::size_t shift_amount) noexcept
     {
         this->val >>= shift_amount;
         return *this;
@@ -363,7 +363,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator&(integral_type rhs) const noexcept
     {
-        return modint{this->val & rhs};
+        return modint{static_cast<integral_type>(this->val & rhs)};
     }
 
     HEDLEY_CONST
