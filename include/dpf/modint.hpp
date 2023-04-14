@@ -271,7 +271,6 @@ class modint
     ///          and returns a reference to the result. Upon invoking `a<<=b`,
     ///          `a` is congruent to `a * 2^b` modulo `2^Nbits`.
     /// @param shift_amount the number of bits to shift by
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator<<=(std::size_t shift_amount) noexcept
@@ -290,8 +289,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator>>(int shift_amount) const noexcept
     {
-        auto reduced = static_cast<integral_type>(*this);
-        return modint{reduced >> shift_amount};
+        return modint{this->val >> shift_amount};
     }
 
     /// @brief bitwise-right-shift-assignment operator
@@ -299,12 +297,11 @@ class modint
     ///          right and returns a reference to the result. Upon invoking
     ///          `a>>=b`, `a` is equal to the integer part of `a/2^b`.
     /// @param shift_amount the number of bits to shift by
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator>>=(int shift_amount) noexcept
     {
-        this->val = static_cast<integral_type>(*this) >> shift_amount;
+        this->val >>= shift_amount;
         return *this;
     }
 
