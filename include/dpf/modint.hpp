@@ -520,7 +520,7 @@ class modint
 
     constexpr operator bool() const noexcept
     {
-        return static_cast<bool>(static_cast<integral_type>(*this));
+        return static_cast<bool>(static_cast<integral_type>(this->val));
     }
 
   private:
