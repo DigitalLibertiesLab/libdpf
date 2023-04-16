@@ -289,7 +289,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator>>(std::size_t shift_amount) const noexcept
     {
-        return modint{static_cast<integral_type>(this->val >> shift_amount)};
+        return modint{static_cast<integral_type>(this->reduced_value() >> shift_amount)};
     }
 
     /// @brief bitwise-right-shift-assignment operator
@@ -301,7 +301,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator>>=(std::size_t shift_amount) noexcept
     {
-        this->val >>= shift_amount;
+        this->val = this->reduced_value() >> shift_amount;
         return *this;
     }
 
@@ -487,7 +487,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr explicit operator integral_type() const noexcept
     {
-        return val & modulo_mask;
+        return this->reduced_value();
     }
 
     HEDLEY_CONST
@@ -495,7 +495,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr integral_type data() const noexcept
     {
-        return val;
+        return this->val;
     }
 
     template <typename CharT,
@@ -505,7 +505,7 @@ class modint
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const modint & i)
     {
-        return os << i.val;
+        return os << i.reduced_value();
     }
 
     template <typename CharT,
@@ -520,7 +520,12 @@ class modint
 
     constexpr operator bool() const noexcept
     {
-        return static_cast<bool>(static_cast<integral_type>(this->val));
+        return static_cast<bool>(this->reduced_value());
+    }
+
+    constexpr integral_type reduced_value()
+    {
+        return val & modulo_mask;
     }
 
   private:
