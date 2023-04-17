@@ -402,8 +402,7 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
     using U = typename T::integral_type;
-    static constexpr U value
-        = U{1} << bitlength_of_v<T> - 1ul;
+    static constexpr T value = U{1} << bitlength_of_v<T> - 1ul;
 };
 
 /// @brief specializes `dpf::countl_zero_symmetric_difference` for

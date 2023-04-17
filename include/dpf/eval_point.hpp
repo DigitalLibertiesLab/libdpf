@@ -37,11 +37,11 @@ template <typename DpfKey,
 inline auto eval_point_interior(const DpfKey & dpf, InputT x, PathMemoizer & path)
 {
     using dpf_type = DpfKey;
-    using input_type = InputT;
 
-    std::size_t level_index = path.assign_x(dpf, x);
+    auto level_index = path.assign_x(dpf, x);
+
     DPF_UNROLL_LOOP
-    for (input_type mask = dpf.msb_mask>>(level_index-1);
+    for (auto mask = dpf.msb_mask>>(level_index-1);
         level_index <= dpf.depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
