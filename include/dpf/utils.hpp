@@ -133,8 +133,9 @@ template <> simde__m128i to_exterior_node<simde__m128i, simde__m256i>(simde__m25
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,
-        std::numeric_limits<make_unsigned_t<T>>::digits>
-{ };
+        std::numeric_limits<T>::is_specialized ? 
+            std::numeric_limits<T>::digits
+          : CHAR_BIT * sizeof(T)> { };
 
 template <typename T>
 static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;

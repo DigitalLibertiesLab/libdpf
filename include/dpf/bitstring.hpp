@@ -209,6 +209,13 @@ class bitstring : public bit_array_base
             return *this;
         }
 
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        constexpr bool operator&(const bitstring & rhs) noexcept
+        {
+            return rhs[which_bit_];
+        }
+
         /// @brief returns `true` if and only if the bit mask corresponds to a
         ///        valid bit position in a `dpf::bitstring<Nbits>`
         /// @return `(0 <= which_bit()) && (which_bit() < Nbits)`
@@ -229,6 +236,28 @@ class bitstring : public bit_array_base
         constexpr std::size_t which_bit() const noexcept
         {
             return which_bit_;
+        }
+
+        /// @brief shifts the bit mask to the right by the given number of
+        ///        bits
+        /// @param shift_by number of bits to shift the mask to the right
+        /// @return a reference to the modified `dpf::bitstring::bit_mask`
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        friend constexpr bit_mask operator>>(const bit_mask & mask, std::size_t shift_by) noexcept
+        {
+            return bit_mask{mask.which_bit_ >> shift_by};
+        }
+
+        /// @brief shifts the bit mask to the left by the given number of
+        ///        bits
+        /// @param shift_by number of bits to shift the mask to the right
+        /// @return a reference to the modified `dpf::bitstring::bit_mask`
+        HEDLEY_ALWAYS_INLINE
+        HEDLEY_NO_THROW
+        friend constexpr bit_mask operator<<(const bit_mask & mask, std::size_t shift_by) noexcept
+        {
+            return bit_mask{mask.which_bits_ << shift_by};
         }
 
       private:
@@ -393,7 +422,8 @@ struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
 };
 
 template <std::size_t Nbits>
-struct to_integral_type<dpf::bitstring<Nbits>> : public to_integral_type_base<dpf::bitstring<Nbits>>
+struct to_integral_type<dpf::bitstring<Nbits>>
+    : public to_integral_type_base<dpf::bitstring<Nbits>>
 {
     using parent = to_integral_type_base<dpf::bitstring<Nbits>>;
     using typename parent::integral_type;

@@ -51,7 +51,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node>;
     static constexpr std::size_t depth
         = utils::bitlength_of_v<input_type> - lg_outputs_per_leaf;
-    static constexpr input_type msb_mask = utils::msb_of_v<input_type>;
+    static constexpr auto msb_mask = utils::msb_of_v<input_type>;
 
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
@@ -150,7 +150,7 @@ auto make_dpf(InputT x, OutputT y, OutputTs... ys)
     using interior_node = typename dpf_type::interior_node;
 
     constexpr auto depth = dpf_type::depth;
-    InputT mask = dpf_type::msb_mask;
+    auto mask = dpf_type::msb_mask;
 
     const interior_node root[2] = {
         dpf::unset_lo_bit(RootSampler()),
