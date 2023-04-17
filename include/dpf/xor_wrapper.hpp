@@ -85,7 +85,7 @@ struct xor_wrapper
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_PURE
-    constexpr explicit operator T() const noexcept { return value; }
+    constexpr operator T() const noexcept { return value; }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -222,6 +222,16 @@ struct xor_wrapper
     friend constexpr xor_wrapper operator>>(const xor_wrapper & val, std::size_t amount)
     {
         return xor_wrapper(val.value >> amount);
+    }
+
+    friend std::ostream & operator<<(std::ostream & os, xor_wrapper<T> val)
+    {
+        return os << val.value;
+    }
+
+    friend std::istream & operator<<(std::istream & is, xor_wrapper<T> & val)
+    {
+        return is >> val.value;
     }
 
     friend struct utils::to_integral_type<xor_wrapper<T>>;
