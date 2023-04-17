@@ -523,7 +523,7 @@ class modint
         return static_cast<bool>(this->reduced_value());
     }
 
-    constexpr integral_type reduced_value()
+    constexpr integral_type reduced_value() const
     {
         return val & modulo_mask;
     }
