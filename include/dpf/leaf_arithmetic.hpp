@@ -46,7 +46,7 @@ struct add_t<OutputT, void>
     HEDLEY_CONST
     auto operator()(const NodeT & a, const NodeT & b) const
     {
-        static constexpr auto adder = add_t<OutputT, NodeT>{};
+        static constexpr auto adder = add_t<dpf::concrete_type_t<OutputT>, NodeT>{};
         return adder(a, b);
     }
 };
@@ -60,7 +60,7 @@ struct subtract_t<OutputT, void>
     HEDLEY_CONST
     auto operator()(const NodeT & a, const NodeT & b) const
     {
-        static constexpr auto subtracter = subtract_t<OutputT, NodeT>{};
+        static constexpr auto subtracter = subtract_t<dpf::concrete_type_t<OutputT>, NodeT>{};
         return subtracter(a, b);
     }
 };
