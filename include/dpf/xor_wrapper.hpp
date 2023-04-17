@@ -27,6 +27,7 @@ struct xor_wrapper
     using value_type = T;
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
+    static constexpr auto bit_or = std::bit_or<value_type>{};
 
     static constexpr std::size_t bits = utils::bitlength_of_v<value_type>;
     using integral_type = utils::integral_type_from_bitlength_t<bits>;
@@ -40,10 +41,10 @@ struct xor_wrapper
     constexpr xor_wrapper(const xor_wrapper &) noexcept = default;
 
     /// @brief Move c'tor
-    constexpr explicit xor_wrapper(xor_wrapper &&) noexcept = default;
+    constexpr xor_wrapper(xor_wrapper &&) noexcept = default;
 
     /// @brief Value c'tor
-    constexpr explicit xor_wrapper(T v) noexcept : value{v} { }
+    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT
 
     /// @}
 
@@ -71,6 +72,14 @@ struct xor_wrapper
     constexpr xor_wrapper operator-() const noexcept
     {
         return xor_wrapper{value};
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_PURE
+    constexpr operator bool() const noexcept
+    {
+        return static_cast<bool>(value);
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -134,6 +143,22 @@ struct xor_wrapper
         return value;
     }
 
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr xor_wrapper & operator<<=(std::size_t amount)
+    {
+        this->value <<= amount;
+        return *this;
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr xor_wrapper & operator>>=(std::size_t amount)
+    {
+        this->value >>= amount;
+        return *this;
+    }
+
   private:
     value_type value;
 
@@ -161,6 +186,44 @@ struct xor_wrapper
         return xor_wrapper(xor_wrapper::bit_and(lhs.value, rhs.value));
     }
 
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator&(const xor_wrapper & lhs,
+        const xor_wrapper & rhs) noexcept
+    {
+        return xor_wrapper(xor_wrapper::bit_and(lhs.value, rhs.value));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator|(const xor_wrapper & lhs,
+        const xor_wrapper & rhs) noexcept
+    {
+        return xor_wrapper(xor_wrapper::bit_or(lhs.value, rhs.value));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator^(const xor_wrapper & lhs,
+        const xor_wrapper & rhs) noexcept
+    {
+        return xor_wrapper(xor_wrapper::bit_xor(lhs.value, rhs.value));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator<<(const xor_wrapper & val, std::size_t amount)
+    {
+        return xor_wrapper(val.value << amount);
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator>>(const xor_wrapper & val, std::size_t amount)
+    {
+        return xor_wrapper(val.value >> amount);
+    }
+
     friend struct utils::to_integral_type<xor_wrapper<T>>;
 };
 
@@ -179,6 +242,12 @@ template <typename T>
 struct bitlength_of<xor_wrapper<T>>
   : public bitlength_of<T>
 { };
+
+template <typename T>
+struct msb_of<xor_wrapper<T>>
+{
+    static constexpr xor_wrapper<T> value = xor_wrapper<T>{T{1} << bitlength_of_v<T> - 1ul};
+};
 
 template <typename T>
 struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
