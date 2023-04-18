@@ -129,7 +129,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto ieee_float = wildcard<float>;
     static constexpr auto ieee_double = wildcard<double>;
 
-}  // namespace wildcards
+}  // namespace dpf::wildcards
 
 namespace utils
 {
@@ -140,7 +140,7 @@ struct bitlength_of<wildcard_value<T>>
   : public bitlength_of<T>
 { };
 
-}  // namespace utils
+}  // namespace dpf::utils
 
 }  // namespace dpf
 

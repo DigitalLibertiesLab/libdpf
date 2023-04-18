@@ -78,4 +78,12 @@
 
 #include "dpf/xor_wrapper.hpp"
 
+#ifdef HAS_NLOHMANN_JSON
+  #ifndef NLOHMANN_JSON_VERSION_MAJOR
+    // was told you use nlohmann::json, but it's not available!
+  #else
+    #include "dpf/json.hpp"
+  #endif
+#endif
+
 #endif  // LIBDPF_INCLUDE_DPF_HPP__
