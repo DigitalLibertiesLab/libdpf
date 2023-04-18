@@ -190,8 +190,9 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
   private:
     using parent = interval_memoizer_base<DpfKey>;
   public:
+    using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
-    using return_type = typename DpfKey::interior_node *;
+    using return_type = std::add_pointer_t<node_type>;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
