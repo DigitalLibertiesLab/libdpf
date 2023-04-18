@@ -28,7 +28,7 @@ struct adl_serializer<beaver<true, NodeT, OutputT, outputs_per_leaf>>
     {
         j.get_to(beaver.output_blind);
         j.get_to(beaver.vector_blind);
-        j.get_to(beaver_blinded_vector);
+        j.get_to(beaver.blinded_vector);
     }
 
     static void to_json(nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)
@@ -117,9 +117,9 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
             {"root", dpf.root},
             {"correction_words", dpf.correction_words},
             {"correction_advice", dpf.correction_advice},
-            {"leaves", dpf.exterior_cws()},
-            {"wildcards", dpf.wildcard_bitmask()},
-            {"beavers", dpf.beavers()}
+            {"leaves", dpf.mutable_leaf_tuple()},
+            {"wildcards", dpf.mutable_wildcard_mask()},
+            {"beavers", dpf.mutable_beaver_tuple()}
         };
     }
 };
