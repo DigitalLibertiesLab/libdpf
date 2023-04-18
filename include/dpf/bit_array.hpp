@@ -1145,8 +1145,17 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
         arr_[data_length_] = sentinel;
     }
 
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() const noexcept
+    {
+        return static_cast<word_pointer>(__builtin_assume_aligned(&arr[0], utils::max_align_v));
+    }
+
   private:
-    std::array<word_type, length_in_words> arr;
+    alignas(utils::max_align_v) std::array<word_type, length_in_words> arr;
 };
 
 class dynamic_bit_array : public bit_array_base
@@ -1178,6 +1187,21 @@ class dynamic_bit_array : public bit_array_base
     ~dynamic_bit_array() noexcept
     {
         if (arr_ != nullptr) free(arr_);
+    }
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() const noexcept
+    {
+        return static_cast<word_pointer>(__builtin_assume_aligned(arr_, utils::max_align_v));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type & data(size_type pos) const noexcept
+    {
+        return data()[pos];
     }
 };
 
