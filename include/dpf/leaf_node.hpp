@@ -338,7 +338,6 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::pair<
         std::pair<leaf_type, beaver_type>,
         std::pair<leaf_type, beaver_type> > return_tuple;
-HEDLEY_PRAGMA(GCC diagnostic pop)
 
     // N.B.: Despite the nesting, the loops below advance in lockstep, making
     // only a single pass over each of the tuples being looped over
@@ -413,6 +412,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             }, return_tuple.first.first);
         }, leaves);
     }, std::make_tuple(y, ys...));
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return return_tuple;
 }
