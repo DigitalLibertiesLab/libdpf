@@ -307,9 +307,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         static_assert(std::is_same_v<OutputType, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>);
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         auto my_output = std::make_unique<OutputType>(output);
         auto peer_output = std::make_unique<OutputType>();
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 #include <asio/yield.hpp>
         return asio::async_compose<
@@ -393,18 +396,21 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             typename CompletionToken>
     auto async_assign_leaf(StreamT & peer, const OutputType & output, CompletionToken && token)
     {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         using output_type = concrete_type_t<std::tuple_element_t<I, outputs_tuple>>;
         static_assert(std::is_same_v<OutputType, output_type>);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 #include <asio/yield.hpp>
         return asio::async_compose<
             CompletionToken, void(asio::error_code)>(
                 [
                     &peer,
-                    &wildcard_mask = this->wildcard_mask,
+                    &wildcard_mask = this->mutable_wildcard_mask,
                     &output,
-                    &leaf = std::get<I>(this->mutable_exterior_cw),
+                    &leaf = std::get<I>(this->mutable_leaf_tuple),
                     &beaver = std::get<I>(this->mutable_beaver_tuple),
                     coro = asio::coroutine()
                 ]
