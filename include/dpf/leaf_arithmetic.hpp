@@ -300,9 +300,8 @@ template <> struct add_t<simde_uint128, simde__m256i> final
     }
 };
 
-template <typename OutputT, typename NodeT, std::size_t N>
-struct add_t<OutputT, std::array<NodeT, N>> final : public detail::add_array_t {};
-
+template <typename OutputT, typename NodeT, std::size_t N> struct add_t<OutputT, std::array<NodeT, N>> final : public detail::add_array_t {};
+template <std::size_t N> struct add_t<dpf::bitstring<N>, void> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
 template <> struct add_t<dpf::bit, void> final : public std::bit_xor<> {};
@@ -526,9 +525,8 @@ template <> struct subtract_t<simde_uint128, simde__m256i> final
     }
 };
 
-template <typename OutputT, typename NodeT, std::size_t N>
-struct subtract_t<OutputT, std::array<NodeT, N>> final : public detail::sub_array_t {};
-
+template <typename OutputT, typename NodeT, std::size_t N> struct subtract_t<OutputT, std::array<NodeT, N>> final : public detail::sub_array_t {};
+template <std::size_t N> struct subtract_t<dpf::bitstring<N>, void> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<dpf::bit, NodeT> final : public std::bit_xor<> {};
