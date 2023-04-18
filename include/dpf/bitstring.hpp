@@ -166,13 +166,15 @@ class bitstring : public bit_array_base
     ///          the behaviour of a 1-bit mask for us in the `dpf::eval_*`
     ///          family of functions. Specifically, it can be used in loops
     ///          such as
-    ///          ```auto x = dpf::bitstring<Nbits> = ...;
+    ///          \code{c++}
+    ///          auto x = dpf::bitstring<Nbits> = ...;
     ///          auto mask = dpf::msb_of(x);
     ///          for (auto i = 0; i < Nbits; ++i, mask>>=1)
     ///          {
     ///              bool bit = !!(mask & x);
     ///              // ...
-    ///           }```
+    ///          }
+    ///          \end{code}
     ///          to iterate iver the individual bits of a `dpf::bitstring`
     ///          efficiently.
     struct bit_mask
@@ -363,7 +365,23 @@ class bitstring : public bit_array_base
     /// @}
 
   private:
+    //alignas(utils::max_align_v)  // memory here cannot be aligned if we wish
+                                   // to remain trivially copyable
     std::array<word_type, utils::quotient_ceiling(Nbits, bits_per_word)> arr;
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_CONST
+    friend bitstring operator^(const bitstring & lhs, const bitstring & rhs)
+    {
+        bitstring ret;
+        std::cout << rhs.data_length() << std::endl;
+        auto * ptr0 = lhs.data(), * ptr1 = rhs.data();
+        for (std::size_t i = 0; i < ret.data_length(); ++i)
+        {
+            ret[i] = ptr0[i] ^ ptr1[i];
+        }
+        return ret;
+    }
 
     friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
 };  // class dpf::bitstring
