@@ -1207,7 +1207,7 @@ class dynamic_bit_array : public bit_array_base
 
 /// @brief
 inline constexpr void swap(bit_array_base::bit_reference & lhs,
-    bit_array_base::bit_reference & rhs) noexcept  // NOLINT (output params)
+    bit_array_base::bit_reference & rhs) noexcept
 {
     bool tmp = lhs;
     lhs = rhs;

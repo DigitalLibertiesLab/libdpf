@@ -44,7 +44,8 @@ struct xor_wrapper
     constexpr xor_wrapper(xor_wrapper &&) noexcept = default;
 
     /// @brief Value c'tor
-    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT(runtime/explicit)
 
     /// @}
 

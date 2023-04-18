@@ -11,6 +11,8 @@
 
 #include <bsd/stdlib.h>
 
+#include <utility>
+
 #include "hedley/hedley.h"
 
 namespace dpf
@@ -19,7 +21,7 @@ namespace dpf
 template <typename T>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto & uniform_fill(T & buf) noexcept  // NOLINT
+auto & uniform_fill(T & buf) noexcept  // NOLINT(runtime/references)
 {
     arc4random_buf(&buf, sizeof(buf));
     return buf;
@@ -28,7 +30,7 @@ auto & uniform_fill(T & buf) noexcept  // NOLINT
 template <typename T>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto uniform_sample() noexcept  // NOLINT
+auto uniform_sample() noexcept
 {
     T buf;
     return uniform_fill(buf);
@@ -37,7 +39,7 @@ auto uniform_sample() noexcept  // NOLINT
 template <typename T>
 HEDLEY_ALWAYS_INLINE
 HEDLEY_NO_THROW
-auto additively_share(T && secret) noexcept  // NOLINT
+auto additively_share(T && secret) noexcept
 {
     T tmp = uniform_sample<T>();
     return std::make_pair(tmp, secret-tmp);

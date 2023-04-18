@@ -40,7 +40,8 @@ class modint
     ///          modulo `2^Nbits`.
     /// @param value the value to initialize with
     HEDLEY_ALWAYS_INLINE
-    constexpr modint(integral_type value)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    constexpr modint(integral_type value)  // NOLINT(runtime/explicit)
         : val{value}
     { }
 
@@ -704,17 +705,19 @@ class numeric_limits<dpf::modint<Nbits>>
     static constexpr dpf::modint<Nbits> quiet_NaN() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> signaling_NaN() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> denorm_min() noexcept { return 0; }
-
 };
+
 /// @details specializes `std::numeric_limits` for `dpf::modint<Nbits> const`
 template<std::size_t Nbits>
 class numeric_limits<dpf::modint<Nbits> const>
   : public numeric_limits<dpf::modint<Nbits>> {};
+
 /// @details specializes `std::numeric_limits` for
 ///          `dpf::modint<Nbits> volatile`
 template<std::size_t Nbits>
 class numeric_limits<dpf::modint<Nbits> volatile>
   : public numeric_limits<dpf::modint<Nbits>> {};
+
 /// @details specializes `std::numeric_limits` for
 ///          `dpf::modint<Nbits> const volatile`
 template<std::size_t Nbits>
