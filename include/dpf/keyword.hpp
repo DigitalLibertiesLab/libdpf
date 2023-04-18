@@ -148,6 +148,11 @@ class basic_fixed_length_string
     noexcept
       : val{encode_(str)} { }
 
+    constexpr
+    basic_fixed_length_string(integral_type val)
+    noexcept
+      : val{val} { }
+
     /// @}
 
     /// @brief assign the `basic_fixed_length_string`
@@ -161,6 +166,67 @@ class basic_fixed_length_string
     {
         val = encode_(str);
         return *this;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator+(basic_fixed_length_string rhs) const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(this->val + rhs.val)};
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator-(basic_fixed_length_string rhs) const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(this->val - rhs.val)};
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator<<(std::size_t shift_amount) const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(this->val << shift_amount)};
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator<<=(std::size_t shift_amount) noexcept
+    {
+        this->val <<= shift_amount;
+        return *this;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator>>(std::size_t shift_amount) const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(this->val >> shift_amount)};
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator>>=(std::size_t shift_amount) noexcept
+    {
+        this->val >>= shift_amount;
+        return *this;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator&(basic_fixed_length_string rhs) const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(this->val & rhs.val)};
+    }
+
+    constexpr operator bool() const noexcept
+    {
+        return static_cast<bool>(static_cast<integral_type>(this->val));
     }
 
     /// @brief copy assignment
@@ -333,8 +399,7 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
     using U = typename T::integral_type;
-    static constexpr U value
-        = U{1} << bitlength_of_v<T> - 1ul;
+    static constexpr T value = U{1} << bitlength_of_v<T> - 1ul;
 };
 
 /// @brief specializes `dpf::countl_zero_symmetric_difference` for

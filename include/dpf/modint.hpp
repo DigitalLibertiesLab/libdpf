@@ -103,7 +103,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator+(integral_type rhs) const noexcept
     {
-        return modint{this->val+rhs};
+        return modint{static_cast<integral_type>(this->val+rhs)};
     }
 
     /// @details Performs addition with another `modint`.
@@ -183,7 +183,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator-(integral_type rhs) const noexcept
     {
-        return modint{this->val-rhs};
+        return modint{static_cast<integral_type>(this->val-rhs)};
     }
 
     /// @details Performs subtraction by another `modint`.
@@ -263,7 +263,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator<<(std::size_t shift_amount) const noexcept
     {
-        return modint{this->val << shift_amount};
+        return modint{static_cast<integral_type>(this->val << shift_amount)};
     }
 
     /// @brief bitwise-left-shift-assignment operator
@@ -271,7 +271,6 @@ class modint
     ///          and returns a reference to the result. Upon invoking `a<<=b`,
     ///          `a` is congruent to `a * 2^b` modulo `2^Nbits`.
     /// @param shift_amount the number of bits to shift by
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator<<=(std::size_t shift_amount) noexcept
@@ -288,10 +287,9 @@ class modint
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr modint operator>>(int shift_amount) const noexcept
+    constexpr modint operator>>(std::size_t shift_amount) const noexcept
     {
-        auto reduced = static_cast<integral_type>(*this);
-        return modint{reduced >> shift_amount};
+        return modint{static_cast<integral_type>(this->reduced_value() >> shift_amount)};
     }
 
     /// @brief bitwise-right-shift-assignment operator
@@ -299,12 +297,11 @@ class modint
     ///          right and returns a reference to the result. Upon invoking
     ///          `a>>=b`, `a` is equal to the integer part of `a/2^b`.
     /// @param shift_amount the number of bits to shift by
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr modint & operator>>=(int shift_amount) noexcept
+    constexpr modint & operator>>=(std::size_t shift_amount) noexcept
     {
-        this->val = static_cast<integral_type>(*this) >> shift_amount;
+        this->val = this->reduced_value() >> shift_amount;
         return *this;
     }
 
@@ -366,7 +363,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator&(integral_type rhs) const noexcept
     {
-        return modint{this->val & rhs};
+        return modint{static_cast<integral_type>(this->val & rhs)};
     }
 
     HEDLEY_CONST
@@ -490,7 +487,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr explicit operator integral_type() const noexcept
     {
-        return val & modulo_mask;
+        return this->reduced_value();
     }
 
     HEDLEY_CONST
@@ -498,7 +495,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr integral_type data() const noexcept
     {
-        return val;
+        return this->val;
     }
 
     template <typename CharT,
@@ -508,7 +505,7 @@ class modint
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const modint & i)
     {
-        return os << i.val;
+        return os << i.reduced_value();
     }
 
     template <typename CharT,
@@ -523,7 +520,12 @@ class modint
 
     constexpr operator bool() const noexcept
     {
-        return static_cast<bool>(static_cast<integral_type>(*this));
+        return static_cast<bool>(this->reduced_value());
+    }
+
+    constexpr integral_type reduced_value() const
+    {
+        return val & modulo_mask;
     }
 
   private:
