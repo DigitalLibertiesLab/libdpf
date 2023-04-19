@@ -48,9 +48,9 @@
 
 #include "dpf/output_buffer.hpp"
 
-// #include "dpf/parallel_bit_iterable_helpers.hpp"
+#include "dpf/parallel_bit_iterable_helpers.hpp"
 
-// #include "dpf/parallel_bit_iterable.hpp"
+#include "dpf/parallel_bit_iterable.hpp"
 
 #include "dpf/path_memoizer.hpp"
 
