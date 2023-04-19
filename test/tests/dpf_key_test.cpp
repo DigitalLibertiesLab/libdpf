@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "asio.hpp"
 #include "dpf.hpp"
 
 simde__m128i fake_root_sampler()

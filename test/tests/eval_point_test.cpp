@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "asio.hpp"
 #include "dpf.hpp"
 
 template <typename InputT,
@@ -266,7 +267,7 @@ TYPED_TEST_P(EvalPointTest, DistinguishedPoint)
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         output_type y0 = dpf::eval_point(dpf0, x),
                     y1 = dpf::eval_point(dpf1, x);
-        EXPECT_EQ(static_cast<output_type>(y1 - y0), y);
+        ASSERT_EQ(static_cast<output_type>(y1 - y0), y);
     }
 }
 
@@ -280,17 +281,15 @@ TYPED_TEST_P(EvalPointTest, SurroundingPoints)
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10)),
                     range = std::size_t(1) << range_bitlength;
-        for (std::size_t i = 1; i < range >> 1; ++i)
+        input_type xp = x, xm = x; ++xp; --xm;
+        for (std::size_t i = 1; i < range >> 1; ++i, ++xp, --xm)
         {
-            input_type input_i(i),
-                       xp = x + input_i,
-                       xm = x - input_i;
             output_type y0p = dpf::eval_point(dpf0, xp),
                         y1p = dpf::eval_point(dpf1, xp),
                         y0m = dpf::eval_point(dpf0, xm),
                         y1m = dpf::eval_point(dpf1, xm);
-            EXPECT_EQ(static_cast<output_type>(y1p - y0p), output_type(0));
-            EXPECT_EQ(static_cast<output_type>(y1m - y0m), output_type(0));
+            ASSERT_EQ(static_cast<output_type>(y1p - y0p), output_type(0));
+            ASSERT_EQ(static_cast<output_type>(y1m - y0m), output_type(0));
         }
     }
 }
@@ -304,7 +303,7 @@ using Types = testing::Types
     // test input types
     test_type<uint8_t, uint64_t>,
     test_type<simde_uint128, uint64_t>,
-    // test_type<dpf::bitstring<10>, uint64_t>,
+    test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
     test_type<dpf::xor_wrapper<uint64_t>, uint64_t>,
