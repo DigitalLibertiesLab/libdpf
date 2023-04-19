@@ -150,12 +150,6 @@ class basic_fixed_length_string
     noexcept
       : val{encode_(str)} { }
 
-    constexpr
-    // cppcheck-suppress noExplicitConstructor
-    basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
-    noexcept
-      : val{val} { }
-
     /// @}
 
     /// @brief assign the `basic_fixed_length_string`
@@ -169,22 +163,6 @@ class basic_fixed_length_string
     {
         val = encode_(str);
         return *this;
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator+(basic_fixed_length_string rhs) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val + rhs.val)};
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator-(basic_fixed_length_string rhs) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val - rhs.val)};
     }
 
     HEDLEY_CONST
@@ -217,6 +195,40 @@ class basic_fixed_length_string
     {
         this->val >>= shift_amount;
         return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator++() noexcept
+    {
+        val += 1;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator++(int) noexcept
+    {
+        auto ret = *this;
+        this->operator++();
+        return ret;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator--() noexcept
+    {
+        val -= 1;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator--(int) noexcept
+    {
+        auto ret = *this;
+        this->operator--();
+        return ret;
     }
 
     HEDLEY_CONST
@@ -286,6 +298,12 @@ class basic_fixed_length_string
     }
 
   private:
+    constexpr
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
+    noexcept
+      : val{val} { }
+
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer
     /// @throws `std::length_error` if `str` exceeds `max_length`
@@ -352,6 +370,9 @@ class basic_fixed_length_string
     }
 
     /// @}
+
+    friend struct utils::msb_of<basic_fixed_length_string>;
+    friend struct utils::mod_pow_2<basic_fixed_length_string>;
 };  // class dpf::basic_fixed_length_string
 
 /// @brief instantiation of the `dpf::basic_fixed_length_string` class that
@@ -424,6 +445,20 @@ struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT,
         constexpr auto adjust = utils::bitlength_of_v<typename T::integral_type>-T::bits;
         return clz(static_cast<typename T::integral_type>(lhs),
                    static_cast<typename T::integral_type>(rhs)) - adjust;
+    }
+};
+
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          class Traits,
+          class Alloc>
+struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val.val % (1ul << n));
     }
 };
 

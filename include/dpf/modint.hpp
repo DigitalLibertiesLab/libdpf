@@ -151,7 +151,6 @@ class modint
     /// @brief pre-increment operator
     /// @details Increments this `modint` and returns a reference to the
     ///          result.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator++() noexcept
@@ -162,7 +161,6 @@ class modint
     /// @brief post-increment operator
     /// @details Creates a copy of this `modint`, and then increments this
     ///          `modint` and returns the copy from before the increment.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator++(int) noexcept
@@ -231,7 +229,6 @@ class modint
     /// @brief pre-decrement operator
     /// @details Decrements this `modint` and returns a reference to the
     ///          result.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator--() noexcept
@@ -242,7 +239,6 @@ class modint
     /// @brief post-decrement operator
     /// @details Creates a copy of this `modint`, and then decrements this
     ///          `modint` and returns the copy from before the decrement.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator--(int) noexcept
@@ -535,6 +531,8 @@ class modint
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;
+
+    friend struct utils::mod_pow_2<modint>;
 };
 
 /// @brief Multiplies a `modint<Nbits>` with an `modint::integral_type`.
@@ -653,6 +651,16 @@ struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
         {
             return psnip_builtin_clz64(static_cast<uint64_t>(diff))-adjust;
         }
+    }
+};
+
+template <std::size_t Nbits>
+struct mod_pow_2<dpf::modint<Nbits>>
+{
+    using T = dpf::modint<Nbits>;
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val.val % (1ul << n));
     }
 };
 

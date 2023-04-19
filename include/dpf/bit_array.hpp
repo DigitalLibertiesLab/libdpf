@@ -1098,7 +1098,6 @@ class bit_array_base
         // arr_[data_length_] = sentinel;
     }
 
-  protected:
     /// @brief an all-`1`s sentinel word marking the end of the data
     /// @note `sentinel` exists to assist `setbit_index_iterator` in deciding
     ///       if it has hit the end of the data array
