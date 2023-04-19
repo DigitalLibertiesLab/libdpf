@@ -36,8 +36,18 @@ namespace dpf
 /// @details A `bit_array` represents a (dynamically-allocated) fixed-size
 ///          sequence of bits. The underlying storage is an array of integers
 ///          of type `dpf::bit_array::word_type`.
+template <typename ChildT>
 class bit_array_base
 {
+  private:
+    constexpr auto child_from_this()
+    {
+        return reinterpret_cast<ChildT *>(this);
+    }
+    constexpr auto child_from_this() const
+    {
+        return reinterpret_cast<const ChildT *>(this);
+    }
   public:
     class bit_reference;       // forward reference
     class bit_iterator;        // forward reference
@@ -85,8 +95,6 @@ class bit_array_base
         std::log2(bits_per_word);
     static_assert(bits_per_word == 64, "bits_per_word not equal to 64");
 
-    bit_array_base() = delete;
-
     /// @brief default copy constructor
     inline constexpr bit_array_base(const bit_array_base &) = default;
 
@@ -108,7 +116,7 @@ class bit_array_base
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr word_pointer data() const noexcept { return arr_; }
+    constexpr word_pointer data() const noexcept { return child_from_this()->data(); }  // TODO
 
     /// @brief direct access into the underlying data array (w/o bounds
     ///        checking)
@@ -119,14 +127,26 @@ class bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr word_type & data(size_type pos) const noexcept
     {
-        return arr_[pos];
+        return data()[pos];
     }
 
-    /// @brief length of the underlying data array
-    /// @return the number of elements in the underlying array (excluding a
-    ///         non-data sentinel element)
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
-    constexpr size_type data_length() const noexcept { return data_length_; }
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() noexcept { return child_from_this()->data(); }
+
+    /// @brief direct access into the underlying data array (w/o bounds
+    ///        checking)
+    /// @param pos the array element to access
+    /// @note Does not perform bounds checking; behaviour is undefined if
+    ///       `pos` is out of bounds
+    /// @return `data()[pos]`
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type & data(size_type pos) noexcept
+    {
+        return data()[pos];
+    }
 
     /// @brief access specified bit (w/o bounds checking)
     /// @{
@@ -141,7 +161,7 @@ class bit_array_base
     HEDLEY_NO_THROW
     inline constexpr reference operator[](size_type pos) noexcept
     {
-        return reference{&arr_[pos / bits_per_word],
+        return reference{&data()[pos / bits_per_word],
             word_type(1) << (pos % bits_per_word)};
     }
 
@@ -155,8 +175,8 @@ class bit_array_base
     HEDLEY_NO_THROW
     inline constexpr const_reference operator[](size_type pos) const noexcept
     {
-        return reference{&arr_[pos / bits_per_word],
-            word_type(1) << (pos % bits_per_word)};
+        auto tmp = data(pos / bits_per_word);
+        return reference{&tmp, word_type(1) << (pos % bits_per_word)};
     }
     /// @}
 
@@ -200,19 +220,19 @@ class bit_array_base
     /// @complexity `O(1)`
     constexpr iterator begin() noexcept
     {
-        return iterator{arr_, word_type(1)};
+        return iterator{data(), word_type(1)};
     }
     /// @returns iterator to the first element
     /// @complexity `O(1)`
     constexpr const_iterator begin() const noexcept
     {
-        return const_iterator{arr_, word_type(1)};
+        return const_iterator{data(), word_type(1)};
     }
     /// @returns iterator to the first element
     /// @complexity `O(1)`
     constexpr const_iterator cbegin() const noexcept
     {
-        return const_iterator{arr_, word_type(1)};
+        return const_iterator{data(), word_type(1)};
     }
     /// @}
 
@@ -222,22 +242,22 @@ class bit_array_base
     /// @complexity `O(1)`
     constexpr iterator end() noexcept
     {
-        return bit_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
-            word_type(1) << num_bits_ % bits_per_word};
+        return bit_iterator{data() + (size() >> lg_bits_per_word),
+            word_type(1) << size() % bits_per_word};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator end() const noexcept
     {
-        return const_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
-            word_type(1) << num_bits_ % bits_per_word};
+        return const_iterator{data() + (size() >> lg_bits_per_word),
+            word_type(1) << size() % bits_per_word};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator cend() const noexcept
     {
-        return const_iterator{arr_ + (num_bits_ >> lg_bits_per_word),
-            word_type(1) << num_bits_ % bits_per_word};
+        return const_iterator{data() + (size() >> lg_bits_per_word),
+            word_type(1) << size() % bits_per_word};
     }
     /// @}
 
@@ -258,7 +278,7 @@ class bit_array_base
     /// @complexity `O(size())`
     bool all() const noexcept
     {
-        return ~word_type(0) == std::accumulate(arr_, arr_+data_length_,
+        return ~word_type(0) == std::accumulate(data(), data()+data_length_(),
             word_type(0), std::bit_and<word_type>{});
     }
 
@@ -282,7 +302,7 @@ class bit_array_base
     /// @complexity `O(size())`
     bool any() const noexcept
     {
-        return word_type(0) != std::accumulate(arr_, arr_+data_length_,
+        return word_type(0) != std::accumulate(data(), data()+data_length_(),
             word_type(0), std::bit_or<word_type>{});
     }
 
@@ -329,7 +349,7 @@ class bit_array_base
     /// @complexity `O(size())`
     size_type count() const noexcept
     {
-        return std::accumulate(arr_, arr_+data_length_, size_type(0),
+        return std::accumulate(data(), data()+data_length_(), size_type(0),
             [](word_type lhs, word_type rhs)
             {
                 return lhs + psnip_builtin_popcount64(rhs);
@@ -360,7 +380,7 @@ class bit_array_base
     /// @complexity `O(size())`
     size_type parity() const noexcept
     {
-        auto x = std::accumulate(arr_, arr_+data_length_, word_type(0),
+        auto x = std::accumulate(data(), data()+data_length_(), word_type(0),
             std::bit_xor<word_type>{});
         return psnip_builtin_parity64(x);
     }
@@ -382,13 +402,13 @@ class bit_array_base
     /// @}
 
     /// @brief returns the number of bits
-    HEDLEY_PURE
-    HEDLEY_ALWAYS_INLINE
     /// @returns number of bits that the `bit_array_base` holds
     /// @complexity `O(1)`
+    HEDLEY_PURE
+    HEDLEY_ALWAYS_INLINE
     constexpr size_type size() const noexcept
     {
-        return num_bits_;
+        return child_from_this()->size();
     }
 
     /// @brief sets bits to `true` or given value
@@ -397,7 +417,7 @@ class bit_array_base
     /// @complexity `O(size())`
     void set() noexcept
     {
-        std::fill(arr_, arr_+data_length_, ~word_type(0));
+        std::fill(data(), data()+data_length_(), ~word_type(0));
     }
     /// @brief sets the bit at position `pos` to the value `value`
     /// @param pos the 0-based position of the bit to set (least significant
@@ -430,7 +450,7 @@ class bit_array_base
     /// @complexity `O(size())`
     void unset() noexcept
     {
-        std::fill(arr_, arr_+data_length_, word_type(0));
+        std::fill(data(), data()+data_length_(), word_type(0));
     }
     /// @brief sets the bit at position `pos` to `false`
     /// @param pos the 0-based position of the bit to unset (least
@@ -455,7 +475,7 @@ class bit_array_base
     /// @complexity `O(size())`
     void flip()
     {
-        std::transform(arr_, arr_+data_length_, arr_,
+        std::transform(data(), data()+data_length_(), data(),
             std::bit_not<word_type>{});
     }
     /// @brief flips the bit at the position `pos`
@@ -835,12 +855,20 @@ class bit_array_base
             increment_by(-amt);
         }
 
-        friend difference_type operator-(const bit_iterator_base &,
-            const bit_iterator_base &);
+        friend difference_type operator-(const bit_iterator_base & lhs,
+            const bit_iterator_base & rhs)
+        {
+            constexpr auto bits_per_word
+                = bit_array_base::bit_iterator_base::bits_per_word;
+            return bits_per_word*(lhs.word_ptr_ - rhs.word_ptr_)
+                + (psnip_builtin_ctz64(lhs.mask_) - psnip_builtin_ctz64(rhs.mask_));
+        }
     };  // class bit_array_base::bit_iterator_base
 
     class bit_iterator final : public bit_iterator_base
     {
+      private:
+        using base = typename bit_array_base<ChildT>::bit_iterator_base;
       public:
         using value_type = bit_array_base::value_type;
         using reference = bit_array_base::reference;
@@ -881,7 +909,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr reference operator*() const
         {
-            return reference{word_ptr_, mask_};
+            return reference{base::word_ptr_, base::mask_};
         }
 
         HEDLEY_ALWAYS_INLINE
@@ -958,6 +986,8 @@ class bit_array_base
 
     class const_bit_iterator final : public bit_iterator_base
     {
+      private:
+        using base = typename bit_array_base<ChildT>::bit_iterator_base;
       public:
         using value_type = bit_array_base::value_type;
         using reference = bit_array_base::const_reference;
@@ -1014,7 +1044,7 @@ class bit_array_base
         HEDLEY_ALWAYS_INLINE
         constexpr const_reference operator*() const
         {
-            return bit_reference{word_ptr_, mask_};
+            return bit_reference{base::word_ptr_, base::mask_};
         }
 
         HEDLEY_ALWAYS_INLINE
@@ -1087,47 +1117,32 @@ class bit_array_base
 
         friend class bit_array_base;
     };  // class bit_array_base::const_bit_iterator
+  private:
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type data_length_() const noexcept { return child_from_this()->data_length(); }
 
   protected:
-    /// @brief constructs a `bit_array_base` that holds `num_bits` bits
-    inline constexpr bit_array_base(size_type num_bits, word_pointer arr)
-      : num_bits_{num_bits},
-        data_length_{utils::quotient_ceiling(num_bits, bits_per_word)},
-        arr_{arr}
-    {
-        // arr_[data_length_] = sentinel;
-    }
-
+    /// @brief constructs a `bit_array_base`
+    inline constexpr bit_array_base() = default;
     /// @brief an all-`1`s sentinel word marking the end of the data
     /// @note `sentinel` exists to assist `setbit_index_iterator` in deciding
     ///       if it has hit the end of the data array
     static constexpr word_type sentinel = ~word_type(0);
-
-    /// @brief the number of bits represented by the `bit_array_base`
-    size_type num_bits_;
-    /// @brief the number of `word_type`s are being used to represent the
-    ///        `num_bits_` bits
-    size_type data_length_;
-
-    /// @brief the array
-    word_pointer arr_;
 };  // class bit_array_base
 
-inline bit_array_base::bit_iterator_base::difference_type operator-(
-    const bit_array_base::bit_iterator_base & lhs,
-    const bit_array_base::bit_iterator_base & rhs)
-{
-    constexpr auto bits_per_word
-        = bit_array_base::bit_iterator_base::bits_per_word;
-    return bits_per_word*(lhs.word_ptr_ - rhs.word_ptr_)
-        + (psnip_builtin_ctz64(lhs.mask_) - psnip_builtin_ctz64(rhs.mask_));
-}
-
 template <std::size_t Nbits>
-class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
+class alignas(utils::max_align_v) static_bit_array final
+  : public bit_array_base<static_bit_array<Nbits>>
 {
-    static constexpr std::size_t length_in_words
-        = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
+  private:
+    using base = bit_array_base<static_bit_array<Nbits>>;
+    using word_pointer = typename base::word_pointer;
+    using word_type = typename base::word_type;
+    using size_type = typename base::size_type;
+    static constexpr auto bits_per_word = base::bits_per_word;
+    /// @brief the number of `word_type`s are being used to represent the
+    ///        `size()` bits
+    static constexpr size_type data_length_ = utils::quotient_ceiling(Nbits, bits_per_word);
   public:
     constexpr static_bit_array(static_bit_array &&) noexcept = default;
     constexpr static_bit_array(const static_bit_array &) noexcept = default;
@@ -1136,12 +1151,23 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
     constexpr static_bit_array & operator=(const static_bit_array &) noexcept = default;
     /// @brief constructs a `static_bit_array` that holds `num_bits` bits
     inline constexpr static_bit_array()
-      : bit_array_base{Nbits, &arr[0]} { arr_[data_length_] = sentinel; }
-    inline constexpr explicit static_bit_array(std::size_t val)
-      : bit_array_base{Nbits, &arr[0]}
     {
-        arr_[0] = val;
-        arr_[data_length_] = sentinel;
+        data_[data_length_] = base::sentinel;
+    }
+    
+    inline constexpr explicit static_bit_array(std::size_t val)
+    {
+        data_[0] = val;
+        data_[data_length_] = base::sentinel;
+    }
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() noexcept
+    {
+        return static_cast<word_pointer>(__builtin_assume_aligned(std::data(data_), utils::max_align_v));
     }
 
     /// @brief direct access to the underlying data array
@@ -1150,32 +1176,52 @@ class alignas(utils::max_align_v) static_bit_array final : public bit_array_base
     HEDLEY_NO_THROW
     constexpr word_pointer data() const noexcept
     {
-        return static_cast<word_pointer>(__builtin_assume_aligned(&arr[0], utils::max_align_v));
+        return const_cast<word_pointer>(static_cast<const word_pointer>(__builtin_assume_aligned(std::data(data_), utils::max_align_v)));
+    }
+
+
+    /// @brief length of the underlying data array
+    /// @return the number of elements in the underlying array (excluding a
+    ///         non-data sentinel element)
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type data_length() const noexcept
+    {
+        return data_length_;
+    }
+
+    /// @brief returns the number of bits
+    /// @returns number of bits that the `static_bit_array` holds
+    /// @complexity `O(1)`
+    HEDLEY_PURE
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type size() const noexcept
+    {
+        return Nbits;
     }
 
   private:
-    alignas(utils::max_align_v) std::array<word_type, length_in_words> arr;
+    alignas(utils::max_align_v) std::array<word_type, data_length_+1> data_;
 };
 
-class dynamic_bit_array : public bit_array_base
+class dynamic_bit_array
+  : public bit_array_base<dynamic_bit_array>
 {
+  private:
+    using base = bit_array_base<dynamic_bit_array>;
+    using word_pointer = typename base::word_pointer;
+    using word_type = typename base::word_type;
+    static constexpr auto bits_per_word = base::bits_per_word;
   public:
-    constexpr dynamic_bit_array(dynamic_bit_array && other) noexcept
-        : bit_array_base(other)
-    {
-        other.arr_ = nullptr;
-    }
+    constexpr dynamic_bit_array(dynamic_bit_array && other) = default;
     constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
     /// @throws std::bad_alloc if allocating storage fails
     inline explicit dynamic_bit_array(std::size_t nbits)
-      : bit_array_base{nbits, static_cast<word_pointer>(
-            std::aligned_alloc(utils::max_align_v, sizeof(word_type) *
-                utils::quotient_ceiling(nbits+bits_per_word, bits_per_word)))
-            }
+      : data_length_{utils::quotient_ceiling(nbits, bits_per_word)},
+        data_{static_cast<word_pointer>(std::aligned_alloc(utils::max_align_v, sizeof(word_type) * (data_length_+1)))}
     {
-        if (HEDLEY_UNLIKELY(arr_ == nullptr)) throw std::bad_alloc{};
-        arr_[data_length_] = sentinel;
+        if (HEDLEY_UNLIKELY(data_ == nullptr)) throw std::bad_alloc{};
+        data_[data_length_] = base::sentinel;
     }
 
     dynamic_bit_array & operator=(dynamic_bit_array &&) noexcept = default;
@@ -1185,7 +1231,25 @@ class dynamic_bit_array : public bit_array_base
     HEDLEY_NO_THROW
     ~dynamic_bit_array() noexcept
     {
-        if (arr_ != nullptr) free(arr_);
+        if (data_ != nullptr) free(data_);
+    }
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() noexcept
+    {
+        return static_cast<word_pointer>(__builtin_assume_aligned(data_, utils::max_align_v));
+    }
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_type & data(std::size_t i) noexcept
+    {
+        return this->data()[i];
     }
 
     /// @brief direct access to the underlying data array
@@ -1194,63 +1258,94 @@ class dynamic_bit_array : public bit_array_base
     HEDLEY_NO_THROW
     constexpr word_pointer data() const noexcept
     {
-        return static_cast<word_pointer>(__builtin_assume_aligned(arr_, utils::max_align_v));
+        return const_cast<word_pointer>(static_cast<const word_pointer>(__builtin_assume_aligned(data_, utils::max_align_v)));
     }
 
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
-    constexpr word_type & data(size_type pos) const noexcept
+    HEDLEY_NO_THROW
+    constexpr const word_type & data(std::size_t i) const noexcept
     {
-        return data()[pos];
+        return this->data()[i];
     }
+
+
+    /// @brief length of the underlying data array
+    /// @return the number of elements in the underlying array (excluding a
+    ///         non-data sentinel element)
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type data_length() const noexcept
+    {
+        return data_length_;
+    }
+
+    /// @brief returns the number of bits
+    /// @returns number of bits that the `dynamic_bit_array` holds
+    /// @complexity `O(1)`
+    HEDLEY_PURE
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type size() const noexcept
+    {
+        return num_bits_;
+    }
+
+  private:
+    size_type num_bits_;
+    word_pointer data_;
+    /// @brief the number of `word_type`s are being used to represent the
+    ///        `size()` bits
+    size_type data_length_;
 };
 
-/// @brief
-inline constexpr void swap(bit_array_base::bit_reference & lhs,
-    bit_array_base::bit_reference & rhs) noexcept
-{
-    bool tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
-}
+// /// @brief
+// inline constexpr void swap(bit_array_base::bit_reference & lhs,
+//     bit_array_base::bit_reference & rhs) noexcept
+// {
+//     bool tmp = lhs;
+//     lhs = rhs;
+//     rhs = tmp;
+// }
 
-inline std::ostream & operator<<(std::ostream & os, bit_array_base::bit_reference bit)
-{
-    return os << dpf::to_string(bit);
-}
+// template <typename ChildT>
+// inline std::ostream & operator<<(std::ostream & os, bit_array_base<ChildT>::bit_reference bit)
+// {
+//     return os << dpf::to_string(bit);
+// }
 
 }  // namespace dpf
 
-namespace std
-{
+// namespace std
+// {
 
-template <>
-struct iterator_traits<dpf::bit_array_base::iterator>
-{
-  private:
-    using type = dpf::bit_array_base::iterator;
-  public:
-    using iterator_category = type::iterator_category;
-    using difference_type = type::difference_type;
-    using value_type = type::value_type;
-    using reference = type::reference;
-    using const_reference = type::const_reference;
-    using pointer = type::pointer;
-};
+// template <>
+// struct iterator_traits<dpf::bit_array_base::iterator>
+// {
+//   private:
+//     using type = dpf::bit_array_base::iterator;
+//   public:
+//     using iterator_category = type::iterator_category;
+//     using difference_type = type::difference_type;
+//     using value_type = type::value_type;
+//     using reference = type::reference;
+//     using const_reference = type::const_reference;
+//     using pointer = type::pointer;
+// };
 
-template <>
-struct iterator_traits<dpf::bit_array_base::const_iterator>
-{
-  private:
-    using type = dpf::bit_array_base::const_iterator;
-  public:
-    using iterator_category = type::iterator_category;
-    using difference_type = type::difference_type;
-    using value_type = type::value_type;
-    using reference = type::reference;
-    using const_reference = type::const_reference;
-    using pointer = type::pointer;
-};
+// template <>
+// struct iterator_traits<dpf::bit_array_base::const_iterator>
+// {
+//   private:
+//     using type = dpf::bit_array_base::const_iterator;
+//   public:
+//     using iterator_category = type::iterator_category;
+//     using difference_type = type::difference_type;
+//     using value_type = type::value_type;
+//     using reference = type::reference;
+//     using const_reference = type::const_reference;
+//     using pointer = type::pointer;
+// };
 
-}  // namespace std
+// }  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_BIT_ARRAY_HPP__
