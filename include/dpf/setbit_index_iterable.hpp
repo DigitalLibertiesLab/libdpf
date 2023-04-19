@@ -273,23 +273,23 @@ void for_each_set_index(const bit_array_base<ChildT> & arr, UnaryFunction f)
 
 }  // namespace dpf
 
-// namespace std
-// {
+namespace std
+{
 
-// template <>
-// struct iterator_traits<dpf::setbit_index_iterable::const_iterator>
-// {
-//   private:
-//     using type = dpf::setbit_index_iterable::const_iterator;
-//   public:
-//     using iterator_category = type::iterator_category;
-//     using difference_type = type::difference_type;
-//     using value_type = type::value_type;
-//     using reference = type::reference;
-//     using const_reference = type::const_reference;
-//     using pointer = type::pointer;
-// };
+template <typename ChildT>
+struct iterator_traits<dpf::const_setbit_iterator<ChildT>>
+{
+  private:
+    using type = dpf::const_setbit_iterator<ChildT>;
+  public:
+    using iterator_category = typename type::iterator_category;
+    using difference_type = typename type::difference_type;
+    using value_type = typename type::value_type;
+    using reference = typename type::reference;
+    using const_reference = typename type::const_reference;
+    using pointer = typename type::pointer;
+};
 
-// }  // namespace std
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_SETBIT_INDEX_ITERABLE_HPP__
