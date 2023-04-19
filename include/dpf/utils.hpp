@@ -260,6 +260,15 @@ static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
 }
 
 template <typename T>
+struct mod_pow_2
+{
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val % (1ul << n));
+    }
+};
+
+template <typename T>
 struct msb_of
   : public std::integral_constant<T, T{1} << bitlength_of_v<T> - 1ul> { };
 

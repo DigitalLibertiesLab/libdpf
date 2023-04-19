@@ -76,8 +76,8 @@ template <typename OutputT,
           typename InputT>
 constexpr std::size_t offset_within_block(InputT x) noexcept
 {
-    constexpr auto to_int = utils::to_integral_type<InputT>{};
-    return static_cast<std::size_t>(to_int(x) % dpf::outputs_per_leaf_v<OutputT, NodeT>);
+    constexpr auto mod = utils::mod_pow_2<InputT>{};
+    return mod(x, dpf::lg_outputs_per_leaf_v<OutputT, NodeT>);
 }
 
 template <std::size_t I,

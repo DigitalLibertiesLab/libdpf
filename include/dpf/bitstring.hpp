@@ -362,6 +362,52 @@ class bitstring : public bit_array_base
             rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
     }
 
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bitstring & operator++() noexcept
+    {
+        arr[0] += 1;
+        word_type carry = arr[0] == word_type{0} ? 1 : 0;
+        for (std::size_t i = 1; i < arr.size() && carry == 1; ++i)
+        {
+            arr[i] += carry;
+            carry = arr[i] == word_type{0} ? 1 : 0;
+        }
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bitstring operator++(int) noexcept
+    {
+        auto ret = *this;
+        this->operator++();
+        return ret;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bitstring & operator--() noexcept
+    {
+        arr[0] -= 1;
+        word_type borrow = arr[0] == ~word_type{0} ? 1 : 0;
+        for (std::size_t i = 1; i < arr.size() && borrow == 1; ++i)
+        {
+            arr[i] -= borrow;
+            borrow = arr[i] == ~word_type{0} ? 1 : 0;
+        }
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bitstring operator--(int) noexcept
+    {
+        auto ret = *this;
+        this->operator--();
+        return ret;
+    }
+
     /// @}
 
   private:
@@ -383,7 +429,8 @@ class bitstring : public bit_array_base
         return ret;
     }
 
-    friend struct utils::to_integral_type<dpf::bitstring<Nbits>>;
+    friend struct utils::to_integral_type<bitstring>;
+    friend struct utils::mod_pow_2<bitstring>;
 };  // class dpf::bitstring
 
 template <std::size_t Nbits>
@@ -467,6 +514,16 @@ struct to_integral_type<dpf::bitstring<Nbits>>
             }
             return ret;
         }
+    }
+};
+
+template <std::size_t Nbits>
+struct mod_pow_2<dpf::bitstring<Nbits>>
+{
+    using T = dpf::bitstring<Nbits>;
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val.arr[0] % (1ul << n));
     }
 };
 

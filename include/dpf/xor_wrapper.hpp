@@ -160,6 +160,41 @@ struct xor_wrapper
         return *this;
     }
 
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper & operator++() noexcept
+    {
+        ++value;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper operator++(int) noexcept
+    {
+        auto ret = *this;
+        this->operator++();
+        return ret;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper & operator--() noexcept
+    {
+        --value;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper operator--(int) noexcept
+    {
+        auto ret = *this;
+        this->operator--();
+        return ret;
+    }
+
   private:
     value_type value;
 
@@ -235,7 +270,8 @@ struct xor_wrapper
         return is >> val.value;
     }
 
-    friend struct utils::to_integral_type<xor_wrapper<T>>;
+    friend struct utils::to_integral_type<xor_wrapper>;
+    friend struct utils::mod_pow_2<xor_wrapper>;
 };
 
 using xint128_t = xor_wrapper<simde_uint128>;  ///< `xor_wrapper<simde_uint128>`
@@ -276,6 +312,16 @@ struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
     constexpr integral_type operator()(xor_wrapper<T> & input) const noexcept
     {
         return to_integral_type_cast(input.value);
+    }
+};
+
+template <typename T>
+struct mod_pow_2<xor_wrapper<T>>
+{
+    static constexpr auto mod = mod_pow_2<T>{};
+    std::size_t operator()(xor_wrapper<T> val, std::size_t n) const noexcept
+    {
+        return mod(val.value, n);
     }
 };
 
