@@ -133,8 +133,21 @@ template <> simde__m128i to_exterior_node<simde__m128i, simde__m256i>(simde__m25
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,
-        std::numeric_limits<T>::is_specialized ? 
-            std::numeric_limits<T>::digits
+        std::is_integral_v<T> ?
+            // we cannot leverage `std::make_unsigned_t` here since `T` might
+            // not be an integral type at all (i.e., this ternary might take
+            // the other path); thus, we resort to a bit of a hack.
+            // If `T==bool`, then `digits==1`; otherwise, if `T` is a signed
+            // integral type, then `digits==bitlength-1`; otherwise if, `T` is
+            // an unsigned integral type, then `digits==bitlength`; otherwise,
+            // we take the other branch.
+            //
+            // We want each of these to return the `bitlength`. So we add
+            // `CHAR_BIT-1` so that `bool` maps to `8`, signed types with
+            // `8l-1` digits map to `8l+6`, and unsigned types with `8l`
+            // digits map to `8l+7`. We then use integer division and
+            // multiplication to round down to the nearest multiple of `8`.
+            ((static_cast<unsigned int>(std::numeric_limits<T>::digits)+CHAR_BIT-1)/CHAR_BIT)*CHAR_BIT
           : CHAR_BIT * sizeof(T)> { };
 
 template <typename T>
