@@ -44,7 +44,8 @@ struct xor_wrapper
     constexpr xor_wrapper(xor_wrapper &&) noexcept = default;
 
     /// @brief Value c'tor
-    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT(runtime/explicit)
 
     /// @}
 
@@ -258,6 +259,9 @@ struct msb_of<xor_wrapper<T>>
 {
     static constexpr xor_wrapper<T> value = xor_wrapper<T>{T{1} << bitlength_of_v<T> - 1ul};
 };
+
+template <typename T>
+struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
 
 template <typename T>
 struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>

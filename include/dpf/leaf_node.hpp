@@ -15,6 +15,7 @@
 #include <cstring>
 #include <functional>
 #include <tuple>
+#include <shared_mutex>
 
 #include "simde/simde/x86/avx2.h"
 
@@ -134,6 +135,50 @@ template <typename NodeT,
           typename OutputT,
           typename ...OutputTs>
 using leaf_tuple_t = typename leaf_tuple<NodeT, OutputT, OutputTs...>::type;
+
+template <bool isWildcard,
+          typename NodeT,
+          typename OutputT,
+          std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
+struct beaver final { };
+
+
+template <typename NodeT,
+          typename OutputT>
+struct beaver<true, NodeT, OutputT, 1> final
+{
+    static_assert(1 == outputs_per_leaf_v<OutputT, NodeT>);
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
+    beaver(beaver &&) = default;
+    std::unique_ptr<std::atomic_flag> is_locked;
+};
+
+template <typename NodeT,
+          typename OutputT,
+          std::size_t outputs_per_leaf>
+struct beaver<true, NodeT, OutputT, outputs_per_leaf> final
+{
+    static_assert(outputs_per_leaf == outputs_per_leaf_v<OutputT, NodeT>);
+    beaver() : is_locked{new std::atomic_flag{ATOMIC_FLAG_INIT}} { }
+
+    std::unique_ptr<std::atomic_flag> is_locked;
+    OutputT output_blind;
+    NodeT vector_blind;
+    NodeT blinded_vector;
+};
+
+template <typename NodeT,
+          typename OutputT,
+          typename ...OutputTs>
+struct beaver_tuple
+{
+    using type = std::tuple<beaver<is_wildcard_v<OutputT>, NodeT, concrete_type_t<OutputT>>,
+                            beaver<is_wildcard_v<OutputTs>, NodeT, concrete_type_t<OutputTs>>...>;
+};
+template <typename NodeT,
+          typename OutputT,
+          typename ...OutputTs>
+using beaver_tuple_t = typename beaver_tuple<NodeT, OutputT, OutputTs...>::type;
 
 template <typename NodeT,
           typename OutputT>
@@ -264,63 +309,113 @@ auto make_leaves_impl(InputT x, const ExteriorBlock & seed0, const ExteriorBlock
 template <typename ExteriorPRG,
           typename InputT,
           typename ExteriorBlock,
+          typename OutputT,
           typename ...OutputTs,
-          typename Indices = std::make_index_sequence<sizeof...(OutputTs)>>
+          typename Indices = std::make_index_sequence<1+sizeof...(OutputTs)>>
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
-    bool sign, OutputTs... ys)
+    bool sign, OutputT y, OutputTs... ys)
 {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using node_type = typename ExteriorPRG::block_type;
-    auto tup = make_leaves_impl<ExteriorPRG>(x, seed0, seed1, sign, Indices{}, ys...);
+    using leaf_type = dpf::leaf_tuple_t<node_type, OutputT, OutputTs...>;
+    using beaver_type = dpf::beaver_tuple_t<node_type, OutputT, OutputTs...>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
+    leaf_type leaves = make_leaves_impl<ExteriorPRG>(x, seed0, seed1, sign, Indices{}, y, ys...);
+    beaver_type beavers{};
 
     // post-processing to secret-share any wildcard leaves
     // that is, after the call to `make_leaves_impl`, any values that were
     // should be `wildcards` will currently have a correction_word for `0` in
-    // `tup`. Below is a glorified loop that creates two tuples from `tup`
-    // (stored in the pair `ret`). For concrete types, it simply copies the
-    // corresponding correction_words from `tup`; for the `wildcard`s, it
+    // `leaves`. Below is a glorified loop that creates two tuples from `leaves`
+    // (stored in the pair `return_tuple`). For concrete output_types, it simply copies the
+    // corresponding correction_words from `leaves`; for the `wildcard`s, it
     // additively shares them.
 
-    std::pair<decltype(tup), decltype(tup)> ret;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    std::pair<
+        std::pair<leaf_type, beaver_type>,
+        std::pair<leaf_type, beaver_type> > return_tuple;
 
     // N.B.: Despite the nesting, the loops below advance in lockstep, making
     // only a single pass over each of the tuples being looped over
 
-    // loop over the original inputs (to interrogate their types)
-    std::apply([&ret, &tup](auto && ...types)
+    // loop over the original inputs (to interrogate their output_types)
+    std::apply([x, &return_tuple, &leaves](auto && ...output_types)
     {
-        // loop over the elements of `tup`, our "template" for a leaf tuple
-        std::apply([&ret, &types...](auto && ...args0)
+        // loop over the elements of `leaves`, our "template" for a leaf tuple
+        std::apply([x, &return_tuple, &output_types...](auto && ...args0)
         {
-            // and also over the elements of `ret.first`, the first output
-            std::apply([&ret, &types..., &args0...](auto && ...args1)
+            // and also over the elements of `return_tuple.first.first`, the first leaf tuple
+            std::apply([x, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
             {
-                // and also `ret.second`, the secound output
-                std::apply([&types..., &args0..., &args1...](auto && ...args2)
+                // and also `return_tuple.second.first`, the secound leaf tuple
+                std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
                 {
-                    // lambda to decide whether to copy the leaf (for concrete types)
-                    // or whether to secret share it (for wildcard types)
-                    ([](auto & type, auto & arg0, auto & arg1, auto & arg2)
+                    // plus `return_tuple.first.second`, the first beaver tuple
+                    std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
                     {
-                        using auto_type = typename std::remove_reference_t<decltype(type)>;
-                        if constexpr (dpf::is_wildcard_v<auto_type>)
+                        // and `return_tuple.second.second`, the secound beaver tuple
+                        std::apply([x, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
                         {
-                            // secret share the value
-                            dpf::uniform_fill(arg1);
-                            arg2 = dpf::subtract_leaf<concrete_type_t<auto_type>>(arg0, arg1);
-                        }
-                        else
-                        {
-                            // copy concrete value
-                            arg1 = arg0;
-                            arg2 = arg0;
-                        }
-                    }(types, args0, args1, args2), ...);
-                }, ret.second);
-            }, ret.first);
-        }, tup);
-    }, std::make_tuple(ys...));
+                            // lambda to decide whether to copy the leaf (for concrete output_types)
+                            // or whether to secret share it (for wildcard output_types)
+                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1)
+                            {
+                                using output_type = typename std::remove_reference_t<decltype(type)>;
+                                if constexpr(dpf::is_wildcard_v<output_type>)
+                                {
+                                    using concrete_type = dpf::concrete_type_t<output_type>;
+                                    // secret share the value
+                                    dpf::uniform_fill(leaf0);
+                                    leaf1 = dpf::subtract_leaf<concrete_type>(leaf, leaf0);
+                                    // also initialize the beavers
+                                    if constexpr(dpf::outputs_per_leaf_v<concrete_type, node_type> > 1)
+                                    {
+                                        dpf::leaf_node_t<node_type, concrete_type> vector;
+                                        if constexpr(utils::is_xor_wrapper_v<decltype(x)> == true)
+                                        {
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(~0));
+                                        }
+                                        else
+                                        {
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(1));
+                                        }
 
-    return ret;
+                                        uniform_fill(beaver0.output_blind);
+                                        uniform_fill(beaver0.vector_blind);
+
+                                        uniform_fill(beaver1.output_blind);
+                                        uniform_fill(beaver1.vector_blind);
+
+                                        beaver0.blinded_vector = dpf::add_leaf<output_type>(vector, beaver1.vector_blind);
+                                        beaver1.blinded_vector = dpf::add_leaf<output_type>(vector, beaver0.vector_blind);
+
+                                        leaf0= dpf::add_leaf<output_type>(leaf0,
+                                            dpf::multiply_leaf(beaver0.vector_blind, beaver1.output_blind));
+                                        leaf1= dpf::add_leaf<output_type>(leaf1,
+                                            dpf::multiply_leaf(beaver1.vector_blind, beaver0.output_blind));
+                                    }
+                                }
+                                else
+                                {
+                                    // copy concrete value; beaver is a trivial type
+                                    leaf0 = leaf;
+                                    leaf1 = leaf;
+                                }
+                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1), ...);
+                        }, return_tuple.second.second);
+                    }, return_tuple.first.second);
+                }, return_tuple.second.first);
+            }, return_tuple.first.first);
+        }, leaves);
+    }, std::make_tuple(y, ys...));
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
+
+    return return_tuple;
 }
 
 }  // namespace dpf

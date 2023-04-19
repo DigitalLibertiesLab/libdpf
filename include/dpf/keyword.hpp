@@ -97,9 +97,6 @@ class basic_fixed_length_string
     /// @brief the (maximum) length of a string
     static constexpr std::size_t max_length = N;
 
-    /// @brief the empty string
-    // static constexpr auto empty_string = basic_fixed_length_string{};
-
     /// @brief the number of bits needed to uniquely represent any string
     ///        of length at most `max_length` over `alphabet`
     static constexpr std::size_t bits
@@ -138,7 +135,8 @@ class basic_fixed_length_string
     ///          initialized to the integer representation of `str`.
     /// @param str the string to initialize with
     constexpr
-    basic_fixed_length_string(string_view str)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(string_view str)  // NOLINT(runtime/explicit)
     noexcept
       : val{encode_(str)} { }
 
@@ -147,12 +145,14 @@ class basic_fixed_length_string
     ///          initialized to the integer representation of `str`.
     /// @param str the string to initialize with
     constexpr
-    basic_fixed_length_string(const CharT * str)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(const CharT * str)  // NOLINT(runtime/explicit)
     noexcept
       : val{encode_(str)} { }
 
     constexpr
-    basic_fixed_length_string(integral_type val)
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
     noexcept
       : val{val} { }
 
@@ -295,7 +295,7 @@ class basic_fixed_length_string
     static constexpr integral_type encode_(string_view str)
     {
         constexpr auto npos = string_view::npos;
-        using namespace std::string_literals;
+        using std::string_literals::operator""s;
 
         utils::constexpr_maybe_throw<std::length_error>(
             str.size() > max_length,

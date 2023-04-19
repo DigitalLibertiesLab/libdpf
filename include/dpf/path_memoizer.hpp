@@ -40,7 +40,7 @@ basic_path_memoizer final
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
-    using return_type = const typename DpfKey::interior_node *;
+    using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
     using iterator_type = return_type;
     static constexpr auto depth = DpfKey::depth;
 
@@ -105,7 +105,10 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
-    using return_type = const typename DpfKey::interior_node *;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     using iterator_type = return_type;
 
     nonmemoizing_path_memoizer()
@@ -121,7 +124,11 @@ struct nonmemoizing_path_memoizer final : public path_memoizer_base<DpfKey>
     HEDLEY_CONST
     std::size_t assign_x(const dpf_type & dpf, input_type) noexcept override
     {
-        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf)) v = dpf.root;
+        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
+        {
+            dpf_ = dpf;
+            v = dpf.root;
+        }
         return 1;
     }
 

@@ -350,6 +350,12 @@ struct countl_zero<simde__m256i>
 };
 
 template <typename T>
+struct is_xor_wrapper : std::false_type {};
+
+template <typename T>
+static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
+
+template <typename T>
 auto data(T & bar)
 {
     return std::data(bar);
