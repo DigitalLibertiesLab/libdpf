@@ -13,10 +13,12 @@ simde__m128i fake_root_sampler()
 
 TEST(DpfKeyTest, SimpleGen)
 {
-    uint8_t x = 0xAA;  // = 0b 1010 1010
-    uint32_t y0 = 0xAAAAAAAA;  // additive / subtractive share
-    dpf::xor_wrapper<uint32_t> y1 = dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555));  // xor share
-    dpf::wildcard_value<uint32_t> y2 = dpf::wildcard_value<uint32_t>();  // wildcard
+    using input_type = uint8_t;
+    using output_type = uint32_t;
+    input_type x = 0xAA;  // = 0b 1010 1010
+    output_type y0 = 0xAAAAAAAA;  // additive / subtractive share
+    dpf::xor_wrapper<output_type> y1 = dpf::xor_wrapper<output_type>(0x55555555);  // xor share
+    dpf::wildcard_value<output_type> y2 = dpf::wildcard_value<output_type>();  // wildcard
     auto [dpf0, dpf1] = dpf::make_dpf<dpf::prg::aes128, dpf::prg::aes128, &fake_root_sampler>(x, y0, y1, y2);
 
     // 128-bit representation of 0x4 with lowest bit unset
@@ -127,9 +129,22 @@ TEST(DpfKeyTest, SimpleGen)
     EXPECT_EQ(dpf0.leaf<1>()[1], dpf1.leaf<1>()[1]);
     EXPECT_EQ(dpf0.leaf<1>()[0], dpf1.leaf<1>()[0]);
 
-    simde__m128i wildcard = simde_mm_add_epi32(dpf0.leaf<2>(), dpf1.leaf<2>());
-    EXPECT_EQ(wildcard[1], 0x6d9edc8a6d54b590);
-    EXPECT_EQ(wildcard[0], 0x97147f0cbfc700b5);
+    auto &beaver0 = dpf0.beaver<2>(),
+         &beaver1 = dpf1.beaver<2>();
+    simde__m128i vector{0x0000000000000000, 0x0000000000000001},  // [0|0|1|0] which corresponds to input x
+                 blinded0 = simde_mm_add_epi32(vector, dpf1.beaver<2>().vector_blind),
+                 blinded1 = simde_mm_add_epi32(vector, dpf0.beaver<2>().vector_blind),
+                 mulleaf0 = simde_mm_mullo_epi32(dpf0.beaver<2>().vector_blind, simde_mm_set1_epi32(dpf1.beaver<2>().output_blind)),
+                 mulleaf1 = simde_mm_mullo_epi32(dpf1.beaver<2>().vector_blind, simde_mm_set1_epi32(dpf0.beaver<2>().output_blind)),
+                 leaf = simde_mm_sub_epi32(simde_mm_add_epi32(dpf0.leaf<2>(), dpf1.leaf<2>()),
+                                           simde_mm_add_epi32(mulleaf0, mulleaf1));
+
+    EXPECT_EQ(blinded0[1], dpf0.beaver<2>().blinded_vector[1]);
+    EXPECT_EQ(blinded0[0], dpf0.beaver<2>().blinded_vector[0]);
+    EXPECT_EQ(blinded1[1], dpf1.beaver<2>().blinded_vector[1]);
+    EXPECT_EQ(blinded1[0], dpf1.beaver<2>().blinded_vector[0]);
+    EXPECT_EQ(leaf[1], 0x6d9edc8a6d54b590);
+    EXPECT_EQ(leaf[0], 0x97147f0cbfc700b5);
 
     EXPECT_EQ(dpf0.is_wildcard(0), false);
     EXPECT_EQ(dpf0.is_wildcard(1), false);
