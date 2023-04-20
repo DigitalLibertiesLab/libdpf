@@ -20,9 +20,14 @@
 ///          `::operator "" _bitstring()` for creating `dpf::bitstring<Nbits>` objects
 ///          at compile time, where `Nbits` is the length of the numeric literal
 ///          (i.e., minus the ``"_bitstring"`` suffix). For example, the expression
-///          \code{.cpp}auto x = 10101001_bitstring\endcode yields a `dpf::bitstring<8>` with the
-///          bits `10101001`, and is therefore equivalent to invoking
-///          \code{.cpp}dpf::bitstring<8> x(0b10101001);\endcode
+///          \code{.cpp}
+///              auto x = 10101001_bitstring
+///          \endcode
+///          yields a `dpf::bitstring<8>` with the bits `10101001`, and is
+///          therefore equivalent to invoking
+///          \code{.cpp}
+///              dpf::bitstring<8> x(0b10101001);
+///          \endcode
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
@@ -56,6 +61,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
   private:
     using base = bit_array_base<bitstring<Nbits>>;
     using word_pointer = typename base::word_pointer;
+    using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
     using const_pointer = typename base::const_pointer;
     using size_type = typename base::size_type;
@@ -376,11 +382,11 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bitstring & operator++() noexcept
     {
         data_[0] += 1;
-        word_type carry = data_[0] == word_type{0} ? 1 : 0;
+        word_type carry = (data_[0] == word_type{0}) ? 1 : 0;
         for (std::size_t i = 1; i < data_.size() && carry == 1; ++i)
         {
             data_[i] += carry;
-            carry = data_[i] == word_type{0} ? 1 : 0;
+            carry = (data_[i] == word_type{0}) ? 1 : 0;
         }
         return *this;
     }
@@ -399,11 +405,11 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bitstring & operator--() noexcept
     {
         data_[0] -= 1;
-        word_type borrow = data_[0] == ~word_type{0} ? 1 : 0;
+        word_type borrow = (data_[0] == ~word_type{0}) ? 1 : 0;
         for (std::size_t i = 1; i < data_.size() && borrow == 1; ++i)
         {
             data_[i] -= borrow;
-            borrow = data_[i] == ~word_type{0} ? 1 : 0;
+            borrow = (data_[i] == ~word_type{0}) ? 1 : 0;
         }
         return *this;
     }
@@ -432,9 +438,33 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr word_pointer data() const noexcept
+    constexpr const_word_pointer data() const noexcept
     {
-        return const_cast<word_pointer>(std::data(data_));
+        return std::data(data_);
+    }
+
+    /// @brief direct access into the underlying data array (w/o bounds
+    ///        checking)
+    /// @param pos the array element to access
+    /// @note Does not perform bounds checking; behaviour is undefined if
+    ///       `pos` is out of bounds
+    /// @return `data()[pos]`
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type data(size_type pos) const noexcept
+    {
+        return data()[pos];
+    }
+
+    /// @brief direct access into the underlying data array (w/o bounds
+    ///        checking)
+    /// @param pos the array element to access
+    /// @note Does not perform bounds checking; behaviour is undefined if
+    ///       `pos` is out of bounds
+    /// @return `data()[pos]`
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type & data(size_type pos) noexcept
+    {
+        return data()[pos];
     }
 
     /// @brief length of the underlying data array
@@ -465,11 +495,9 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     friend bitstring operator^(const bitstring & lhs, const bitstring & rhs)
     {
         bitstring ret;
-        std::cout << rhs.data_length() << std::endl;
-        auto * ptr0 = lhs.data(), * ptr1 = rhs.data();
         for (std::size_t i = 0; i < ret.data_length(); ++i)
         {
-            ret[i] = ptr0[i] ^ ptr1[i];
+            ret[i] = lhs.data(i) ^ rhs.data(i);
         }
         return ret;
     }
