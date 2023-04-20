@@ -239,6 +239,13 @@ class basic_fixed_length_string
         return basic_fixed_length_string{static_cast<integral_type>(this->val & rhs.val)};
     }
 
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator==(const basic_fixed_length_string & rhs) const noexcept
+    {
+        return val == rhs.val;
+    }
+
     constexpr operator bool() const noexcept
     {
         return static_cast<bool>(static_cast<integral_type>(this->val));
@@ -373,6 +380,7 @@ class basic_fixed_length_string
 
     friend struct utils::msb_of<basic_fixed_length_string>;
     friend struct utils::mod_pow_2<basic_fixed_length_string>;
+    friend struct utils::make_from_integral_value<basic_fixed_length_string>;
 };  // class dpf::basic_fixed_length_string
 
 /// @brief instantiation of the `dpf::basic_fixed_length_string` class that
@@ -459,6 +467,21 @@ struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
         return static_cast<std::size_t>(val.val % (1ul << n));
+    }
+};
+
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          class Traits,
+          class Alloc>
+struct make_from_integral_value<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    using integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
+    constexpr T operator()(integral_type val)
+    {
+        return T{val};
     }
 };
 

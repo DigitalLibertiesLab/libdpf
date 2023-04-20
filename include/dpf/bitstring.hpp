@@ -571,7 +571,7 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(dpf::bitstring<Nbits> & input) const noexcept
+    constexpr integral_type operator()(const dpf::bitstring<Nbits> & input) const noexcept
     {
         if constexpr(Nbits <= bits_per_word)
         {

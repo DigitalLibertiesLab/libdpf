@@ -309,7 +309,7 @@ struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(xor_wrapper<T> & input) const noexcept
+    constexpr integral_type operator()(const xor_wrapper<T> & input) const noexcept
     {
         return to_integral_type_cast(input.value);
     }

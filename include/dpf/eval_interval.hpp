@@ -38,16 +38,15 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
     IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
-    using input_type = typename DpfKey::input_type;
-    // using integral_type = typename DpfKey::integral_type;
+    using integral_type = typename DpfKey::integral_type;
     using node_type = typename DpfKey::interior_node;
 
     // level_index represents the current level being built
     // level_index = 0 => root
     // level_index = depth => last layer of interior nodes
     std::size_t level_index = memoizer.assign_interval(dpf, from_node, to_node);
-    input_type mask = dpf.msb_mask >> (level_index-1 + dpf_type::lg_outputs_per_leaf);
     std::size_t nodes_at_level = memoizer.get_nodes_at_level();
+    integral_type mask = utils::get_node_mask<dpf_type>(dpf.msb_mask, level_index);
 
     for (; level_index <= to_level; level_index = memoizer.advance_level(), nodes_at_level = memoizer.get_nodes_at_level(), mask>>=1)
     {
@@ -126,6 +125,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     using dpf_type = DpfKey;
     using integral_type = typename DpfKey::integral_type;
     using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    constexpr auto mod = utils::mod_pow_2<InputT>{};
 
     integral_type from_node = utils::get_from_node<dpf_type>(from),
         to_node = utils::get_to_node<dpf_type>(to);
@@ -134,8 +134,8 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     internal::eval_interval_exterior<I>(dpf, from_node, to_node, outbuf, memoizer);
 
-    return subinterval_iterable<output_type>(utils::data(outbuf), nodes_in_interval*dpf_type::outputs_per_leaf, from % dpf_type::outputs_per_leaf,
-        dpf_type::outputs_per_leaf - (to % dpf_type::outputs_per_leaf));
+    return subinterval_iterable(std::begin(outbuf), nodes_in_interval*dpf_type::outputs_per_leaf, mod(from, dpf_type::lg_outputs_per_leaf),
+        dpf_type::outputs_per_leaf - mod(to, dpf_type::lg_outputs_per_leaf));
 }
 
 template <std::size_t I = 0,

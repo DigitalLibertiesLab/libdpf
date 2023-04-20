@@ -393,9 +393,9 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
                                         beaver0.blinded_vector = dpf::add_leaf<output_type>(vector, beaver1.vector_blind);
                                         beaver1.blinded_vector = dpf::add_leaf<output_type>(vector, beaver0.vector_blind);
 
-                                        leaf0= dpf::add_leaf<output_type>(leaf0,
+                                        leaf0 = dpf::add_leaf<output_type>(leaf0,
                                             dpf::multiply_leaf(beaver0.vector_blind, beaver1.output_blind));
-                                        leaf1= dpf::add_leaf<output_type>(leaf1,
+                                        leaf1 = dpf::add_leaf<output_type>(leaf1,
                                             dpf::multiply_leaf(beaver1.vector_blind, beaver0.output_blind));
                                     }
                                 }
