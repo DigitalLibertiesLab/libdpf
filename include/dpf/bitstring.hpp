@@ -502,6 +502,13 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
         return ret;
     }
 
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_CONST
+    friend bitstring operator-(const bitstring & lhs, const bitstring & rhs)
+    {
+        return operator^(lhs, rhs);
+    }
+
     friend struct utils::to_integral_type<bitstring>;
     friend struct utils::mod_pow_2<bitstring>;
 };  // class dpf::bitstring
@@ -587,6 +594,14 @@ struct to_integral_type<dpf::bitstring<Nbits>>
             }
             return ret;
         }
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr integral_type operator()(const typename dpf::bitstring<Nbits>::bit_mask & input) const noexcept
+    {
+        return input.which_bit();
     }
 };
 
