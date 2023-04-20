@@ -322,7 +322,7 @@ using Types = testing::Types
     // test input types
     test_type<uint8_t, uint64_t>,
     test_type<simde_uint128, uint64_t>,
-    // test_type<dpf::bitstring<10>, uint64_t>,
+    test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
     test_type<dpf::xor_wrapper<uint64_t>, uint64_t>,

@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_subdirectory(googletest)
 enable_testing()
 
-include_directories(../include ../thirdparty)
+include_directories(../include ../thirdparty ../thirdparty/asio/asio/include)
 link_libraries(gtest_main bsd)
 add_compile_options(-march=native)
 
