@@ -20,9 +20,14 @@
 ///          `::operator "" _bitstring()` for creating `dpf::bitstring<Nbits>` objects
 ///          at compile time, where `Nbits` is the length of the numeric literal
 ///          (i.e., minus the ``"_bitstring"`` suffix). For example, the expression
-///          \code{.cpp}auto x = 10101001_bitstring\endcode yields a `dpf::bitstring<8>` with the
-///          bits `10101001`, and is therefore equivalent to invoking
-///          \code{.cpp}dpf::bitstring<8> x(0b10101001);\endcode
+///          \code{.cpp}
+///              auto x = 10101001_bitstring
+///          \endcode
+///          yields a `dpf::bitstring<8>` with the bits `10101001`, and is
+///          therefore equivalent to invoking
+///          \code{.cpp}
+///              dpf::bitstring<8> x(0b10101001);
+///          \endcode
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
@@ -51,8 +56,20 @@ namespace dpf
 ///          the length of the bitstring.
 /// @tparam Nbits the bitlength of the string
 template <std::size_t Nbits>
-class bitstring : public bit_array_base
+class bitstring : public bit_array_base<bitstring<Nbits>>
 {
+  private:
+    using base = bit_array_base<bitstring<Nbits>>;
+    using word_pointer = typename base::word_pointer;
+    using const_word_pointer = typename base::const_word_pointer;
+    using word_type = typename base::word_type;
+    using const_pointer = typename base::const_pointer;
+    using size_type = typename base::size_type;
+    static constexpr auto bits_per_word = base::bits_per_word;
+    /// @brief the number of `word_type`s are being used to represent the
+    ///        `num_bits_` bits
+    static constexpr size_type data_length_
+        = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
   public:
     /// @brief the primitive integral type used to represent the string
     using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
@@ -67,7 +84,7 @@ class bitstring : public bit_array_base
     ///          to `0`.
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring() : bit_array_base{Nbits, &arr[0]}, arr{} { }
+    constexpr bitstring() = default;
 
     /// @brief Copy c'tor
     /// @details Constructs an instance of `dpf::bitstring` from another
@@ -75,7 +92,7 @@ class bitstring : public bit_array_base
     /// @param other another `dpf::bitstring` to construct with
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr bitstring(const bitstring & other) = default;
+    constexpr bitstring(const bitstring &) = default;
 
     /// @brief Move c'tor
     /// @details Constructs an instance of `dpf::bitstring` from another
@@ -94,7 +111,7 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr explicit bitstring(uint64_t val) noexcept
-      : bit_array_base{Nbits, &arr[0]}, arr{val} { }
+      : data_{val} { }
 
     /// @brief Constructs a `dpf::bitstring` using the characters in the
     ///        `std::basic_string` `str`. An optional starting position `pos`
@@ -115,8 +132,7 @@ class bitstring : public bit_array_base
         typename std::basic_string<CharT, Traits, Alloc>::size_type len
             = std::basic_string<CharT, Traits, Alloc>::npos,
         CharT zero = CharT('0'),
-        CharT one = CharT('1'))
-      : bit_array_base{Nbits, &arr[0]}, arr{}
+        CharT one = CharT('1')) : data_{}
     {
         if (pos > str.size())
         {
@@ -145,8 +161,7 @@ class bitstring : public bit_array_base
         typename std::basic_string<CharT>::size_type len
             = std::basic_string<CharT>::npos,
         CharT zero = CharT('0'),
-        CharT one = CharT('1'))
-      : bit_array_base{Nbits, &arr[0]}, arr{}
+        CharT one = CharT('1')) : data_{}
     {
         len = std::min(len, strnlen(str, len));
         for (std::size_t i = 0; i < len; ++i)
@@ -291,7 +306,7 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator==(const bitstring & rhs) const
     {
-        return arr == rhs.arr;
+        return data_ == rhs.data_;
     }
 
     /// @brief Inequality
@@ -304,7 +319,7 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator!=(const bitstring<Nbits> & rhs) const
     {
-        return arr != rhs.arr;
+        return data_ != rhs.data_;
     }
 
     /// @brief Less than
@@ -315,8 +330,8 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator<(const bitstring<Nbits> & rhs) const
     {
-        return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::greater{});
+        return std::lexicographical_compare(rbegin(data_), rend(data_),
+            rbegin(rhs.data_), rend(rhs.data_), std::greater{});
     }
 
     /// @brief Less than or equal
@@ -329,8 +344,8 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator<=(const bitstring<Nbits> & rhs) const
     {
-        return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::greater_equal{});
+        return std::lexicographical_compare(rbegin(data_), rend(data_),
+            rbegin(rhs.data_), rend(rhs.data_), std::greater_equal{});
     }
 
     /// @brief Greater than
@@ -343,8 +358,8 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator>(const bitstring<Nbits> & rhs) const
     {
-        return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::less{});
+        return std::lexicographical_compare(rbegin(data_), rend(data_),
+            rbegin(rhs.data_), rend(rhs.data_), std::less{});
     }
 
     /// @brief Greater than or equal
@@ -358,20 +373,20 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator>=(const bitstring<Nbits> & rhs) const
     {
-        return std::lexicographical_compare(rbegin(arr), rend(arr),
-            rbegin(rhs.arr), rend(rhs.arr), std::less_equal{});
+        return std::lexicographical_compare(rbegin(data_), rend(data_),
+            rbegin(rhs.data_), rend(rhs.data_), std::less_equal{});
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr bitstring & operator++() noexcept
     {
-        arr[0] += 1;
-        word_type carry = arr[0] == word_type{0} ? 1 : 0;
-        for (std::size_t i = 1; i < arr.size() && carry == 1; ++i)
+        data_[0] += 1;
+        word_type carry = (data_[0] == word_type{0}) ? 1 : 0;
+        for (std::size_t i = 1; i < data_.size() && carry == 1; ++i)
         {
-            arr[i] += carry;
-            carry = arr[i] == word_type{0} ? 1 : 0;
+            data_[i] += carry;
+            carry = (data_[i] == word_type{0}) ? 1 : 0;
         }
         return *this;
     }
@@ -389,12 +404,12 @@ class bitstring : public bit_array_base
     HEDLEY_ALWAYS_INLINE
     constexpr bitstring & operator--() noexcept
     {
-        arr[0] -= 1;
-        word_type borrow = arr[0] == ~word_type{0} ? 1 : 0;
-        for (std::size_t i = 1; i < arr.size() && borrow == 1; ++i)
+        data_[0] -= 1;
+        word_type borrow = (data_[0] == ~word_type{0}) ? 1 : 0;
+        for (std::size_t i = 1; i < data_.size() && borrow == 1; ++i)
         {
-            arr[i] -= borrow;
-            borrow = arr[i] == ~word_type{0} ? 1 : 0;
+            data_[i] -= borrow;
+            borrow = (data_[i] == ~word_type{0}) ? 1 : 0;
         }
         return *this;
     }
@@ -410,21 +425,79 @@ class bitstring : public bit_array_base
 
     /// @}
 
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr word_pointer data() noexcept
+    {
+        return std::data(data_);
+    }
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    constexpr const_word_pointer data() const noexcept
+    {
+        return std::data(data_);
+    }
+
+    /// @brief direct access into the underlying data array (w/o bounds
+    ///        checking)
+    /// @param pos the array element to access
+    /// @note Does not perform bounds checking; behaviour is undefined if
+    ///       `pos` is out of bounds
+    /// @return `data()[pos]`
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type data(size_type pos) const noexcept
+    {
+        return data()[pos];
+    }
+
+    /// @brief direct access into the underlying data array (w/o bounds
+    ///        checking)
+    /// @param pos the array element to access
+    /// @note Does not perform bounds checking; behaviour is undefined if
+    ///       `pos` is out of bounds
+    /// @return `data()[pos]`
+    HEDLEY_ALWAYS_INLINE
+    constexpr word_type & data(size_type pos) noexcept
+    {
+        return data()[pos];
+    }
+
+    /// @brief length of the underlying data array
+    /// @return the number of elements in the underlying array
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type data_length() const noexcept
+    {
+        return data_length_;
+    }
+
+    /// @brief returns the number of bits
+    /// @returns number of bits that the `bitstring` holds
+    /// @complexity `O(1)`
+    HEDLEY_PURE
+    HEDLEY_ALWAYS_INLINE
+    constexpr size_type size() const noexcept
+    {
+        return Nbits;
+    }
+
   private:
     //alignas(utils::max_align_v)  // memory here cannot be aligned if we wish
                                    // to remain trivially copyable
-    std::array<word_type, utils::quotient_ceiling(Nbits, bits_per_word)> arr;
+    std::array<word_type, data_length_> data_;
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_CONST
     friend bitstring operator^(const bitstring & lhs, const bitstring & rhs)
     {
         bitstring ret;
-        std::cout << rhs.data_length() << std::endl;
-        auto * ptr0 = lhs.data(), * ptr1 = rhs.data();
         for (std::size_t i = 0; i < ret.data_length(); ++i)
         {
-            ret[i] = ptr0[i] ^ ptr1[i];
+            ret[i] = lhs.data(i) ^ rhs.data(i);
         }
         return ret;
     }
@@ -498,11 +571,11 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(dpf::bitstring<Nbits> & input) const noexcept
+    constexpr integral_type operator()(const dpf::bitstring<Nbits> & input) const noexcept
     {
         if constexpr(Nbits <= bits_per_word)
         {
-            return integral_type(input.arr[0]);
+            return integral_type(input.data_[0]);
         }
         else
         {
@@ -510,7 +583,7 @@ struct to_integral_type<dpf::bitstring<Nbits>>
             for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
             {
                 ret <<= bits_per_word;
-                ret += input.arr[i-1];
+                ret += input.data_[i-1];
             }
             return ret;
         }
@@ -523,7 +596,7 @@ struct mod_pow_2<dpf::bitstring<Nbits>>
     using T = dpf::bitstring<Nbits>;
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
-        return static_cast<std::size_t>(val.arr[0] % (1ul << n));
+        return static_cast<std::size_t>(val.data_[0] % (1ul << n));
     }
 };
 

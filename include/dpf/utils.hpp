@@ -107,7 +107,7 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m128i single_bit_mask<simde__m128i>(std::size_t i)
 {
-    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i <= 63), uint64_t(i >= 64)), i % 64);
+    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i >= 64), uint64_t(i <= 63)), i % 64);
 }
 
 template <>
@@ -116,10 +116,10 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
 {
-    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i <= 63),
+    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i >= 192),
+                                     uint64_t(i >= 128 && i <= 191),
                                      uint64_t(i >= 64 && i <= 127),
-                                     uint64_t(i >= 127 && i <= 191),
-                                     uint64_t(i >= 192)), i % 64);
+                                     uint64_t(i <= 63)), i % 64);
 }
 
 template <typename ExteriorT, typename InteriorT>
@@ -231,11 +231,32 @@ struct to_integral_type : public to_integral_type_base<T>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(T & input) const noexcept
+    constexpr integral_type operator()(const T & input) const noexcept
     {
         return static_cast<integral_type>(static_cast<T_integral_type>(input));
     }
 };
+
+template <typename T>
+struct make_from_integral_value
+{
+    using T_integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
+    using integral_type = std::conditional_t<std::is_void_v<T_integral_type>, simde_uint128, T_integral_type>;
+    constexpr T operator()(integral_type val)
+    {
+        return T{val};
+    }
+};
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_type,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_node_mask(InputT mask, std::size_t level_index)
+{
+    using dpf_type = DpfKey;
+    constexpr auto to_int = to_integral_type<InputT>{};
+    return static_cast<IntegralT>(to_int(mask) >> (level_index-1 + dpf_type::lg_outputs_per_leaf));
+}
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type,

@@ -21,19 +21,19 @@ namespace dpf
 namespace
 {
 
-template <std::size_t batch_size_log_2>
+template <std::size_t batch_size_log_2, typename ChildT>
 struct parallel_bit_iterable_helper;
 
 /// @brief for batch_size in 1..4
-template <>
-struct parallel_bit_iterable_helper<2>
+template <typename ChildT>
+struct parallel_bit_iterable_helper<2, ChildT>
 {
   public:
-    using word_pointer = dpf::bit_array_base::word_pointer;
+    using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint64_t;
-    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -54,15 +54,15 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 };  // struct parallel_bit_iterable_helper<2>
 
 /// @brief for batch_size in 5..8
-template <>
-struct parallel_bit_iterable_helper<3>
+template <typename ChildT>
+struct parallel_bit_iterable_helper<3, ChildT>
 {
   public:
-    using word_pointer = dpf::bit_array_base::word_pointer;
+    using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint32_t;
-    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -97,15 +97,15 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 };  // struct parallel_bit_iterable_helper<3>
 
 /// @brief for batch_size in 9..16
-template <>
-struct parallel_bit_iterable_helper<4>
+template <typename ChildT>
+struct parallel_bit_iterable_helper<4, ChildT>
 {
   public:
-    using word_pointer = dpf::bit_array_base::word_pointer;
+    using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint16_t;
-    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -161,15 +161,15 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 };  // struct parallel_bit_iterable_helper<4>
 
 /// @brief for batch_size in 17..32
-template <>
-struct parallel_bit_iterable_helper<5>
+template <typename ChildT>
+struct parallel_bit_iterable_helper<5, ChildT>
 {
   public:
-    using word_pointer = dpf::bit_array_base::word_pointer;
+    using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
     using element_type = uint8_t;
-    static constexpr auto bits_per_word = dpf::bit_array_base::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
 HEDLEY_PRAGMA(GCC diagnostic push)
