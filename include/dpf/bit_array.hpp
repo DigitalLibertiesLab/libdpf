@@ -28,6 +28,7 @@
 
 #include "dpf/bit.hpp"
 #include "dpf/utils.hpp"
+#include "dpf/aligned_allocator.hpp"
 
 namespace dpf
 {
@@ -1237,15 +1238,18 @@ class dynamic_bit_array
     using word_pointer = typename base::word_pointer;
     using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
+    using allocator = aligned_allocator<word_type, utils::max_align_v>;
+    using unique_ptr = typename allocator::unique_ptr;
     static constexpr auto bits_per_word = base::bits_per_word;
   public:
     dynamic_bit_array(dynamic_bit_array && other) = default;
     dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
     /// @throws std::bad_alloc if allocating storage fails
-    inline explicit dynamic_bit_array(std::size_t nbits)
+    inline explicit dynamic_bit_array(std::size_t nbits,
+        allocator alloc = allocator{})
       : data_length_{utils::quotient_ceiling(nbits, bits_per_word)},
-        data_{new (std::align_val_t(utils::max_align_v)) word_type[data_length_+1]}
+        data_{alloc.allocate_unique_ptr(data_length_+1)}
     {
         if (HEDLEY_UNLIKELY(data_ == nullptr)) throw std::bad_alloc{};
         data_[data_length_] = base::sentinel;
@@ -1318,8 +1322,7 @@ class dynamic_bit_array
     /// @brief the number of `word_type`s are being used to represent the
     ///        `size()` bits
     size_type data_length_;
-  public:
-    std::unique_ptr<word_type[]> data_;
+    unique_ptr data_;
 };
 
 /// @brief
