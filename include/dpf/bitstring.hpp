@@ -69,7 +69,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     /// @brief the number of `word_type`s are being used to represent the
     ///        `num_bits_` bits
     static constexpr size_type data_length_
-        = utils::quotient_ceiling(Nbits + bits_per_word, bits_per_word);
+        = utils::quotient_ceiling(Nbits, bits_per_word);
   public:
     /// @brief the primitive integral type used to represent the string
     using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
@@ -497,7 +497,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
         bitstring ret;
         for (std::size_t i = 0; i < ret.data_length(); ++i)
         {
-            ret[i] = lhs.data(i) ^ rhs.data(i);
+            ret.data(i) = lhs.data(i) ^ rhs.data(i);
         }
         return ret;
     }
