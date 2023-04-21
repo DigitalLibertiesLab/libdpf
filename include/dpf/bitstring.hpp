@@ -331,7 +331,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bool operator<(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
-            rbegin(rhs.data_), rend(rhs.data_), std::greater{});
+            rbegin(rhs.data_), rend(rhs.data_), std::less{});
     }
 
     /// @brief Less than or equal
@@ -345,7 +345,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bool operator<=(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
-            rbegin(rhs.data_), rend(rhs.data_), std::greater_equal{});
+            rbegin(rhs.data_), rend(rhs.data_), std::less_equal{});
     }
 
     /// @brief Greater than
@@ -359,7 +359,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bool operator>(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
-            rbegin(rhs.data_), rend(rhs.data_), std::less{});
+            rbegin(rhs.data_), rend(rhs.data_), std::greater{});
     }
 
     /// @brief Greater than or equal
@@ -374,7 +374,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     constexpr bool operator>=(const bitstring<Nbits> & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
-            rbegin(rhs.data_), rend(rhs.data_), std::less_equal{});
+            rbegin(rhs.data_), rend(rhs.data_), std::greater_equal{});
     }
 
     HEDLEY_NO_THROW
@@ -601,7 +601,7 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     HEDLEY_ALWAYS_INLINE
     constexpr integral_type operator()(const typename dpf::bitstring<Nbits>::bit_mask & input) const noexcept
     {
-        return input.which_bit();
+        return integral_type(1) << input.which_bit();
     }
 };
 
