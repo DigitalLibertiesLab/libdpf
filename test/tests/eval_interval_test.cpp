@@ -297,7 +297,7 @@ TYPED_TEST_P(EvalIntervalTest, SurroundingInterval)
         output_type zero_output = output_type(0);
         auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to);
         auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to);
-        auto it0 = iter0.begin(), it1 = iter1.begin();
+        auto it0 = std::begin(iter0), it1 = std::begin(iter1);
 
         for (std::size_t i = 0; i <= range<<1; ++i, ++cur, ++it0, ++it1)
         {
