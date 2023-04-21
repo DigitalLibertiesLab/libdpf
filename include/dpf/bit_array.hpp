@@ -33,7 +33,7 @@ namespace dpf
 {
 
 template <typename ConcreteBitArrayT>
-class bit_iterator_base;        // forward reference
+class bit_iterator_base;   // forward reference
 
 template <typename ConcreteBitArrayT>
 class bit_iterator;        // forward reference
@@ -1239,13 +1239,13 @@ class dynamic_bit_array
     using word_type = typename base::word_type;
     static constexpr auto bits_per_word = base::bits_per_word;
   public:
-    constexpr dynamic_bit_array(dynamic_bit_array && other) = default;
-    constexpr dynamic_bit_array(const dynamic_bit_array &) = default;
+    dynamic_bit_array(dynamic_bit_array && other) = default;
+    dynamic_bit_array(const dynamic_bit_array &) = default;
     /// @brief constructs a `dynamic_bit_array` that holds `num_bits` bits
     /// @throws std::bad_alloc if allocating storage fails
     inline explicit dynamic_bit_array(std::size_t nbits)
       : data_length_{utils::quotient_ceiling(nbits, bits_per_word)},
-        data_{static_cast<word_pointer>(std::aligned_alloc(utils::max_align_v, sizeof(word_type) * (data_length_+1)))}
+        data_{new (std::align_val_t(utils::max_align_v)) word_type[data_length_+1]}
     {
         if (HEDLEY_UNLIKELY(data_ == nullptr)) throw std::bad_alloc{};
         data_[data_length_] = base::sentinel;
@@ -1256,25 +1256,22 @@ class dynamic_bit_array
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    ~dynamic_bit_array() noexcept
+    ~dynamic_bit_array() noexcept = default;
+
+    /// @brief direct access to the underlying data array
+    /// @return a pointer to the start of the data array
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    word_pointer data() noexcept
     {
-        if (data_ != nullptr) free(data_);
+        return static_cast<word_pointer>(__builtin_assume_aligned(data_.get(), utils::max_align_v));
     }
 
     /// @brief direct access to the underlying data array
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr word_pointer data() noexcept
-    {
-        return static_cast<word_pointer>(__builtin_assume_aligned(data_, utils::max_align_v));
-    }
-
-    /// @brief direct access to the underlying data array
-    /// @return a pointer to the start of the data array
-    HEDLEY_ALWAYS_INLINE
-    HEDLEY_NO_THROW
-    constexpr word_type & data(std::size_t i) noexcept
+    word_type & data(std::size_t i) noexcept
     {
         return this->data()[i];
     }
@@ -1283,20 +1280,19 @@ class dynamic_bit_array
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr const_word_pointer data() const noexcept
+    const_word_pointer data() const noexcept
     {
-        return static_cast<const_word_pointer>(__builtin_assume_aligned(data_, utils::max_align_v));
+        return static_cast<const_word_pointer>(__builtin_assume_aligned(data_.get(), utils::max_align_v));
     }
 
     /// @brief direct access to the underlying data array
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr const word_type & data(std::size_t i) const noexcept
+    const word_type & data(std::size_t i) const noexcept
     {
         return this->data()[i];
     }
-
 
     /// @brief length of the underlying data array
     /// @return the number of elements in the underlying array (excluding a
@@ -1322,7 +1318,8 @@ class dynamic_bit_array
     /// @brief the number of `word_type`s are being used to represent the
     ///        `size()` bits
     size_type data_length_;
-    word_pointer data_;
+  public:
+    std::unique_ptr<word_type[]> data_;
 };
 
 /// @brief
