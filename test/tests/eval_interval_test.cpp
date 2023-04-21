@@ -331,7 +331,7 @@ using Types = testing::Types
     test_type<uint64_t, uint8_t>,
     test_type<uint64_t, simde_uint128>,
     test_type<uint64_t, dpf::bit>,
-    // test_type<uint64_t, dpf::bitstring<10>>,
+    test_type<uint64_t, dpf::bitstring<10>>,
     test_type<uint64_t, dpf::xor_wrapper<uint64_t>>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalIntervalTestInstantiation, EvalIntervalTest, Types);
