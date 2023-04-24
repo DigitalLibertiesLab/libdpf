@@ -26,8 +26,8 @@ namespace dpf
 template <typename InteriorPRG>
 using root_sampler_t = std::add_pointer_t<typename InteriorPRG::block_type()>;
 
-template <class InteriorPRG,
-          class ExteriorPRG,
+template <typename InteriorPRG,
+          typename ExteriorPRG,
           typename InputT,
           typename OutputT,
           typename... OutputTs>
@@ -36,18 +36,28 @@ struct dpf_key
   public:
     using interior_prg = InteriorPRG;
     using interior_node = typename InteriorPRG::block_type;
+
     using exterior_prg = ExteriorPRG;
     using exterior_node = typename ExteriorPRG::block_type;
+
     using input_type = InputT;
     using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>, utils::bitlength_of_v<std::size_t>>;
+
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
+    template <std::size_t I>
+    using output_type = std::tuple_element_t<I, outputs_tuple>;
+
     using concrete_outputs_tuple
         = std::tuple<concrete_type_t<OutputT>, concrete_type_t<OutputTs>...>;
+    template <std::size_t I>
+    using concrete_output_type = std::tuple_element_t<I, concrete_outputs_tuple>;
+
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_tuple = dpf::leaf_tuple_t<exterior_node, OutputT, OutputTs...>;
     using beaver_tuple = dpf::beaver_tuple_t<exterior_node, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
+
     static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node>;
     static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node>;
     static constexpr std::size_t depth
@@ -59,7 +69,10 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
         "all output types must be trivially copyable");
-    static_assert(std::has_unique_object_representations_v<input_type>);
+    static_assert(std::conjunction_v<std::is_standard_layout<OutputT>,
+                                     std::is_standard_layout<OutputTs>...>,
+        "all output types must be standard layout");
+    // static_assert(std::has_unique_object_representations_v<input_type>);
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node root_,
@@ -522,14 +535,14 @@ static T basic_uniform_root_sampler()
     return ret;
 }
 
-template <class InteriorPRG = dpf::prg::aes128,
-          class ExteriorPRG = InteriorPRG,
+template <typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
           dpf::root_sampler_t<InteriorPRG> RootSampler
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
-          typename OutputT,
+          typename OutputT = dpf::bit,
           typename... OutputTs>
-auto make_dpf(InputT x, OutputT y, OutputTs... ys)
+auto make_dpf(InputT x, OutputT y = dpf::bit::one, OutputTs... ys)
 {
     using dpf_type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
                                    OutputT, OutputTs...>;
@@ -597,8 +610,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <typename PeerT,
           typename CompletionToken,
-          class InteriorPRG = dpf::prg::aes128,
-          class ExteriorPRG = InteriorPRG,
+          typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
           dpf::root_sampler_t<InteriorPRG> RootSampler
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
