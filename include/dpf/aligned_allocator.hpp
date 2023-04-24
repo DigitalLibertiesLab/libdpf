@@ -43,7 +43,7 @@ namespace dpf
 /// @tparam T the type to allocate
 /// @tparam Alignment specifies the alignment (default: `dpf::utils::max_align`).'
 ///         The program is ill-formed if `Alignment` is not a power of 2.
-template <class T,
+template <typename T,
           std::size_t Alignment = alignof(T)>
 class aligned_allocator
 {
@@ -71,7 +71,7 @@ class aligned_allocator
     ///        `dpf::aligned_allocator` for some type `U` with alignment `A`.
     /// @tparam U the type to rebind to
     /// @tparam A the alignment of the rebound allocator
-    template <class U, size_type A = alignment> struct rebind
+    template <typename U, size_type A = alignment> struct rebind
     {
         using other = aligned_allocator<U, A>;
     };

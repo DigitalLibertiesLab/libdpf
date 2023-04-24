@@ -522,9 +522,9 @@ class bit_array_base
     /// @returns the converted string
     /// @throws May throw `std::bad_alloc` from the `std::string` constructor.
     /// @complexity `O(size())`
-    template <class CharT = char,
-              class Traits = std::char_traits<CharT>,
-              class Allocator = std::allocator<CharT>>
+    template <typename CharT = char,
+              typename Traits = std::char_traits<CharT>,
+              typename Allocator = std::allocator<CharT>>
     std::basic_string<CharT, Traits, Allocator> to_string(
         CharT zero = CharT('0'),
         CharT one = CharT('1')) const

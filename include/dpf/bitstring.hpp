@@ -123,9 +123,9 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     /// @param len number of characters to use from `str`
     /// @param zero character used to represent `0` (default: `CharT('0')`)
     /// @param one character used to represent `1` (default: `CharT('1')`)
-    template <class CharT,
-              class Traits,
-              class Alloc>
+    template <typename CharT,
+              typename Traits,
+              typename Alloc>
     explicit bitstring(
         const std::basic_string<CharT, Traits, Alloc> & str,
         typename std::basic_string<CharT, Traits, Alloc>::size_type pos = 0,
@@ -156,7 +156,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     /// @param len number of characters to use from `str`
     /// @param zero character used to represent `false`/`0` (default: ``CharT('0')``)
     /// @param one character used to represent `true`/`1` (default: ``CharT('1')``)
-    template <class CharT>
+    template <typename CharT>
     explicit bitstring(const CharT * str,
         typename std::basic_string<CharT>::size_type len
             = std::basic_string<CharT>::npos,
