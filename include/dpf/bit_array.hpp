@@ -32,21 +32,20 @@
 
 namespace dpf
 {
-
-template <typename ConcreteBitArrayT>
+template <typename ConcreteBitArrayT, typename WordT>
 class bit_iterator_base;   // forward reference
 
-template <typename ConcreteBitArrayT>
+template <typename ConcreteBitArrayT, typename WordT>
 class bit_iterator;        // forward reference
 
-template <typename ConcreteBitArrayT>
+template <typename ConcreteBitArrayT, typename WordT>
 class const_bit_iterator;  // forward reference
 
 /// @brief a class representing a fixed-size sequence of bits
 /// @details A `bit_array` represents a (dynamically-allocated) fixed-size
 ///          sequence of bits. The underlying storage is an array of integers
 ///          of type `dpf::bit_array::word_type`.
-template <typename ConcreteBitArrayT>
+template <typename ConcreteBitArrayT, typename WordT = uint64_t>
 class bit_array_base
 {
   private:
@@ -67,7 +66,6 @@ class bit_array_base
     }
   public:
     class bit_reference;       // forward reference
-
     /// @brief `dpf::bit`
     using value_type = dpf::bit;
     /// @brief proxy class representing a reference to a single bit.
@@ -76,9 +74,9 @@ class bit_array_base
     using const_reference = bool;
     /// @brief a random access iterator to `value_type`.
     /// @note convertible to `const_bit_iterator`
-    using iterator = bit_iterator<ConcreteBitArrayT>;
+    using iterator = bit_iterator<ConcreteBitArrayT, WordT>;
     /// @brief a random access iterator to `const value_type`
-    using const_iterator = const_bit_iterator<ConcreteBitArrayT>;
+    using const_iterator = const_bit_iterator<ConcreteBitArrayT, WordT>;
     /// @brief a type that simulates pointer-to-`value_type` behavior,
     ///        identical to `iterator`.
     using pointer = iterator;
@@ -97,7 +95,7 @@ class bit_array_base
         && std::is_unsigned_v<size_type>);
     /// @brief an unsigned integral type used for the internal representation
     ///        of bits.
-    using word_type = uint64_t;
+    using word_type = WordT;
     static_assert(std::is_integral_v<size_type>
         && std::is_unsigned_v<size_type>);
     /// @brief pointer to `word_type`
@@ -105,12 +103,10 @@ class bit_array_base
     /// @brief const pointer to `word_type`
     using const_word_pointer = std::add_pointer_t<std::add_const_t<word_type>>;
     /// @brief the number of `dpf::bit`s represented by each `word_type`.
-    /// @note guaranteed (via `static_assert`) to be `64`
-    static constexpr size_type bits_per_word =
-        std::numeric_limits<word_type>::digits;
-    static constexpr size_type lg_bits_per_word =
-        std::log2(bits_per_word);
-    static_assert(bits_per_word == 64, "bits_per_word not equal to 64");
+    /// @note guaranteed (via `static_assert`) to at most `64` bits
+    static constexpr size_type bits_per_word = utils::bitlength_of<word_type>();
+    static constexpr size_type lg_bits_per_word = std::log2(bits_per_word);
+    static_assert(bits_per_word <= 64, "bits_per_word not equal to 64");
 
     /// @brief default copy constructor
     inline constexpr bit_array_base(const bit_array_base &) = default;
@@ -133,7 +129,10 @@ class bit_array_base
     /// @return a pointer to the start of the data array
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr const_word_pointer data() const noexcept { return derived_from_this()->data(); }  // TODO
+    constexpr const_word_pointer data() const noexcept
+    {
+        return derived_from_this()->data();
+    }
 
     /// @brief direct access into the underlying data array (w/o bounds
     ///        checking)
@@ -182,7 +181,7 @@ class bit_array_base
     inline constexpr reference operator[](size_type pos) noexcept
     {
         return reference{&data(pos / bits_per_word),
-            word_type(1) << (pos % bits_per_word)};
+            static_cast<word_type>(word_type(1) << (pos % bits_per_word))};
     }
 
     /// @details accesses the bit at position `pos`
@@ -196,7 +195,8 @@ class bit_array_base
     inline constexpr const_reference operator[](size_type pos) const noexcept
     {
         word_type tmp = data(pos / bits_per_word);
-        return reference{&tmp, word_type(1) << (pos % bits_per_word)};
+        return reference{&tmp,
+            static_cast<word_type>(word_type(1) << (pos % bits_per_word))};
     }
     /// @}
 
@@ -263,21 +263,21 @@ class bit_array_base
     constexpr iterator end() noexcept
     {
         return bit_iterator{data() + (size() >> lg_bits_per_word),
-            word_type(1) << size() % bits_per_word};
+            static_cast<word_type>(word_type(1) << size() % bits_per_word)};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator end() const noexcept
     {
         return const_iterator{data() + (size() >> lg_bits_per_word),
-            word_type(1) << size() % bits_per_word};
+            static_cast<word_type>(word_type(1) << size() % bits_per_word)};
     }
     /// @returns iterator to the element following the last element
     /// @complexity `O(1)`
     constexpr const_iterator cend() const noexcept
     {
         return const_iterator{data() + (size() >> lg_bits_per_word),
-            word_type(1) << size() % bits_per_word};
+            static_cast<word_type>(word_type(1) << size() % bits_per_word)};
     }
     /// @}
 
@@ -731,9 +731,9 @@ class bit_array_base
         }
 
         friend class bit_array_base;      //< access to c'tor
-        friend class bit_iterator_base<ConcreteBitArrayT>;   //< access to c'tor
-        friend class bit_iterator<ConcreteBitArrayT>;        //< access to c'tor
-        friend class const_bit_iterator<ConcreteBitArrayT>;  //< access to c'tor
+        friend class bit_iterator_base<ConcreteBitArrayT, WordT>;   //< access to c'tor
+        friend class bit_iterator<ConcreteBitArrayT, WordT>;        //< access to c'tor
+        friend class const_bit_iterator<ConcreteBitArrayT, WordT>;  //< access to c'tor
     };  // class bit_array_base::bit_reference
 
   protected:
@@ -747,15 +747,16 @@ class bit_array_base
 
 /// @brief a base class provided to simplify the definition of
 ///        `bit_iterator` and `const_bit_iterator`
-template <typename ConcreteBitArrayT>
+template <typename ConcreteBitArrayT,
+          typename WordT>
 class bit_iterator_base
 {
     public:
     using difference_type = std::ptrdiff_t;
     using iterator_category = std::random_access_iterator_tag;
-    using word_type = typename bit_array_base<ConcreteBitArrayT>::word_type;
-    using word_pointer = typename bit_array_base<ConcreteBitArrayT>::word_pointer;
-    static constexpr auto bits_per_word = bit_array_base<ConcreteBitArrayT>::bits_per_word;
+    using word_type = typename bit_array_base<ConcreteBitArrayT, WordT>::word_type;
+    using word_pointer = typename bit_array_base<ConcreteBitArrayT, WordT>::word_pointer;
+    static constexpr auto bits_per_word = bit_array_base<ConcreteBitArrayT, WordT>::bits_per_word;
 
     inline constexpr bool operator==(const bit_iterator_base & rhs) const
     {
@@ -888,26 +889,28 @@ class bit_iterator_base
     friend difference_type operator-(const bit_iterator_base & lhs,
         const bit_iterator_base & rhs)
     {
-        constexpr auto bits_per_word = bit_iterator_base<ConcreteBitArrayT>::bits_per_word;
+        constexpr auto bits_per_word = bit_iterator_base<ConcreteBitArrayT, WordT>::bits_per_word;
         return bits_per_word*(lhs.word_ptr_ - rhs.word_ptr_)
             + (psnip_builtin_ctz64(lhs.mask_) - psnip_builtin_ctz64(rhs.mask_));
     }
 };  // class bit_iterator_base
 
-template <typename ConcreteBitArrayT>
-class bit_iterator final : public bit_iterator_base<ConcreteBitArrayT>
+template <typename ConcreteBitArrayT,
+          typename WordT>
+class bit_iterator final
+  : public bit_iterator_base<ConcreteBitArrayT, WordT>
 {
     private:
-    using base = bit_iterator_base<ConcreteBitArrayT>;
+    using base = bit_iterator_base<ConcreteBitArrayT, WordT>;
     public:
     using difference_type = std::ptrdiff_t;
-    using value_type = typename bit_array_base<ConcreteBitArrayT>::value_type;
-    using reference = typename bit_array_base<ConcreteBitArrayT>::reference;
+    using value_type = typename bit_array_base<ConcreteBitArrayT, WordT>::value_type;
+    using reference = typename bit_array_base<ConcreteBitArrayT, WordT>::reference;
     using const_reference = typename bit_array_base<ConcreteBitArrayT>::const_reference;
     using pointer = std::add_pointer_t<reference>;
-    using iterator = bit_iterator<ConcreteBitArrayT>;
-    using word_type = typename bit_array_base<ConcreteBitArrayT>::word_type;
-    using word_pointer = typename bit_array_base<ConcreteBitArrayT>::word_pointer;
+    using iterator = bit_iterator<ConcreteBitArrayT, WordT>;
+    using word_type = typename bit_array_base<ConcreteBitArrayT, WordT>::word_type;
+    using word_pointer = typename bit_array_base<ConcreteBitArrayT, WordT>::word_pointer;
 
     /// @brief (deleted) default c'tor
     inline bit_iterator() = delete;
@@ -1013,26 +1016,28 @@ class bit_iterator final : public bit_iterator_base<ConcreteBitArrayT>
         return *(*this + i);
     }
 
-    friend class bit_array_base<ConcreteBitArrayT>;
-    friend class const_bit_iterator<ConcreteBitArrayT>;
+    friend class bit_array_base<ConcreteBitArrayT, WordT>;
+    friend class const_bit_iterator<ConcreteBitArrayT, WordT>;
 };  // class bit_iterator
 
-template <typename ConcreteBitArrayT>
-class const_bit_iterator final : public bit_iterator_base<ConcreteBitArrayT>
+template <typename ConcreteBitArrayT,
+          typename WordT>
+class const_bit_iterator final
+  : public bit_iterator_base<ConcreteBitArrayT, WordT>
 {
     private:
-    using base = bit_iterator_base<ConcreteBitArrayT>;
+    using base = bit_iterator_base<ConcreteBitArrayT, WordT>;
     public:
     using difference_type = std::ptrdiff_t;
-    using value_type = typename bit_array_base<ConcreteBitArrayT>::value_type;
-    using reference = typename bit_array_base<ConcreteBitArrayT>::const_reference;
-    using const_reference = typename bit_array_base<ConcreteBitArrayT>::const_reference;
+    using value_type = typename bit_array_base<ConcreteBitArrayT, WordT>::value_type;
+    using reference = typename bit_array_base<ConcreteBitArrayT, WordT>::const_reference;
+    using const_reference = typename bit_array_base<ConcreteBitArrayT, WordT>::const_reference;
     using pointer = std::add_pointer_t<reference>;
-    using iterator = const_bit_iterator<ConcreteBitArrayT>;
-    using const_iterator = const_bit_iterator<ConcreteBitArrayT>;
-    using word_type = typename bit_array_base<ConcreteBitArrayT>::word_type;
-    using word_pointer = typename bit_array_base<ConcreteBitArrayT>::word_pointer;
-    using const_word_pointer = typename bit_array_base<ConcreteBitArrayT>::const_word_pointer;
+    using iterator = const_bit_iterator<ConcreteBitArrayT, WordT>;
+    using const_iterator = const_bit_iterator<ConcreteBitArrayT, WordT>;
+    using word_type = typename bit_array_base<ConcreteBitArrayT, WordT>::word_type;
+    using word_pointer = typename bit_array_base<ConcreteBitArrayT, WordT>::word_pointer;
+    using const_word_pointer = typename bit_array_base<ConcreteBitArrayT, WordT>::const_word_pointer;
 
     /// @brief (deleted) default c'tor
     inline const_bit_iterator() = delete;
@@ -1067,13 +1072,13 @@ class const_bit_iterator final : public bit_iterator_base<ConcreteBitArrayT>
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr
-    explicit const_bit_iterator(const bit_iterator<ConcreteBitArrayT> & to_copy) noexcept
+    explicit const_bit_iterator(const bit_iterator<ConcreteBitArrayT, WordT> & to_copy) noexcept
         : base{to_copy.word_ptr_, to_copy.mask_} {}
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr
-    explicit const_bit_iterator(bit_iterator<ConcreteBitArrayT> && to_copy) noexcept
+    explicit const_bit_iterator(bit_iterator<ConcreteBitArrayT, WordT> && to_copy) noexcept
         : base{to_copy.word_ptr_, to_copy.mask_} {}
 
     ~const_bit_iterator() = default;
@@ -1082,7 +1087,7 @@ class const_bit_iterator final : public bit_iterator_base<ConcreteBitArrayT>
     HEDLEY_ALWAYS_INLINE
     constexpr const_reference operator*() const
     {
-        using bitref = typename bit_array_base<ConcreteBitArrayT>::bit_reference;
+        using bitref = typename bit_array_base<ConcreteBitArrayT, WordT>::bit_reference;
         return bitref{base::word_ptr_, base::mask_};
     }
 
@@ -1346,11 +1351,12 @@ inline std::ostream & operator<<(std::ostream & os, typename bit_array_base<Conc
 namespace std
 {
 
-template <typename ConcreteBitArrayT>
-struct iterator_traits<dpf::bit_iterator<ConcreteBitArrayT>>
+template <typename ConcreteBitArrayT,
+          typename WordT>
+struct iterator_traits<dpf::bit_iterator<ConcreteBitArrayT, WordT>>
 {
   private:
-    using type = dpf::bit_iterator<ConcreteBitArrayT>;
+    using type = dpf::bit_iterator<ConcreteBitArrayT, WordT>;
   public:
     using iterator_category = typename type::iterator_category;
     using difference_type = typename type::difference_type;
@@ -1360,11 +1366,12 @@ struct iterator_traits<dpf::bit_iterator<ConcreteBitArrayT>>
     using pointer = typename type::pointer;
 };
 
-template <typename ConcreteBitArrayT>
-struct iterator_traits<dpf::const_bit_iterator<ConcreteBitArrayT>>
+template <typename ConcreteBitArrayT,
+          typename WordT>
+struct iterator_traits<dpf::const_bit_iterator<ConcreteBitArrayT, WordT>>
 {
   private:
-    using type = dpf::const_bit_iterator<ConcreteBitArrayT>;
+    using type = dpf::const_bit_iterator<ConcreteBitArrayT, WordT>;
   public:
     using iterator_category = typename type::iterator_category;
     using difference_type = typename type::difference_type;

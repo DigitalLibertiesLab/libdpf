@@ -56,10 +56,12 @@ namespace dpf
 ///          the length of the bitstring.
 /// @tparam Nbits the bitlength of the string
 template <std::size_t Nbits>
-class bitstring : public bit_array_base<bitstring<Nbits>>
+class bitstring : public bit_array_base<bitstring<Nbits>,
+    utils::integral_type_from_bitlength_t<Nbits, 8, 64>>
 {
   private:
-    using base = bit_array_base<bitstring<Nbits>>;
+    using base = bit_array_base<bitstring<Nbits>,
+        utils::integral_type_from_bitlength_t<Nbits, 8, 64>>;
     using word_pointer = typename base::word_pointer;
     using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
@@ -110,7 +112,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>>
     /// @param val the number used to initialize the `dpf::bitstring`
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
-    constexpr explicit bitstring(uint64_t val) noexcept
+    constexpr explicit bitstring(word_type val) noexcept
       : data_{val} { }
 
     /// @brief Constructs a `dpf::bitstring` using the characters in the
