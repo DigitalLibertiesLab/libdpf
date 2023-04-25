@@ -496,8 +496,8 @@ class modint
     }
 
     template <typename CharT,
-              class Traits = std::char_traits<CharT>,
-              class Allocator = std::allocator<CharT>>
+              typename Traits = std::char_traits<CharT>,
+              typename Allocator = std::allocator<CharT>>
     friend std::basic_ostream<CharT, Traits> &
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const modint & i)
@@ -506,8 +506,8 @@ class modint
     }
 
     template <typename CharT,
-              class Traits = std::char_traits<CharT>,
-              class Allocator = std::allocator<CharT>>
+              typename Traits = std::char_traits<CharT>,
+              typename Allocator = std::allocator<CharT>>
     friend std::basic_istream<CharT, Traits> &
     operator>>(std::basic_istream<CharT, Traits> & is,
         const modint & i)

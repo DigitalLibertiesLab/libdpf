@@ -40,7 +40,10 @@ basic_path_memoizer final
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using return_type = std::add_pointer_t<std::add_const_t<node_type>>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     using iterator_type = return_type;
     static constexpr auto depth = DpfKey::depth;
 
@@ -95,7 +98,10 @@ basic_path_memoizer final
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     std::optional<input_type> x_;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::array<node_type, depth+1> arr_;
+HEDLEY_PRAGMA(GCC diagnostic pop)
 };
 
 template <typename DpfKey>

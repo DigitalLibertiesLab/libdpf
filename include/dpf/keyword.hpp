@@ -81,8 +81,8 @@ namespace alphabets
 template <std::size_t N,
           typename CharT = char,
           const CharT * Alphabet = alphabets::printable_ascii,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+          typename Traits = std::char_traits<CharT>,
+          typename Allocator = std::allocator<CharT>>
 class basic_fixed_length_string
 {
   public:
@@ -398,8 +398,8 @@ using keyword = basic_fixed_length_string<N, char, Alphabet>;
 template <std::size_t N,
           typename CharT,
           const CharT * Alphabet,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+          typename Traits = std::char_traits<CharT>,
+          typename Allocator = std::allocator<CharT>>
 static constexpr std::basic_string<CharT, Traits, Allocator>
 to_string(basic_fixed_length_string<N, CharT, Alphabet, Traits, Allocator>
     str) noexcept
@@ -414,8 +414,8 @@ namespace utils
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct bitlength_of<
     dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
   : public std::integral_constant<std::size_t,
@@ -425,8 +425,8 @@ struct bitlength_of<
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
@@ -439,8 +439,8 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
@@ -459,8 +459,8 @@ struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT,
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
@@ -473,8 +473,8 @@ struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct make_from_integral_value<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;

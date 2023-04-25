@@ -25,6 +25,8 @@ struct interval_memoizer_base
     using return_type = ReturnT;
     using iterator_type = return_type;
 
+    std::size_t max_size() const { return output_length; }
+
     // level 0 should access the root
     // level goes up to (and including) depth
     virtual return_type operator[](std::size_t) const noexcept = 0;
@@ -130,6 +132,15 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using parent::level_index;
     using parent::get_nodes_at_level;
 
+    explicit basic_interval_memoizer() : parent::interval_memoizer_base(0) { }
+    void initialize(std::size_t output_len, Allocator alloc = Allocator{})
+    {
+        if (parent::output_length) throw std::runtime_error("");
+        parent::output_length = output_len;
+        pivot = std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2);
+        buf = alloc.allocate_unique_ptr(pivot+((output_len+2)>>1));
+    }
+
     // See comment for full_tree_interval_memoizer::initialize_endpoints() for
     //   general explanation of derivation for "nodes at previous level".
     // When creating the final level of interior nodes from the previous level,
@@ -153,7 +164,9 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
       : parent::interval_memoizer_base(output_len),
         pivot{std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2)},
         buf{alloc.allocate_unique_ptr(pivot+((output_len+2)>>1))}
-    { }
+    {
+        if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
+    }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -202,7 +215,9 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
       : parent::interval_memoizer_base(output_len),
         level_endpoints{initialize_endpoints(output_len)},
         buf{alloc.allocate_unique_ptr(level_endpoints[depth] + output_len)}
-    { }
+    {
+        if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
+    }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW

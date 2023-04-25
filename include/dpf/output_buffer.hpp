@@ -65,26 +65,51 @@ class output_buffer<dpf::bit> : public dpf::dynamic_bit_array
     ~output_buffer() = default;
 };
 
-template <std::size_t I = 0,
-          typename DpfKey,
+template <typename DpfKey,
+          std::size_t I = 0,
           typename InputT>
-auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
+auto make_output_buffer_for_interval(InputT from, InputT to)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
-
     return dpf::output_buffer<output_type>(nodes_in_interval*dpf_type::outputs_per_leaf);
 }
 
 template <std::size_t I = 0,
           typename DpfKey,
-          typename Iterator>
-auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
+          typename InputT>
+inline auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
+{
+    return make_output_buffer_for_interval<DpfKey, I>(from, to);
+}
+
+template <typename DpfKey,
+          std::size_t I = 0>
+auto make_output_buffer_for_full()
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using input_type = typename DpfKey::input_type;
+
+    return make_output_buffer_for_interval<DpfKey, I>(input_type(0),
+        std::numeric_limits<input_type>::max());
+}
+
+template <std::size_t I = 0,
+          typename DpfKey>
+inline auto make_output_buffer_for_full(const DpfKey &)
+{
+    return make_output_buffer_for_full<DpfKey, I>();
+}
+
+template <typename DpfKey,
+          std::size_t I = 0,
+          typename Iterator>
+auto make_output_buffer_for_subsequence(Iterator begin, Iterator end)
+{
+    using dpf_type = DpfKey;
+    using output_type = typename DpfKey::concrete_output_type<I>;
     std::size_t nodes_in_sequence = std::distance(begin, end);
 
     return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
@@ -92,15 +117,31 @@ auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator
 
 template <std::size_t I = 0,
           typename DpfKey,
+          typename Iterator>
+inline auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
+{
+    return make_output_buffer_for_subsequence<DpfKey, I>(begin, end);
+}
+
+template <typename DpfKey,
+          std::size_t I = 0,
           typename InputT>
-auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
+auto make_output_buffer_for_recipe_subsequence(const sequence_recipe<InputT> & recipe)
 {
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     std::size_t nodes_in_sequence = recipe.num_leaf_nodes;
 
     return dpf::output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
+}
+
+template <std::size_t I = 0,
+          typename DpfKey,
+          typename InputT>
+inline auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
+{
+    return make_output_buffer_for_recipe_subsequence<DpfKey, I>(recipe);
 }
 
 }  // namespace dpf

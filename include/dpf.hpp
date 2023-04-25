@@ -24,6 +24,8 @@
 
 #include "dpf/eval_interval.hpp"
 
+#include "dpf/eval_full.hpp"
+
 #include "dpf/eval_point.hpp"
 
 #include "dpf/eval_sequence.hpp"

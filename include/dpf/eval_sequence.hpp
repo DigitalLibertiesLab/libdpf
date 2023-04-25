@@ -48,7 +48,7 @@ HEDLEY_ALWAYS_INLINE
 auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
     std::size_t i = 0;
@@ -68,7 +68,7 @@ HEDLEY_ALWAYS_INLINE
 auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
     auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
     std::size_t i = 0;
     DPF_UNROLL_LOOP
@@ -120,7 +120,7 @@ inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterat
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     if (!std::is_sorted(begin, end))
     {
@@ -287,7 +287,7 @@ inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequenc
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -327,7 +327,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     internal::eval_sequence_interior(dpf, recipe, memoizer);
 
