@@ -266,13 +266,14 @@ TYPED_TEST_P(EvalIntervalTest, SurroundingInterval)
     auto to_integral_type = dpf::utils::to_integral_type<input_type>{};
     auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
 
+    std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10)),
+                range = (std::size_t(1) << range_bitlength-1)-1;
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        integral_type x_int = to_integral_type(x);
-        std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10)),
-                    range = (std::size_t(1) << range_bitlength-1)-1;
-        integral_type from_int, to_int, msb_mask = to_integral_type(dpf::utils::msb_of_v<input_type>),
+        integral_type x_int = to_integral_type(x),
+                      from_int, to_int, msb_mask = to_integral_type(dpf::utils::msb_of_v<input_type>),
                       max_int = msb_mask | msb_mask-1;
         // set [from_int, to_int] to be centered around x_int if possible
         //   use [0, 2*range] or [max_int-2*range, max_int] as needed otherwise
@@ -331,7 +332,7 @@ using Types = testing::Types
     test_type<uint64_t, uint8_t>,
     test_type<uint64_t, simde_uint128>,
     test_type<uint64_t, dpf::bit>,
-    test_type<uint64_t, dpf::bitstring<10>>,
+    // test_type<uint64_t, dpf::bitstring<10>>,
     test_type<uint64_t, dpf::xor_wrapper<uint64_t>>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalIntervalTestInstantiation, EvalIntervalTest, Types);

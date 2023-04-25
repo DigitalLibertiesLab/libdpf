@@ -276,11 +276,12 @@ TYPED_TEST_P(EvalPointTest, SurroundingPoints)
     using input_type = typename std::tuple_element_t<0, TypeParam>;
     using output_type = typename std::tuple_element_t<1, TypeParam>;
 
+    std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10)),
+                range = std::size_t(1) << range_bitlength-1;
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        std::size_t range_bitlength = std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10)),
-                    range = std::size_t(1) << range_bitlength-1;
         input_type xp = x, xm = x; ++xp; --xm;
         output_type zero_output = output_type(0);
         for (std::size_t i = 1; i < range; ++i, ++xp, --xm)
@@ -313,7 +314,7 @@ using Types = testing::Types
     test_type<uint64_t, uint8_t>,
     test_type<uint64_t, simde_uint128>,
     test_type<uint64_t, dpf::bit>,
-    // test_type<uint64_t, dpf::bitstring<10>>,
+    test_type<uint64_t, dpf::bitstring<10>>,
     test_type<uint64_t, dpf::xor_wrapper<uint64_t>>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalPointTestInstantiation, EvalPointTest, Types);
