@@ -61,11 +61,11 @@ auto make_dpf_output(const Node & node, Input x)
         offset_within_block<concrete_type_t<Output>, Node>(x)};
 }
 
-template <std::size_t I = 0,
+template <std::size_t ...Is,
           typename DpfKey>
 void assert_not_wildcard(const DpfKey & dpf)
 {
-    if (dpf.is_wildcard(I))
+    if ((dpf.is_wildcard(Is) || ...))
     {
         throw std::runtime_error("cannot evaluate to wildcards");
     }

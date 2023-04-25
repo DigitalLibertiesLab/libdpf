@@ -249,7 +249,7 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
 template <std::size_t I,
           typename DpfKey,
           typename InputT,
-          class OutputBuffer,
+          typename OutputBuffer,
           typename SequenceMemoizer>
 inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
@@ -279,7 +279,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <std::size_t I,
           typename DpfKey,
           typename InputT,
-          class OutputBuffer,
+          typename OutputBuffer,
           typename SequenceMemoizer>
 inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
@@ -320,7 +320,7 @@ template <std::size_t I = 0,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
           typename InputT,
-          class OutputBuffer,
+          typename OutputBuffer,
           typename SequenceMemoizer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     OutputBuffer && outbuf, SequenceMemoizer & memoizer)
@@ -347,7 +347,7 @@ template <std::size_t I = 0,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
           typename InputT,
-          class OutputBuffer>
+          typename OutputBuffer>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     OutputBuffer && outbuf)
 {

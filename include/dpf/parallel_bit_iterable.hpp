@@ -19,10 +19,12 @@
 namespace dpf
 {
 
-template <std::size_t BatchSize, typename ChildT>
+template <std::size_t BatchSize,
+          typename ChildT>
 class parallel_const_bit_iterator;  // forward declaration
 
-template <std::size_t BatchSize, typename ChildT>
+template <std::size_t BatchSize,
+          typename ChildT>
 class parallel_bit_iterable
 {
   public:
@@ -38,7 +40,8 @@ class parallel_bit_iterable
             [](Iter it){ return it->data() + it->data_length(); })}
     { }
 
-    template <typename T, typename ...Ts>
+    template <typename T,
+              typename ...Ts>
     explicit parallel_bit_iterable(const T & t, const Ts & ...ts)
       : begin_{t.data(), ts.data()...},
         end_{t.data()+t.data_length(), ts.data()+ts.data_length()...}
@@ -75,7 +78,9 @@ class parallel_bit_iterable
   private:
     using array_type = std::array<word_pointer, batch_size>;
 
-    template <typename F, typename Iter, std::size_t... Is>
+    template <typename F,
+              typename Iter,
+              std::size_t... Is>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     static constexpr array_type init_array_impl(Iter it,
@@ -84,8 +89,9 @@ class parallel_bit_iterable
         return {{ ((void)Is, lambda(it++))... }};
     }
 
-    template <typename F, typename Iter,
-        class Indices = std::make_index_sequence<batch_size>>
+    template <typename F,
+              typename Iter,
+              typename Indices = std::make_index_sequence<batch_size>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     static constexpr array_type init_array(Iter it,
@@ -97,7 +103,8 @@ class parallel_bit_iterable
     const array_type begin_, end_;
 };  // class dpf::parallel_bit_iterable
 
-template <std::size_t N, typename ChildT>
+template <std::size_t N,
+          typename ChildT>
 class parallel_const_bit_iterator
 {
   private:
@@ -282,7 +289,9 @@ class parallel_const_bit_iterator
     friend parallel_const_bit_iterator parallel_bit_iterable<batch_size, ChildT>::end() const noexcept;
 };  // class dpf::parallel_const_bit_iterator
 
-template <std::size_t N, typename ChildT, typename Iter>
+template <std::size_t N,
+          typename ChildT,
+          typename Iter>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 auto batch_of(Iter it) noexcept
@@ -290,7 +299,8 @@ auto batch_of(Iter it) noexcept
     return dpf::parallel_bit_iterable<N, ChildT>{it};
 }
 
-template <typename ChildT, typename... Ts>
+template <typename ChildT,
+          typename... Ts>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 auto batch_of(const dpf::bit_array_base<ChildT> & t, const Ts & ... ts) noexcept
@@ -298,14 +308,17 @@ auto batch_of(const dpf::bit_array_base<ChildT> & t, const Ts & ... ts) noexcept
     return dpf::parallel_bit_iterable<1+sizeof...(Ts), ChildT>{t, ts...};
 }
 
-template <std::size_t N, typename Iter, class UnaryFunction>
+template <std::size_t N, typename Iter,
+          typename UnaryFunction>
 HEDLEY_ALWAYS_INLINE
 void for_each_bit_parallel(Iter it, UnaryFunction f)
 {
     for (auto i : batch_of<N>(it)) f(i);
 }
 
-template <typename ChildT, class UnaryFunction, typename... Ts>
+template <typename ChildT,
+          typename UnaryFunction,
+          typename... Ts>
 HEDLEY_ALWAYS_INLINE
 void for_each_bit_parallel(const dpf::bit_array_base<ChildT> & t, const Ts & ... ts, UnaryFunction f)
 {

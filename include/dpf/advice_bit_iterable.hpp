@@ -289,7 +289,8 @@ dpf::advice_bit_iterable<Iterable> advice_bits_of(const Iterable & iterable)
     return advice_bit_iterable<Iterable>{iterable};
 }
 
-template <typename Iterable, class UnaryFunction>
+template <typename Iterable,
+          typename UnaryFunction>
 void for_each_advice_bit(const Iterable & iterable, UnaryFunction f)
 {
     for (auto i : advice_bits_of(iterable)) f(i);

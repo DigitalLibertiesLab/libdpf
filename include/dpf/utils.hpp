@@ -181,10 +181,13 @@ struct bitlength_of<std::array<T, N>>
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
 /// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(Nbits, MinBits)>
 struct integral_type_from_bitlength
 {
-    static constexpr auto effective_Nbits = std::max(Nbits, MinBits);
+    static_assert(MinBits <= MaxBits);
+    static constexpr auto effective_Nbits = std::min(std::max(Nbits, MinBits), MaxBits);
     static constexpr auto less_equal = std::less_equal<void>{};
     using type = std::conditional_t<less_equal(effective_Nbits, 128),
         std::conditional_t<less_equal(effective_Nbits, 64),
@@ -198,17 +201,23 @@ struct integral_type_from_bitlength
     void>;
 };
 
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(Nbits, MinBits)>
 using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits>::type;
 
 /// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits  = std::max(std::size_t(128), MinBits)>
 struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
 {
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    static_assert(Nbits && Nbits <= MaxBits, "representation must fit in 128 bits");
 };
 
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(std::size_t(128), MinBits)>
 using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
 
 template <typename T>

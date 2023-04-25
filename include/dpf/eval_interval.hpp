@@ -32,7 +32,7 @@ namespace internal
 {
 
 template <typename DpfKey,
-          class IntervalMemoizer,
+          typename IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
 inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     IntervalMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
@@ -81,8 +81,8 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node, Inte
 
 template <std::size_t I = 0,
           typename DpfKey,
-          class OutputBuffer,
-          class IntervalMemoizer,
+          typename OutputBuffer,
+          typename IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
 inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node, IntegralT to_node,
     OutputBuffer & outbuf, IntervalMemoizer & memoizer)
@@ -114,8 +114,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <std::size_t I = 0,
           typename DpfKey,
-          class OutputBuffer,
-          class IntervalMemoizer,
+          typename OutputBuffer,
+          typename IntervalMemoizer,
           typename InputT>
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     OutputBuffer && outbuf, IntervalMemoizer & memoizer)
@@ -161,8 +161,8 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to)
 
 template <std::size_t I = 0,
           typename DpfKey,
-          class OutputBuffer,
-          class IntervalMemoizer>
+          typename OutputBuffer,
+          typename IntervalMemoizer>
 auto eval_full(const DpfKey & dpf, OutputBuffer && outbuf, IntervalMemoizer & memoizer)
 {
     using input_type = typename DpfKey::input_type;
@@ -171,7 +171,7 @@ auto eval_full(const DpfKey & dpf, OutputBuffer && outbuf, IntervalMemoizer & me
 
 template <std::size_t I = 0,
           typename DpfKey,
-          class OutputBuffer>
+          typename OutputBuffer>
 auto eval_full(const DpfKey & dpf, OutputBuffer && outbuf)
 {
     using input_type = typename DpfKey::input_type;
