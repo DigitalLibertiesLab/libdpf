@@ -224,6 +224,7 @@ template <typename T>
 struct to_integral_type_base
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
+    // Select integer type larger than or equal to size of std::size_t
     using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
     static_assert(!std::is_void_v<integral_type>, "cannot convert to void type");
 };

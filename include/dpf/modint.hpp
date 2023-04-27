@@ -475,7 +475,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator~() const noexcept
     {
-        return modint{~this->val};
+        return modint{static_cast<integral_type>(~this->val)};
     }
 
     /// @brief convert this `modint` to the equivalent `integeral_type`
@@ -527,7 +527,7 @@ class modint
 
   private:
     /// @brief bitmask used for performing reductions modulo `2^Nbits`
-    static constexpr integral_type modulo_mask = ~integral_type{0} >> utils::bitlength_of_v<integral_type> - Nbits;
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - Nbits;
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;
@@ -637,7 +637,7 @@ struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
     {
         using T = typename dpf::modint<Nbits>::integral_type;
         constexpr auto xor_op = std::bit_xor<T>{};
-        constexpr auto adjust = bitlength_of_v<T> - Nbits;
+        constexpr auto adjust = 64 - Nbits;
         auto diff = xor_op(static_cast<T>(lhs), static_cast<T>(rhs));
 
         if constexpr (std::is_same_v<T, simde_uint128>)

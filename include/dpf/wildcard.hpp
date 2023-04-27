@@ -39,7 +39,10 @@ struct wildcard_value
     static_assert(std::numeric_limits<T>::is_iec559 ||
         !(std::is_same_v<T, float> || std::is_same_v<T, double>),
         "floating point types only supported for iec559");
-    inline constexpr wildcard_value() noexcept = default;
+    inline constexpr wildcard_value() noexcept : val{0} { }
+
+  private:
+    std::array<char, sizeof(T)> val;
 };
 
 // }  // namespace

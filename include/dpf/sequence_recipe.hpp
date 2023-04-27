@@ -29,10 +29,10 @@ struct sequence_recipe
         level_endpoints_{level_endpoints}
     { }
 
-    const std::vector<int8_t> recipe_steps() { return recipe_steps_; }
-    const std::vector<std::size_t> output_indices() { return output_indices_; }
-    std::size_t num_leaf_nodes() { return num_leaf_nodes_; }
-    const std::vector<std::size_t> level_endpoints() { return level_endpoints_; }
+    const std::vector<int8_t> & recipe_steps() const { return recipe_steps_; }
+    const std::vector<std::size_t> & output_indices() const { return output_indices_; }
+    std::size_t num_leaf_nodes() const { return num_leaf_nodes_; }
+    const std::vector<std::size_t> & level_endpoints() const { return level_endpoints_; }
 
   private:
     std::vector<int8_t> recipe_steps_;
@@ -48,10 +48,10 @@ template <typename DpfKey,
           typename RandomAccessIterator>
 auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 {
-    static_assert(std::is_same_v<typename DpfKey::input_type, std::remove_reference_t<decltype(*begin)>>);
+    static_assert(std::is_same_v<typename DpfKey::input_type, std::remove_const_t<std::remove_reference_t<decltype(*begin)>>>);
 
     using dpf_type = DpfKey;
-    using input_type = std::remove_reference_t<decltype(*begin)>;
+    using input_type = typename DpfKey::input_type;
 
     if (!std::is_sorted(begin, end))
     {
@@ -88,10 +88,12 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
     std::vector<std::size_t> output_indices;
     // output_indices.push_back(*begin % outputs_per_leaf);
     std::size_t leaf_index = 0;//*begin/outputs_per_leaf < *(begin+1)/outs_per_leaf;
+    constexpr auto mod = utils::mod_pow_2<input_type>{};
+    constexpr auto clz = utils::countl_zero_symmetric_difference<input_type>{};
     for (auto curr = begin, prev = curr; curr != end; prev = curr++)
     {
-        leaf_index += *prev >> dpf_type::lg_outputs_per_leaf < *curr >> dpf_type::lg_outputs_per_leaf;
-        output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + (*curr % dpf_type::outputs_per_leaf));
+        leaf_index += (clz(*prev, *curr)) < dpf_type::depth;
+        output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + mod(*curr, dpf_type::lg_outputs_per_leaf));
     }
 
     return sequence_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};

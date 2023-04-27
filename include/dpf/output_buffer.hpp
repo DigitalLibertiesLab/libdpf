@@ -131,7 +131,7 @@ auto make_output_buffer_for_recipe_subsequence(const sequence_recipe<InputT> & r
     using dpf_type = DpfKey;
     using output_type = typename DpfKey::concrete_output_type<I>;
 
-    std::size_t nodes_in_sequence = recipe.num_leaf_nodes;
+    std::size_t nodes_in_sequence = recipe.num_leaf_nodes();
 
     return dpf::output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
 }

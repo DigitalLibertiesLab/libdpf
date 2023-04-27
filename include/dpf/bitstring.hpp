@@ -108,12 +108,12 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     /// @details Constructs an instance of `dpf::bitstring` while initializing
     ///          the first (rightmost, least significant) `M` bit positions to
     ///          the corresponding bit values of `val`, where `M` is the
-    ///          smaller of `Nbits` and `64`.
+    ///          smaller of `Nbits` and `bits_per_word`.
     /// @param val the number used to initialize the `dpf::bitstring`
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr explicit bitstring(word_type val) noexcept
-      : data_{val} { }
+      : data_{Nbits < bits_per_word ? static_cast<word_type>(val % (1 << Nbits)) : val} { }
 
     /// @brief Constructs a `dpf::bitstring` using the characters in the
     ///        `std::basic_string` `str`. An optional starting position `pos`
@@ -265,7 +265,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
         HEDLEY_NO_THROW
         friend constexpr bit_mask operator>>(const bit_mask & mask, std::size_t shift_by) noexcept
         {
-            return bit_mask{mask.which_bit_ >> shift_by};
+            return bit_mask{mask.which_bit_ - shift_by};
         }
 
         /// @brief shifts the bit mask to the left by the given number of
@@ -276,7 +276,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
         HEDLEY_NO_THROW
         friend constexpr bit_mask operator<<(const bit_mask & mask, std::size_t shift_by) noexcept
         {
-            return bit_mask{mask.which_bits_ << shift_by};
+            return bit_mask{mask.which_bits_ + shift_by};
         }
 
       private:
@@ -319,7 +319,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     /// @return `true` if the `bitstring`s are unequal, `false` otherwise
     /// @complexity `O(Nbits)`
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator!=(const bitstring<Nbits> & rhs) const
+    constexpr bool operator!=(const bitstring & rhs) const
     {
         return data_ != rhs.data_;
     }
@@ -330,7 +330,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     /// @return `true` if `this` comes before `rhs` lexiographically, `false`
     ///          otherwise
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator<(const bitstring<Nbits> & rhs) const
+    constexpr bool operator<(const bitstring & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
             rbegin(rhs.data_), rend(rhs.data_), std::less{});
@@ -344,7 +344,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     ///         `false` otherwise
     /// @complexity `O(Nbits)`
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator<=(const bitstring<Nbits> & rhs) const
+    constexpr bool operator<=(const bitstring & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
             rbegin(rhs.data_), rend(rhs.data_), std::less_equal{});
@@ -358,7 +358,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     ///          otherwise
     /// @complexity `O(Nbits)`
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator>(const bitstring<Nbits> & rhs) const
+    constexpr bool operator>(const bitstring & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
             rbegin(rhs.data_), rend(rhs.data_), std::greater{});
@@ -373,10 +373,20 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     ///          otherwise
     /// @complexity `O(Nbits)`
     HEDLEY_ALWAYS_INLINE
-    constexpr bool operator>=(const bitstring<Nbits> & rhs) const
+    constexpr bool operator>=(const bitstring & rhs) const
     {
         return std::lexicographical_compare(rbegin(data_), rend(data_),
             rbegin(rhs.data_), rend(rhs.data_), std::greater_equal{});
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bitstring operator~() const noexcept
+    {
+        bitstring ret = *this;
+        ret.flip();
+        return ret;
     }
 
     HEDLEY_NO_THROW
@@ -511,6 +521,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
         return operator^(lhs, rhs);
     }
 
+    friend struct utils::countl_zero_symmetric_difference<bitstring>;
     friend struct utils::to_integral_type<bitstring>;
     friend struct utils::mod_pow_2<bitstring>;
 };  // class dpf::bitstring
@@ -555,13 +566,13 @@ struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
         constexpr auto xor_op = std::bit_xor<word_type>{};
         auto adjust = lhs.data_length()*bitlength_of_v<word_type> - Nbits;
         std::size_t prefix_len = 0;
-        for (auto i = lhs.data_length()-1; i >= 0; --i,
+        for (auto i = lhs.data_length(); i > 0; --i,
             prefix_len += bitlength_of_v<word_type>)
         {
-            word_type limb = xor_op(lhs.data(i), rhs.data(i));
+            uint64_t limb = xor_op(lhs.data(i-1), rhs.data(i-1));
             if (limb)
             {
-                return prefix_len + psnip_builtin_clz64(limb) - adjust;
+                return prefix_len + psnip_builtin_clz64(limb) - adjust - (64 - bitlength_of_v<word_type>);
             }
         }
         return prefix_len - adjust;

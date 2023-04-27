@@ -70,8 +70,8 @@ class bit_array_base
     using value_type = dpf::bit;
     /// @brief proxy class representing a reference to a single bit.
     using reference = bit_array_base::bit_reference;
-    /// @brief `bool`
-    using const_reference = bool;
+    /// @brief `dpf::bit`
+    using const_reference = dpf::bit;
     /// @brief a random access iterator to `value_type`.
     /// @note convertible to `const_bit_iterator`
     using iterator = bit_iterator<ConcreteBitArrayT, WordT>;
@@ -96,8 +96,8 @@ class bit_array_base
     /// @brief an unsigned integral type used for the internal representation
     ///        of bits.
     using word_type = WordT;
-    static_assert(std::is_integral_v<size_type>
-        && std::is_unsigned_v<size_type>);
+    static_assert(std::is_integral_v<word_type>
+        && std::is_unsigned_v<word_type>);
     /// @brief pointer to `word_type`
     using word_pointer = std::add_pointer_t<word_type>;
     /// @brief const pointer to `word_type`

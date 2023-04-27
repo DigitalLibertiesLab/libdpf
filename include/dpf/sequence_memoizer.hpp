@@ -70,10 +70,10 @@ struct sequence_memoizer_base
 
         if (level == depth)
         {
-            return recipe.num_leaf_nodes;
+            return recipe.num_leaf_nodes();
         }
 
-        return recipe.level_endpoints[level+1] - recipe.level_endpoints[level];
+        return recipe.level_endpoints()[level+1] - recipe.level_endpoints()[level];
     }
 
     // returns true if first traversal should be taken
@@ -81,7 +81,7 @@ struct sequence_memoizer_base
     // if it is working in reverse, this could be a right traversal
     virtual bool traverse_first(std::size_t step) const
     {
-        return recipe.recipe_steps[step] > int8_t(-1);
+        return recipe.recipe_steps()[step] > int8_t(-1);
     }
 
     // returns true if second traversal should be taken
@@ -89,7 +89,7 @@ struct sequence_memoizer_base
     // if it is working in reverse, this could be a left traversal
     virtual bool traverse_second(std::size_t step) const
     {
-        return recipe.recipe_steps[step] < int8_t(1);
+        return recipe.recipe_steps()[step] < int8_t(1);
     }
 
     // returns true if traversal should be done to the right
@@ -107,7 +107,7 @@ struct sequence_memoizer_base
 
     explicit sequence_memoizer_base(const sequence_recipe<input_type> & r)
       : recipe{r},
-        depth{recipe.level_endpoints.size()-1},
+        depth{recipe.level_endpoints().size()-1},
         level_index{0},
         dpf_{std::nullopt}
     { }
@@ -270,7 +270,7 @@ struct inplace_reversing_sequence_memoizer final
     explicit inplace_reversing_sequence_memoizer(const sequence_recipe<input_type> & r,
         Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(r.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(r.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
@@ -285,12 +285,12 @@ struct inplace_reversing_sequence_memoizer final
         if (level == level_index-1 && level != depth)
         {
             std::size_t nodes_at_level = get_nodes_at_level(level);
-            return return_type(!flip, &buf[recipe.num_leaf_nodes-nodes_at_level],
+            return return_type(!flip, &buf[recipe.num_leaf_nodes()-nodes_at_level],
                 std::make_reverse_iterator(&buf[nodes_at_level]));
         }
 
         return return_type(flip, &buf[0],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()]));
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -301,7 +301,7 @@ struct inplace_reversing_sequence_memoizer final
         // flip false => forward traversal
         bool flip = (depth ^ level) & 1;
         return return_type(flip, &buf[0],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()]));
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -313,23 +313,23 @@ struct inplace_reversing_sequence_memoizer final
         bool flip = (depth ^ level) & 1;
         std::size_t nodes_at_level = get_nodes_at_level(level);
         return return_type(flip, &buf[nodes_at_level],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes-nodes_at_level]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()-nodes_at_level]));
     }
 
     bool traverse_first(std::size_t step) const override
     {
         // flip false => forward traversal
         bool flip = (depth ^ level_index) & 1;
-        step = !flip ? step : recipe.level_endpoints[level_index] - step - 1 + recipe.level_endpoints[level_index-1];
-        return !flip ? (recipe.recipe_steps[step] > int8_t(-1)) : (recipe.recipe_steps[step] < int8_t(1));
+        step = !flip ? step : recipe.level_endpoints()[level_index] - step - 1 + recipe.level_endpoints()[level_index-1];
+        return !flip ? (recipe.recipe_steps()[step] > int8_t(-1)) : (recipe.recipe_steps()[step] < int8_t(1));
     }
 
     bool traverse_second(std::size_t step) const override
     {
         // flip false => forward traversal
         bool flip = (depth ^ level_index) & 1;
-        step = !flip ? step : recipe.level_endpoints[level_index] - step - 1 + recipe.level_endpoints[level_index-1];
-        return !flip ? (recipe.recipe_steps[step] < int8_t(1)) : (recipe.recipe_steps[step] > int8_t(-1));
+        step = !flip ? step : recipe.level_endpoints()[level_index] - step - 1 + recipe.level_endpoints()[level_index-1];
+        return !flip ? (recipe.recipe_steps()[step] < int8_t(1)) : (recipe.recipe_steps()[step] > int8_t(-1));
     }
 
     bool get_direction(bool right) const override
@@ -361,7 +361,7 @@ struct double_space_sequence_memoizer final
 
     explicit double_space_sequence_memoizer(const sequence_recipe<input_type> & r, Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(2*recipe.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(2*recipe.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
@@ -369,7 +369,7 @@ struct double_space_sequence_memoizer final
     return_type operator[](std::size_t level) const noexcept override
     {
         auto b = (depth ^ level) & 1;
-        return Allocator::assume_aligned(&buf[recipe.num_leaf_nodes*b]);
+        return Allocator::assume_aligned(&buf[recipe.num_leaf_nodes()*b]);
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -407,14 +407,14 @@ struct full_tree_sequence_memoizer final
 
     explicit full_tree_sequence_memoizer(const sequence_recipe<input_type> & r, Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(recipe.level_endpoints[recipe.level_endpoints.size()-1] + recipe.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(recipe.level_endpoints()[recipe.level_endpoints().size()-1] + recipe.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     return_type operator[](std::size_t level) const noexcept override
     {
-        return Allocator::assume_aligned(&buf[recipe.level_endpoints[level]]);
+        return Allocator::assume_aligned(&buf[recipe.level_endpoints()[level]]);
     }
 
     HEDLEY_ALWAYS_INLINE
