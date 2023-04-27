@@ -449,6 +449,12 @@ constexpr auto remove_tuple_if_trivial(std::tuple<Ts...> && ts) noexcept
     else { return std::forward<std::tuple<Ts...>>(ts); }
 }
 
+template <typename> struct is_tuple: std::false_type {};
+
+template <typename ...T> struct is_tuple<std::tuple<T...>>: std::true_type {};
+
+template <typename T> static constexpr bool is_tuple_v = is_tuple<T>::value;
+
 }  // namespace utils
 
 }  // namespace dpf

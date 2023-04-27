@@ -65,6 +65,8 @@ HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
+    assert_not_wildcard<I, Is...>(dpf);
+
     return utils::remove_tuple_if_trivial(
         internal::eval_full<I, Is...>(dpf, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
 }
@@ -78,6 +80,8 @@ HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
+    assert_not_wildcard<I, Is...>(dpf);
+
     using input_type = typename DpfKey::input_type;
     auto outbufs = std::make_tuple(
         make_output_buffer_for_full<I>(dpf),
@@ -88,7 +92,7 @@ auto eval_full(const DpfKey & dpf,
     return std::make_pair(
         std::move(iterable),
         utils::remove_tuple_if_trivial(std::move(outbufs)));
-}  // namespace dpf::internal
+}
 
 }  // namespace dpf
 

@@ -153,9 +153,18 @@ HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT && from, InputT && to,
     OutputBuffers && outbufs, IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
-    assert_not_wildcard<I>(dpf);
-    return utils::remove_tuple_if_trivial(
-        internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
+    assert_not_wildcard<I, Is...>(dpf);
+
+    if constexpr(utils::is_tuple_v<OutputBuffers> == false)
+    {
+        return utils::remove_tuple_if_trivial(
+            internal::eval_interval<I, Is...>(dpf, from, to, std::forward_as_tuple(outbufs), memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
+    }
+    else
+    {
+        return utils::remove_tuple_if_trivial(
+            internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
+    }
 }
 
 template <std::size_t I = 0,
@@ -168,7 +177,8 @@ HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT && from, InputT && to,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
-    assert_not_wildcard<I>(dpf);
+    assert_not_wildcard<I, Is...>(dpf);
+
     using input_type = typename DpfKey::input_type;
     auto outbufs = std::make_tuple(
         make_output_buffer_for_interval<I>(dpf, from, to),
