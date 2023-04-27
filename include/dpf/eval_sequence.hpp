@@ -205,9 +205,8 @@ namespace internal
 {
 
 template <typename DpfKey,
-          typename InputT,
           typename SequenceMemoizer>
-inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe & recipe,
     SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
@@ -249,10 +248,9 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
 
 template <std::size_t I,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer,
           typename SequenceMemoizer>
-inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
 {
     assert_not_wildcard<I>(dpf);
@@ -279,10 +277,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <std::size_t I,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer,
           typename SequenceMemoizer>
-inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer & outbuf, SequenceMemoizer & memoizer)
 {
     assert_not_wildcard<I>(dpf);
@@ -320,10 +317,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <std::size_t I = 0,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer,
           typename SequenceMemoizer>
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer && outbuf, SequenceMemoizer & memoizer)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
@@ -347,9 +343,8 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
 template <std::size_t I = 0,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer>
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer && outbuf)
 {
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
@@ -358,9 +353,8 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
 
 template <std::size_t I = 0,
           typename ReturnType = return_entire_node_tag_,
-          typename DpfKey,
-          typename InputT>
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe)
+          typename DpfKey>
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe)
 {
     auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
     auto outbuf = make_output_buffer_for_recipe_subsequence<I>(dpf, recipe);

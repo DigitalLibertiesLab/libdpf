@@ -91,9 +91,8 @@ auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator
 }
 
 template <std::size_t I = 0,
-          typename DpfKey,
-          typename InputT>
-auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
+          typename DpfKey>
+auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe & recipe)
 {
     using dpf_type = DpfKey;
     using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
