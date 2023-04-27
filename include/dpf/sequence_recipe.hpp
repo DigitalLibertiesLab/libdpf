@@ -15,7 +15,6 @@
 namespace dpf
 {
 
-template <typename InputT>
 struct sequence_recipe
 {
   public:
@@ -96,7 +95,7 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
         output_indices.push_back(leaf_index * dpf_type::outputs_per_leaf + mod(*curr, dpf_type::lg_outputs_per_leaf));
     }
 
-    return sequence_recipe<input_type>{recipe_steps, output_indices, leaf_index+1, level_endpoints};
+    return sequence_recipe{recipe_steps, output_indices, leaf_index+1, level_endpoints};
 }
 
 }  // namespace detail
