@@ -22,78 +22,78 @@ TEST(DpfKeyTest, SimpleGen)
     auto [dpf0, dpf1] = dpf::make_dpf<dpf::prg::aes128, dpf::prg::aes128, &fake_root_sampler>(x, y0, y1, y2);
 
     // 128-bit representation of 0x4 with lowest bit unset
-    EXPECT_EQ(dpf0.root[1], 0);
-    EXPECT_EQ(dpf0.root[0], 0x4);
+    ASSERT_EQ(dpf0.root[1], 0);
+    ASSERT_EQ(dpf0.root[0], 0x4);
     // 128-bit representation of 0x8 with lowest bit set
-    EXPECT_EQ(dpf1.root[1], 0);
-    EXPECT_EQ(dpf1.root[0], 0x9);
+    ASSERT_EQ(dpf1.root[1], 0);
+    ASSERT_EQ(dpf1.root[0], 0x9);
 
-    EXPECT_EQ(dpf0.correction_words[0][1], 0x7ff85a65ce2111c9);
-    EXPECT_EQ(dpf0.correction_words[0][0], 0x36863b84ab3944d2);
-    EXPECT_EQ(dpf0.correction_words[0][1], dpf1.correction_words[0][1]);
-    EXPECT_EQ(dpf0.correction_words[0][0], dpf1.correction_words[0][0]);
-    EXPECT_EQ(dpf0.correction_advice[0], 0b00);
-    EXPECT_EQ(dpf0.correction_advice[0], dpf1.correction_advice[0]);
+    ASSERT_EQ(dpf0.correction_words[0][1], 0x7ff85a65ce2111c9);
+    ASSERT_EQ(dpf0.correction_words[0][0], 0x36863b84ab3944d2);
+    ASSERT_EQ(dpf0.correction_words[0][1], dpf1.correction_words[0][1]);
+    ASSERT_EQ(dpf0.correction_words[0][0], dpf1.correction_words[0][0]);
+    ASSERT_EQ(dpf0.correction_advice[0], 0b00);
+    ASSERT_EQ(dpf0.correction_advice[0], dpf1.correction_advice[0]);
 
     // dpf0 after level 0:
     // 0xc4c4bd72d02958c541201f063e3c1173
     // dpf1 after level 0:
     // 0xdd09c23385ba379378631a3a9c46f52e
 
-    EXPECT_EQ(dpf0.correction_words[1][1], 0x9ca0f55370cf6bfe);
-    EXPECT_EQ(dpf0.correction_words[1][0], 0xc3b9e951c500d272);
-    EXPECT_EQ(dpf0.correction_words[1][1], dpf1.correction_words[1][1]);
-    EXPECT_EQ(dpf0.correction_words[1][0], dpf1.correction_words[1][0]);
-    EXPECT_EQ(dpf0.correction_advice[1], 0b01);
-    EXPECT_EQ(dpf0.correction_advice[1], dpf1.correction_advice[1]);
+    ASSERT_EQ(dpf0.correction_words[1][1], 0x9ca0f55370cf6bfe);
+    ASSERT_EQ(dpf0.correction_words[1][0], 0xc3b9e951c500d272);
+    ASSERT_EQ(dpf0.correction_words[1][1], dpf1.correction_words[1][1]);
+    ASSERT_EQ(dpf0.correction_words[1][0], dpf1.correction_words[1][0]);
+    ASSERT_EQ(dpf0.correction_advice[1], 0b01);
+    ASSERT_EQ(dpf0.correction_advice[1], dpf1.correction_advice[1]);
 
     // dpf0 after level 1:
     // 0x2bef771157872382accfcf2a5e2f7e57
     // dpf1 after level 1:
     // 0x7604b860b26e8586b0c6ad05ec6886ce
 
-    EXPECT_EQ(dpf0.correction_words[2][1], 0x886f1eb652b72eda);
-    EXPECT_EQ(dpf0.correction_words[2][0], 0x0ff98303eca43ab6);
-    EXPECT_EQ(dpf0.correction_words[2][1], dpf1.correction_words[2][1]);
-    EXPECT_EQ(dpf0.correction_words[2][0], dpf1.correction_words[2][0]);
-    EXPECT_EQ(dpf0.correction_advice[2], 0b10);
-    EXPECT_EQ(dpf0.correction_advice[2], dpf1.correction_advice[2]);
+    ASSERT_EQ(dpf0.correction_words[2][1], 0x886f1eb652b72eda);
+    ASSERT_EQ(dpf0.correction_words[2][0], 0x0ff98303eca43ab6);
+    ASSERT_EQ(dpf0.correction_words[2][1], dpf1.correction_words[2][1]);
+    ASSERT_EQ(dpf0.correction_words[2][0], dpf1.correction_words[2][0]);
+    ASSERT_EQ(dpf0.correction_advice[2], 0b10);
+    ASSERT_EQ(dpf0.correction_advice[2], dpf1.correction_advice[2]);
 
     // dpf0 after level 2:
     // 0x39adfa95d94a10fdff65a956019f0a6c
     // dpf1 after level 2:
     // 0x59be9dba7aa04f9a12d23cd995d90135
 
-    EXPECT_EQ(dpf0.correction_words[3][1], 0x4e69100f5b844cb9);
-    EXPECT_EQ(dpf0.correction_words[3][0], 0x9ac5b5baba9a193b);
-    EXPECT_EQ(dpf0.correction_words[3][1], dpf1.correction_words[3][1]);
-    EXPECT_EQ(dpf0.correction_words[3][0], dpf1.correction_words[3][0]);
-    EXPECT_EQ(dpf0.correction_advice[3], 0b10);
-    EXPECT_EQ(dpf0.correction_advice[3], dpf1.correction_advice[3]);
+    ASSERT_EQ(dpf0.correction_words[3][1], 0x4e69100f5b844cb9);
+    ASSERT_EQ(dpf0.correction_words[3][0], 0x9ac5b5baba9a193b);
+    ASSERT_EQ(dpf0.correction_words[3][1], dpf1.correction_words[3][1]);
+    ASSERT_EQ(dpf0.correction_words[3][0], dpf1.correction_words[3][0]);
+    ASSERT_EQ(dpf0.correction_advice[3], 0b10);
+    ASSERT_EQ(dpf0.correction_advice[3], dpf1.correction_advice[3]);
 
     // dpf0 after level 3:
     // 0x028922e3e5fca1a824a12136fc2ed7e3
     // dpf1 after level 3:
     // 0xd7699bb72bb9e8d42363e899692ecf36
 
-    EXPECT_EQ(dpf0.correction_words[4][1], 0xe701887629e08652);
-    EXPECT_EQ(dpf0.correction_words[4][0], 0xbd92c2853e1e2457);
-    EXPECT_EQ(dpf0.correction_words[4][1], dpf1.correction_words[4][1]);
-    EXPECT_EQ(dpf0.correction_words[4][0], dpf1.correction_words[4][0]);
-    EXPECT_EQ(dpf0.correction_advice[4], 0b01);
-    EXPECT_EQ(dpf0.correction_advice[4], dpf1.correction_advice[4]);
+    ASSERT_EQ(dpf0.correction_words[4][1], 0xe701887629e08652);
+    ASSERT_EQ(dpf0.correction_words[4][0], 0xbd92c2853e1e2457);
+    ASSERT_EQ(dpf0.correction_words[4][1], dpf1.correction_words[4][1]);
+    ASSERT_EQ(dpf0.correction_words[4][0], dpf1.correction_words[4][0]);
+    ASSERT_EQ(dpf0.correction_advice[4], 0b01);
+    ASSERT_EQ(dpf0.correction_advice[4], dpf1.correction_advice[4]);
 
     // dpf0 after level 4:
     // 0xe0deacc7c5f61d83aebacde0bd97f61f
     // dpf1 after level 4:
     // 0x96be3cfb09b9bc84e0a6de756d9589f2
 
-    EXPECT_EQ(dpf0.correction_words[5][1], 0xc8edc84047a7b3df);
-    EXPECT_EQ(dpf0.correction_words[5][0], 0xbc0d1f614b01d608);
-    EXPECT_EQ(dpf0.correction_words[5][1], dpf1.correction_words[5][1]);
-    EXPECT_EQ(dpf0.correction_words[5][0], dpf1.correction_words[5][0]);
-    EXPECT_EQ(dpf0.correction_advice[5], 0b01);
-    EXPECT_EQ(dpf0.correction_advice[5], dpf1.correction_advice[5]);
+    ASSERT_EQ(dpf0.correction_words[5][1], 0xc8edc84047a7b3df);
+    ASSERT_EQ(dpf0.correction_words[5][0], 0xbc0d1f614b01d608);
+    ASSERT_EQ(dpf0.correction_words[5][1], dpf1.correction_words[5][1]);
+    ASSERT_EQ(dpf0.correction_words[5][0], dpf1.correction_words[5][0]);
+    ASSERT_EQ(dpf0.correction_advice[5], 0b01);
+    ASSERT_EQ(dpf0.correction_advice[5], dpf1.correction_advice[5]);
 
     // dpf0 after level 5:
     // 0x3cb3c5060d58e866c703b4b7939725b8
@@ -119,18 +119,16 @@ TEST(DpfKeyTest, SimpleGen)
     // 1: 546c7398 7aa0d795 5b9fd929 b102cc1a
     // 2: 6d9edc8a 6d54b590 97147f0c bfc700b5
 
-    EXPECT_EQ(dpf0.leaf<0>()[1], 0xd68266081a585266);
-    EXPECT_EQ(dpf0.leaf<0>()[0], 0x0e975243b4820e10);
-    EXPECT_EQ(dpf0.leaf<0>()[1], dpf1.leaf<0>()[1]);
-    EXPECT_EQ(dpf0.leaf<0>()[0], dpf1.leaf<0>()[0]);
+    ASSERT_EQ(dpf0.leaf<0>()[1], 0xd68266081a585266);
+    ASSERT_EQ(dpf0.leaf<0>()[0], 0x0e975243b4820e10);
+    ASSERT_EQ(dpf0.leaf<0>()[1], dpf1.leaf<0>()[1]);
+    ASSERT_EQ(dpf0.leaf<0>()[0], dpf1.leaf<0>()[0]);
 
-    EXPECT_EQ(dpf0.leaf<1>()[1], 0xf4b79498656fa03f);
-    EXPECT_EQ(dpf0.leaf<1>()[0], 0x67a02ad7b73d4c3a);
-    EXPECT_EQ(dpf0.leaf<1>()[1], dpf1.leaf<1>()[1]);
-    EXPECT_EQ(dpf0.leaf<1>()[0], dpf1.leaf<1>()[0]);
+    ASSERT_EQ(dpf0.leaf<1>()[1], 0xf4b79498656fa03f);
+    ASSERT_EQ(dpf0.leaf<1>()[0], 0x67a02ad7b73d4c3a);
+    ASSERT_EQ(dpf0.leaf<1>()[1], dpf1.leaf<1>()[1]);
+    ASSERT_EQ(dpf0.leaf<1>()[0], dpf1.leaf<1>()[0]);
 
-    auto &beaver0 = dpf0.beaver<2>(),
-         &beaver1 = dpf1.beaver<2>();
     simde__m128i vector{0x0000000000000000, 0x0000000000000001},  // [0|0|1|0] which corresponds to input x
                  blinded0 = simde_mm_add_epi32(vector, dpf1.beaver<2>().vector_blind),
                  blinded1 = simde_mm_add_epi32(vector, dpf0.beaver<2>().vector_blind),
@@ -139,17 +137,17 @@ TEST(DpfKeyTest, SimpleGen)
                  leaf = simde_mm_sub_epi32(simde_mm_add_epi32(dpf0.leaf<2>(), dpf1.leaf<2>()),
                                            simde_mm_add_epi32(mulleaf0, mulleaf1));
 
-    EXPECT_EQ(blinded0[1], dpf0.beaver<2>().blinded_vector[1]);
-    EXPECT_EQ(blinded0[0], dpf0.beaver<2>().blinded_vector[0]);
-    EXPECT_EQ(blinded1[1], dpf1.beaver<2>().blinded_vector[1]);
-    EXPECT_EQ(blinded1[0], dpf1.beaver<2>().blinded_vector[0]);
-    EXPECT_EQ(leaf[1], 0x6d9edc8a6d54b590);
-    EXPECT_EQ(leaf[0], 0x97147f0cbfc700b5);
+    ASSERT_EQ(blinded0[1], dpf0.beaver<2>().blinded_vector[1]);
+    ASSERT_EQ(blinded0[0], dpf0.beaver<2>().blinded_vector[0]);
+    ASSERT_EQ(blinded1[1], dpf1.beaver<2>().blinded_vector[1]);
+    ASSERT_EQ(blinded1[0], dpf1.beaver<2>().blinded_vector[0]);
+    ASSERT_EQ(leaf[1], 0x6d9edc8a6d54b590);
+    ASSERT_EQ(leaf[0], 0x97147f0cbfc700b5);
 
-    EXPECT_EQ(dpf0.is_wildcard(0), false);
-    EXPECT_EQ(dpf0.is_wildcard(1), false);
-    EXPECT_EQ(dpf0.is_wildcard(2), true);
-    EXPECT_EQ(dpf1.is_wildcard(0), false);
-    EXPECT_EQ(dpf1.is_wildcard(1), false);
-    EXPECT_EQ(dpf1.is_wildcard(2), true);
+    ASSERT_EQ(dpf0.is_wildcard(0), false);
+    ASSERT_EQ(dpf0.is_wildcard(1), false);
+    ASSERT_EQ(dpf0.is_wildcard(2), true);
+    ASSERT_EQ(dpf1.is_wildcard(0), false);
+    ASSERT_EQ(dpf1.is_wildcard(1), false);
+    ASSERT_EQ(dpf1.is_wildcard(2), true);
 }
