@@ -28,6 +28,7 @@ struct xor_wrapper
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
     static constexpr auto bit_or = std::bit_or<value_type>{};
+    static constexpr auto bit_not = std::bit_not<value_type>{};
 
     static constexpr std::size_t bits = utils::bitlength_of_v<value_type>;
     using integral_type = utils::integral_type_from_bitlength_t<bits>;
@@ -244,6 +245,13 @@ struct xor_wrapper
         const xor_wrapper & rhs) noexcept
     {
         return xor_wrapper(xor_wrapper::bit_xor(lhs.value, rhs.value));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator~(const xor_wrapper & val) noexcept
+    {
+        return xor_wrapper(xor_wrapper::bit_not(val.value));
     }
 
     HEDLEY_ALWAYS_INLINE
