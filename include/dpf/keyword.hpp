@@ -304,13 +304,13 @@ class basic_fixed_length_string
         return val;
     }
 
-  private:
     constexpr
     // cppcheck-suppress noExplicitConstructor
     basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
     noexcept
       : val{val} { }
 
+  private:
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer
     /// @throws `std::length_error` if `str` exceeds `max_length`
@@ -377,6 +377,34 @@ class basic_fixed_length_string
     }
 
     /// @}
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator<(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.val < rhs.val;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator<=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.val <= rhs.val;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator>(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.val > rhs.val;
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator>=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.val >= rhs.val;
+    }
 
     friend struct utils::msb_of<basic_fixed_length_string>;
     friend struct utils::mod_pow_2<basic_fixed_length_string>;

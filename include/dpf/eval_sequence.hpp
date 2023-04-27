@@ -52,12 +52,13 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
     std::size_t i = 0;
-    DPF_UNROLL_LOOP
+    // DPF_UNROLL_LOOP
+    auto to_integral_type = dpf::utils::to_integral_type<typename DpfKey::input_type>{};
     for (auto it = begin; it != end; ++it)
     {
         rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
     }
-    return subsequence_iterable<DpfKey, output_type, Iterator>(utils::data(outbuf), begin, end);
+    return subsequence_iterable<DpfKey, decltype(std::begin(outbuf)), Iterator>(std::begin(outbuf), begin, end);
 }
 
 template <std::size_t I,
@@ -187,7 +188,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
-   return subsequence_iterable<DpfKey, output_type, Iterator>(utils::data(outbuf), begin, end);
+   return subsequence_iterable<DpfKey, decltype(std::begin(outbuf)), Iterator>(std::begin(outbuf), begin, end);
 }
 
 template <std::size_t I = 0,
@@ -216,7 +217,7 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
     // level_index = 0 => root
     // level_index = depth => last layer of interior nodes
     std::size_t level_index = memoizer.assign_dpf(dpf, recipe);
-    std::size_t recipe_index = recipe.level_endpoints[level_index-1];
+    std::size_t recipe_index = recipe.level_endpoints()[level_index-1];
     std::size_t nodes_at_level = memoizer.get_nodes_at_level(level_index-1);
 
     for (; level_index <= to_level; level_index = memoizer.advance_level(), nodes_at_level = memoizer.get_nodes_at_level(level_index-1))
@@ -258,7 +259,7 @@ inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequenc
 
     using dpf_type = DpfKey;
 
-    auto nodes_in_interval = std::max(std::size_t(0), recipe.num_leaf_nodes);
+    auto nodes_in_interval = recipe.num_leaf_nodes();
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -300,16 +301,16 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     leaf_node_type node;
     DPF_UNROLL_LOOP
     for (std::size_t i = 0, j = -1, prev = -1,
-        curr = recipe.output_indices[i]/dpf_type::outputs_per_leaf;
-        i < recipe.output_indices.size();
-        prev = curr, curr = recipe.output_indices[++i]/dpf_type::outputs_per_leaf)
+        curr = recipe.output_indices()[i]/dpf_type::outputs_per_leaf;
+        i < recipe.output_indices().size();
+        prev = curr, curr = recipe.output_indices()[++i]/dpf_type::outputs_per_leaf)
     {
         if (prev != curr)
         {
             ++j;
             node = dpf_type::template traverse_exterior<I>(buf[j], get_if_lo_bit(cw, buf[j]));
         }
-        rawbuf[i] = extract_leaf<node_type, output_type>(node, recipe.output_indices[i] % dpf_type::outputs_per_leaf);
+        rawbuf[i] = extract_leaf<node_type, output_type>(node, recipe.output_indices()[i] % dpf_type::outputs_per_leaf);
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
@@ -334,12 +335,12 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
         internal::eval_sequence_exterior_entire_node<I>(dpf, recipe, outbuf, memoizer);
-        return recipe_subsequence_iterable<output_type>(utils::data(outbuf), recipe.output_indices);
+        return recipe_subsequence_iterable(std::begin(outbuf), recipe.output_indices());
     }
     else
     {
         internal::eval_sequence_exterior_output_only<I>(dpf, recipe, outbuf, memoizer);
-        return dpf::subinterval_iterable<output_type>(utils::data(outbuf), recipe.output_indices.size(), 0, 0);
+        return dpf::subinterval_iterable<output_type>(utils::data(outbuf), recipe.output_indices().size(), 0, 0);
     }
 }
 
