@@ -124,11 +124,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     HEDLEY_CONST
     std::size_t assign_x(const dpf_type & dpf, input_type) noexcept override
     {
-        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
-        {
-            dpf_ = dpf;
-            v = dpf.root;
-        }
+        dpf_ = dpf;
+        v = dpf.root;
         return 1;
     }
 
