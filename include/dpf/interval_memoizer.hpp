@@ -43,7 +43,6 @@ struct interval_memoizer_base
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
-            std::cout << new_to << " - " << new_from << " > " << output_length << "\n";
             if (new_to - new_from > output_length)
             {
                 throw std::length_error("size of new interval is too large for memoizer");

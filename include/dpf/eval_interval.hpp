@@ -194,9 +194,12 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
         make_output_buffer_for_interval<I>(dpf, from, to),
         make_output_buffer_for_interval<Is>(dpf, from, to)...);
 
+    // moving `outbufs` is allowed as the `outbufs` are `std::vectors`
+    //   the underlying data remains on the heap
+    //   and thus the data the iterable refers to is still valid
+    auto iterable = eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer);
     return std::make_pair(
-        eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer),
-        utils::remove_tuple_if_trivial(std::move(outbufs)));
+        utils::remove_tuple_if_trivial(std::move(outbufs)), iterable);
 }
 
 template <std::size_t I = 0,
