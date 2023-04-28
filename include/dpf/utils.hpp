@@ -402,24 +402,6 @@ struct countl_zero<simde__m256i>
     }
 };
 
-template <typename T>
-struct is_xor_wrapper : std::false_type {};
-
-template <typename T>
-static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
-
-template <typename T>
-auto data(T & bar)
-{
-    return std::data(bar);
-}
-
-template <typename T>
-auto data(T * bar)
-{
-    return bar;
-}
-
 // template <>
 // struct countl_zero<simde__m512i>
 // {
@@ -441,6 +423,43 @@ auto data(T * bar)
 //     }
 // };
 HEDLEY_PRAGMA(GCC diagnostic pop)
+
+template <typename T>
+struct is_xor_wrapper : std::false_type {};
+
+template <typename T>
+static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
+
+template <typename T>
+auto data(T & bar)
+{
+    return std::data(bar);
+}
+
+template <typename T>
+auto data(T * bar)
+{
+    return bar;
+}
+
+template <typename ...Ts>
+HEDLEY_ALWAYS_INLINE
+constexpr auto remove_tuple_if_trivial(std::tuple<Ts...> && ts) noexcept
+{
+    if constexpr(sizeof...(Ts) == 1) { return std::move(std::get<0>(ts)); }
+    else { return std::forward<std::tuple<Ts...>>(ts); }
+}
+
+template <typename>
+struct is_tuple
+  : std::false_type {};
+
+template <typename ...Ts>
+struct is_tuple<std::tuple<Ts...>>
+  : std::true_type { };
+
+template <typename T>
+static constexpr bool is_tuple_v = is_tuple<T>::value;
 
 }  // namespace utils
 

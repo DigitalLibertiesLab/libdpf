@@ -31,97 +31,118 @@
 namespace dpf
 {
 
-struct return_entire_node_tag_ final {};
+struct return_type_tag_{};
+
+struct return_entire_node_tag_ final : public return_type_tag_ {};
 // static constexpr auto return_entire_node_tag = return_entire_node_tag_{};
 
-struct return_output_only_tag_ final {};
+struct return_output_only_tag_ final : public return_type_tag_ {};
 // static constexpr auto return_output_only_tag = return_output_only_tag_{};
 
 namespace internal
 {
 
-template <std::size_t I,
+template <std::size_t ...Is,
         typename DpfKey,
         typename Iterator,
-        typename OutputBuffer>
+        typename OutputBuffers,
+        std::size_t ...IIs>
 HEDLEY_ALWAYS_INLINE
-auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
+auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
+    OutputBuffers && outbufs, std::index_sequence<IIs...>)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
-    using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
-    auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
+    auto rawbuf = std::make_tuple(
+        reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(std::get<IIs>(outbufs)))...
+    );
+
     std::size_t i = 0;
     // DPF_UNROLL_LOOP
     auto to_integral_type = dpf::utils::to_integral_type<typename DpfKey::input_type>{};
     for (auto it = begin; it != end; ++it)
     {
-        rawbuf[i++] = internal::eval_point<I>(dpf, *it, path);
+        std::tie(std::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
+            dpf::eval_point<Is>(dpf, *it, path)...);
+        i++;
     }
-    return subsequence_iterable<DpfKey, decltype(std::begin(outbuf)), Iterator>(std::begin(outbuf), begin, end);
+    return std::make_tuple(
+        dpf::subsequence_iterable<DpfKey, typename DpfKey::concrete_output_type<Is>, Iterator>(std::begin(std::get<IIs>(rawbuf)), begin, end)...
+    );
 }
 
-template <std::size_t I,
+template <std::size_t ...Is,
         typename DpfKey,
         typename Iterator,
-        typename OutputBuffer>
+        typename OutputBuffers,
+        std::size_t ...IIs>
 HEDLEY_ALWAYS_INLINE
-auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer & outbuf)
+auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs,
+    std::index_sequence<IIs...>)
 {
     auto path = make_basic_path_memoizer(dpf);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
-    auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
+    auto rawbuf = std::make_tuple(
+        reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(std::get<IIs>(outbufs)))...
+    );
+
     std::size_t i = 0;
     DPF_UNROLL_LOOP
     for (auto it = begin; it != end; ++it)
     {
-        rawbuf[i++] = *dpf::eval_point<I>(dpf, *it, path);
+        std::tie(std::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
+            *dpf::eval_point<Is>(dpf, *it, path)...);
+        i++;
     }
-    return dpf::subinterval_iterable<output_type>(rawbuf, i-1, 0, 0);
+    return std::make_tuple(
+        dpf::subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(rawbuf, i-1, 0, 0)...
+    );
 }
 
 }  // dpf::internal
 
 template <std::size_t I = 0,
+          std::size_t ...Is,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
           typename Iterator,
-          typename OutputBuffer>
-inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
+          typename OutputBuffers>
+inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                     std::is_same_v<ReturnType, return_output_only_tag_>);
-    if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
+    if constexpr(std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
-        return internal::eval_sequence_entire_node<I>(dpf, begin, end, outbuf);
+        return internal::eval_sequence_entire_node<I, Is...>(dpf, begin, end, outbufs);
     }
     else
     {
-        return internal::eval_sequence_output_only<I>(dpf, begin, end, outbuf);
+        return internal::eval_sequence_output_only<I, Is...>(dpf, begin, end, outbufs);
     }
 }
 
 template <std::size_t I = 0,
+          std::size_t ...Is,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
           typename Iterator>
 auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
 {
-    auto outbuf = make_output_buffer_for_subsequence<I>(dpf, begin, end);
-    auto iterable = eval_sequence<I>(dpf, begin, end, outbuf);
-    return std::make_tuple(std::move(outbuf), std::move(iterable));
+    auto outbufs = std::make_tuple(
+        make_output_buffer_for_recipe_subsequence<I>(dpf, begin, end),
+        make_output_buffer_for_recipe_subsequence<Is>(dpf, begin, end)...);
+    auto iterable = eval_sequence<I>(dpf, begin, end, outbufs);
+    return std::make_tuple(std::move(iterable), std::move(outbufs));
 }
 
 template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator,
           typename OutputBuffer>
-inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
+inline auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
 {
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     if (!std::is_sorted(begin, end))
     {
@@ -134,7 +155,6 @@ inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterat
 
     bool curhalf = (dpf_type::depth ^ 1) & 1;
     memo[!curhalf][0] = dpf.root;
-    std::size_t nodes_in_interval;
 
     std::list<Iterator> splits{begin, end};
     for (std::size_t level_index = 1; level_index <= dpf_type::depth; ++level_index, mask>>=1, curhalf=!curhalf)
@@ -167,7 +187,6 @@ inline auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterat
                 splits.insert(upper, it);
             }
         }
-        nodes_in_interval = i;
     }
 
 HEDLEY_PRAGMA(GCC diagnostic push)
@@ -194,11 +213,11 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator>
-auto eval_sequence_with_recipe(const DpfKey & dpf, Iterator begin, Iterator end)
+auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iterator end)
 {
     auto outbuf = make_output_buffer_for_subsequence<I>(dpf, begin, end);
-    auto iterable = eval_sequence_with_recipe<I>(dpf, begin, end, outbuf);
-    return std::make_tuple(std::move(outbuf), std::move(iterable));
+    return std::make_tuple(std::move(outbuf),
+        eval_sequence_breadth_first<I>(dpf, begin, end, outbuf));
 }
 
 namespace internal
@@ -207,7 +226,7 @@ namespace internal
 template <typename DpfKey,
           typename SequenceMemoizer>
 inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe & recipe,
-    SequenceMemoizer & memoizer, std::size_t to_level = DpfKey::depth)
+    SequenceMemoizer && memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
     using node_type = typename DpfKey::interior_node;
@@ -251,7 +270,7 @@ template <std::size_t I,
           typename OutputBuffer,
           typename SequenceMemoizer>
 inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffer & outbuf, SequenceMemoizer & memoizer)
+    OutputBuffer && outbuf, SequenceMemoizer && memoizer)
 {
     assert_not_wildcard<I>(dpf);
 
@@ -280,12 +299,12 @@ template <std::size_t I,
           typename OutputBuffer,
           typename SequenceMemoizer>
 inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffer & outbuf, SequenceMemoizer & memoizer)
+    OutputBuffer && outbuf, SequenceMemoizer && memoizer)
 {
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -312,54 +331,111 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
-}  // namespace internal
-
-template <std::size_t I = 0,
-          typename ReturnType = return_entire_node_tag_,
+template <std::size_t ...Is,
           typename DpfKey,
-          typename OutputBuffer,
-          typename SequenceMemoizer>
+          typename OutputBuffers,
+          typename SequenceMemoizer,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true,
+          std::size_t ...IIs>
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffer && outbuf, SequenceMemoizer & memoizer)
+    OutputBuffers && outbufs, SequenceMemoizer && memoizer, ReturnType return_type, std::index_sequence<IIs...>)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
-    using output_type = std::tuple_element_t<I, typename DpfKey::concrete_outputs_tuple>;
 
     internal::eval_sequence_interior(dpf, recipe, memoizer);
 
     if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
-        internal::eval_sequence_exterior_entire_node<I>(dpf, recipe, outbuf, memoizer);
-        return recipe_subsequence_iterable(std::begin(outbuf), recipe.output_indices());
+        (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
+        return std::make_tuple(
+            recipe_subsequence_iterable(std::begin(std::get<IIs>(outbufs)), recipe.output_indices())...);
     }
     else
     {
-        internal::eval_sequence_exterior_output_only<I>(dpf, recipe, outbuf, memoizer);
-        return dpf::subinterval_iterable<output_type>(utils::data(outbuf), recipe.output_indices().size(), 0, 0);
+        (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
+        return std::make_tuple(
+            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(std::get<IIs>(outbufs)), recipe.output_indices().size(), 0, 0)...
+        );
+    }
+}
+
+}  // namespace internal
+
+template <std::size_t I = 0,
+          std::size_t ...Is,
+          typename DpfKey,
+          typename OutputBuffers,
+          typename SequenceMemoizer,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
+HEDLEY_ALWAYS_INLINE
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
+    OutputBuffers & outbufs, SequenceMemoizer && memoizer,
+    ReturnType return_type = ReturnType{})
+{
+    assert_not_wildcard<I, Is...>(dpf);
+
+    if constexpr(utils::is_tuple_v<OutputBuffers> == false)
+    {
+        return utils::remove_tuple_if_trivial(
+            internal::eval_sequence<I, Is...>(dpf, recipe, std::forward_as_tuple(outbufs), memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
+    }
+    else
+    {
+        return utils::remove_tuple_if_trivial(
+            internal::eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
     }
 }
 
 template <std::size_t I = 0,
-          typename ReturnType = return_entire_node_tag_,
+          std::size_t ...Is,
           typename DpfKey,
-          typename OutputBuffer>
+          typename OutputBuffers,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<!std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, OutputBuffers>, bool> = true,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
+HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffer && outbuf)
+    OutputBuffers & outbufs, ReturnType return_type = ReturnType{})
 {
-    auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
-    return eval_sequence<I>(dpf, recipe, outbuf, memoizer);
+    return eval_sequence<I, Is...>(dpf, recipe, outbufs,
+        dpf::make_double_space_sequence_memoizer<DpfKey>(recipe), return_type);
 }
 
 template <std::size_t I = 0,
+          std::size_t ...Is,
+          typename DpfKey,
+          typename SequenceMemoizer,
           typename ReturnType = return_entire_node_tag_,
-          typename DpfKey>
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe)
+          std::enable_if_t<std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, SequenceMemoizer>, bool> = true,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
+HEDLEY_ALWAYS_INLINE
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
+    SequenceMemoizer && memoizer, ReturnType return_type = ReturnType{})
 {
-    auto memoizer = make_double_space_sequence_memoizer(dpf, recipe);
-    auto outbuf = make_output_buffer_for_recipe_subsequence<I>(dpf, recipe);
-    auto iterable = eval_sequence<I>(dpf, recipe, outbuf, memoizer);
-    return std::make_tuple(std::move(outbuf), std::move(iterable));
+    using input_type = typename DpfKey::input_type;
+    auto outbufs = std::make_tuple(
+        make_output_buffer_for_recipe_subsequence<I>(dpf, recipe),
+        make_output_buffer_for_recipe_subsequence<Is>(dpf, recipe)...);
+
+    return std::make_pair(
+        utils::remove_tuple_if_trivial(std::move(outbufs)),
+        eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type));
+}
+
+template <std::size_t I = 0,
+          std::size_t ...Is,
+          typename DpfKey,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
+HEDLEY_ALWAYS_INLINE
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
+     ReturnType return_type = ReturnType{})
+{
+    return eval_sequence<I, Is...>(dpf, recipe,
+       dpf::make_double_space_sequence_memoizer<DpfKey>(recipe), return_type);
 }
 
 }  // namespace dpf
