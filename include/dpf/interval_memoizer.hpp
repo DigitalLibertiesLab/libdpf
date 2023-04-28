@@ -133,16 +133,6 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using parent::level_index;
     using parent::get_nodes_at_level;
 
-    explicit basic_interval_memoizer() : parent::interval_memoizer_base(0) { }
-    
-    void initialize(std::size_t output_len, Allocator alloc = Allocator{})
-    {
-        if (parent::output_length) throw std::runtime_error("already initialized");
-        parent::output_length = output_len;
-        pivot = std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2);
-        buf = alloc.allocate_unique_ptr(pivot+((output_len+2)>>1));
-    }
-
     // See comment for full_tree_interval_memoizer::initialize_endpoints() for
     //   general explanation of derivation for "nodes at previous level".
     // When creating the final level of interior nodes from the previous level,
@@ -302,19 +292,31 @@ auto make_interval_memoizer(InputT from, InputT to)
 }  // namespace dpf::detail
 
 template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_basic_interval_memoizer(const DpfKey &, InputT from = 0,
-    InputT to = std::numeric_limits<InputT>::max())
+          typename InputT>
+inline auto make_basic_interval_memoizer(InputT from, InputT to)
 {
     return detail::make_interval_memoizer<DpfKey, basic_interval_memoizer<DpfKey>, InputT>(from, to);
 }
 
 template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_full_tree_interval_memoizer(const DpfKey &, InputT from = 0,
-    InputT to = std::numeric_limits<InputT>::max())
+          typename InputT>
+inline auto make_basic_interval_memoizer(const DpfKey &, InputT from, InputT to)
+{
+    return make_basic_interval_memoizer<DpfKey>(from, to);
+}
+
+template <typename DpfKey,
+          typename InputT>
+inline auto make_full_tree_interval_memoizer(InputT from, InputT to)
 {
     return detail::make_interval_memoizer<DpfKey, full_tree_interval_memoizer<DpfKey>, InputT>(from, to);
+}
+
+template <typename DpfKey,
+          typename InputT>
+inline auto make_full_tree_interval_memoizer(const DpfKey &, InputT from, InputT to)
+{
+    return make_full_tree_interval_memoizer<DpfKey>(from, to);
 }
 
 }  // namespace dpf

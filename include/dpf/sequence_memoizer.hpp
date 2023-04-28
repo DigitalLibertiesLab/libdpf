@@ -446,21 +446,39 @@ auto make_sequence_memoizer(const sequence_recipe & recipe)
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <typename DpfKey>
-auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+inline auto make_inplace_reversing_sequence_memoizer(const sequence_recipe & recipe)
 {
     return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey>>(recipe);
 }
 
 template <typename DpfKey>
-auto make_double_space_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+inline auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_inplace_reversing_sequence_memoizer<DpfKey>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_double_space_sequence_memoizer(const sequence_recipe & recipe)
 {
     return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey>>(recipe);
 }
 
 template <typename DpfKey>
-auto make_full_tree_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+inline auto make_double_space_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_double_space_sequence_memoizer<DpfKey>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_sequence_memoizer(const sequence_recipe & recipe)
 {
     return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey>>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_full_tree_sequence_memoizer<DpfKey>(recipe);
 }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

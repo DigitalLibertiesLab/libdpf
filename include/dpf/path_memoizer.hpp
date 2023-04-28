@@ -170,15 +170,27 @@ auto make_path_memoizer()
 }  // namespace dpf::detail
 
 template <typename DpfKey>
-auto make_basic_path_memoizer(const DpfKey &)
+auto make_basic_path_memoizer()
 {
     return detail::make_path_memoizer<basic_path_memoizer<DpfKey>>();
 }
 
 template <typename DpfKey>
-auto make_nonmemoizing_path_memoizer(const DpfKey &)
+auto make_basic_path_memoizer(const DpfKey &)
+{
+    return make_basic_path_memoizer<DpfKey>();
+}
+
+template <typename DpfKey>
+auto make_nonmemoizing_path_memoizer()
 {
     return detail::make_path_memoizer<nonmemoizing_path_memoizer<DpfKey>>();
+}
+
+template <typename DpfKey>
+auto make_nonmemoizing_path_memoizer(const DpfKey &)
+{
+    return make_nonmemoizing_path_memoizer<DpfKey>();
 }
 
 }  // namespace dpf

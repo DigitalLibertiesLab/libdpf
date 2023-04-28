@@ -36,7 +36,7 @@ template <std::size_t ...Is,
           typename OutputBuffers,
           typename IntervalMemoizer,
           std::size_t ...IIs>
-auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs,
+auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
     IntervalMemoizer && memoizer, std::index_sequence<IIs...>)
 {
     using dpf_type = DpfKey;
@@ -62,7 +62,7 @@ template <std::size_t I = 0,
           typename IntervalMemoizer = dpf::basic_interval_memoizer<DpfKey>,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>, OutputBuffers>, bool> = true>
 HEDLEY_ALWAYS_INLINE
-auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs,
+auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
     assert_not_wildcard<I, Is...>(dpf);
@@ -80,9 +80,6 @@ HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
-    assert_not_wildcard<I, Is...>(dpf);
-
-    using input_type = typename DpfKey::input_type;
     auto outbufs = std::make_tuple(
         make_output_buffer_for_full<I>(dpf),
         make_output_buffer_for_full<Is>(dpf)...);
@@ -92,6 +89,18 @@ auto eval_full(const DpfKey & dpf,
     return std::make_pair(
         std::move(iterable),
         utils::remove_tuple_if_trivial(std::move(outbufs)));
+}
+
+template <std::size_t I = 0,
+          std::size_t ...Is,
+          typename DpfKey>
+HEDLEY_ALWAYS_INLINE
+auto eval_full(const DpfKey & dpf)
+{
+    using input_type = typename DpfKey::input_type;
+    return eval_full<I, Is...>(dpf,
+        dpf::make_basic_interval_memoizer(input_type(0),
+            std::numeric_limits<input_type>::max()));
 }
 
 }  // namespace dpf
