@@ -351,8 +351,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     {
         (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            recipe_subsequence_iterable<typename DpfKey::concrete_output_type<Is>>(std::begin((std::get<IIs>(outbufs)), recipe.output_indices)...
-std::begin(
+            recipe_subsequence_iterable<typename DpfKey::concrete_output_type<Is>>(std::begin(std::get<IIs>(outbufs)), recipe.output_indices)...);
     }
     else
     {
