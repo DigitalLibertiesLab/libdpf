@@ -74,7 +74,7 @@ template <std::size_t ...Is,
         typename OutputBuffers,
         std::size_t ...IIs>
 HEDLEY_ALWAYS_INLINE
-auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs,
+auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers & outbufs,
     std::index_sequence<IIs...>)
 {
     auto path = make_basic_path_memoizer(dpf);
@@ -103,7 +103,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator,
           typename OutputBuffers>
-inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs)
+inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers & outbufs)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                     std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -222,9 +222,8 @@ namespace internal
 {
 
 template <typename DpfKey,
-          typename InputT,
           typename SequenceMemoizer>
-inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe & recipe,
     SequenceMemoizer && memoizer, std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
@@ -266,10 +265,9 @@ inline auto eval_sequence_interior(const DpfKey & dpf, const sequence_recipe<Inp
 
 template <std::size_t I,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer,
           typename SequenceMemoizer>
-inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer && outbuf, SequenceMemoizer && memoizer)
 {
     assert_not_wildcard<I>(dpf);
@@ -296,10 +294,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <std::size_t I,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffer,
           typename SequenceMemoizer>
-inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffer && outbuf, SequenceMemoizer && memoizer)
 {
     assert_not_wildcard<I>(dpf);
@@ -335,12 +332,11 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 template <std::size_t ...Is,
           typename ReturnType,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffers,
           typename SequenceMemoizer,
           std::size_t ...IIs>
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffers && outbufs, SequenceMemoizer && memoizer)
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
+    OutputBuffers & outbufs, SequenceMemoizer && memoizer)
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                   std::is_same_v<ReturnType, return_output_only_tag_>);
@@ -351,13 +347,13 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
     {
         (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            recipe_subsequence_iterable<typename DpfKey::concrete_output_type<Is>>(std::begin(std::get<IIs>(outbufs)), recipe.output_indices)...);
+            recipe_subsequence_iterable<typename DpfKey::concrete_output_type<Is>>(std::begin(std::get<IIs>(outbufs)), recipe.output_indices())...);
     }
     else
     {
         (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(std::get<IIs>(outbufs)), recipe.output_indices.size(), 0, 0)...
+            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(std::get<IIs>(outbufs)), recipe.output_indices().size(), 0, 0)...
         );
     }
 }
@@ -380,13 +376,12 @@ template <std::size_t I = 0,
           std::size_t ...Is,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
-          typename InputT,
           typename OutputBuffers,
           typename SequenceMemoizer = dpf::double_space_sequence_memoizer<DpfKey>,
           std::enable_if_t<!std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, OutputBuffers>, bool> = true>
 HEDLEY_ALWAYS_INLINE
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
-    OutputBuffers && outbufs, SequenceMemoizer && memoizer = SequenceMemoizer{})
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
+    OutputBuffers & outbufs, SequenceMemoizer && memoizer = SequenceMemoizer{})
 {
     assert_not_wildcard<I, Is...>(dpf);
     return utils::remove_tuple_if_trivial(
@@ -409,11 +404,10 @@ template <std::size_t I = 0,
           std::size_t ...Is,
           typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
-          typename InputT,
           typename SequenceMemoizer = dpf::double_space_sequence_memoizer<DpfKey>,
           std::enable_if_t<std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, SequenceMemoizer>, bool> = true>
 HEDLEY_ALWAYS_INLINE
-auto eval_sequence(const DpfKey & dpf, const sequence_recipe<InputT> & recipe,
+auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     SequenceMemoizer && memoizer = SequenceMemoizer{})
 {
     assert_not_wildcard<I, Is...>(dpf);

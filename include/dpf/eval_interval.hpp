@@ -119,7 +119,7 @@ template <std::size_t ...Is,
           typename IntervalMemoizer,
           std::size_t ...IIs>
 auto eval_interval(const DpfKey & dpf, InputT && from, InputT && to,
-    OutputBuffers && outbufs, IntervalMemoizer && memoizer,
+    OutputBuffers & outbufs, IntervalMemoizer && memoizer,
     std::index_sequence<IIs...>)
 {
     using dpf_type = DpfKey;
@@ -151,9 +151,10 @@ template <std::size_t I = 0,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>, OutputBuffers>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT && from, InputT && to,
-    OutputBuffers && outbufs, IntervalMemoizer && memoizer = IntervalMemoizer{})
+    OutputBuffers & outbufs, IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
     assert_not_wildcard<I, Is...>(dpf);
+    if (memoizer.max_size() == 0) memoizer.initialize(std::size_t(to-from)+1);
 
     if constexpr(utils::is_tuple_v<OutputBuffers> == false)
     {

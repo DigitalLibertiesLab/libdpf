@@ -77,12 +77,36 @@ auto make_output_buffer_for_interval(InputT from, InputT to)
     return dpf::output_buffer<output_type>(nodes_in_interval*dpf_type::outputs_per_leaf);
 }
 
+template <typename DpfKey,
+          std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename InputT>
+auto make_output_buffer_for_interval(InputT from, InputT to)
+{
+    return std::make_tuple(
+        make_output_buffer_for_interval<DpfKey, I0>(from, to),
+        make_output_buffer_for_interval<DpfKey, I1>(from, to),
+        make_output_buffer_for_interval<DpfKey, Is>(from, to)...
+    );
+}
+
 template <std::size_t I = 0,
           typename DpfKey,
           typename InputT>
 inline auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
 {
     return make_output_buffer_for_interval<DpfKey, I>(from, to);
+}
+
+template <std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename DpfKey,
+          typename InputT>
+inline auto make_output_buffer_for_interval(const DpfKey &, InputT from, InputT to)
+{
+    return make_output_buffer_for_interval<DpfKey, I0, I1, Is...>(from, to);
 }
 
 template <typename DpfKey,
@@ -96,11 +120,33 @@ auto make_output_buffer_for_full()
         std::numeric_limits<input_type>::max());
 }
 
+template <typename DpfKey,
+          std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is>
+auto make_output_buffer_for_full()
+{
+    return std::make_tuple(
+        make_output_buffer_for_full<DpfKey, I0>(),
+        make_output_buffer_for_full<DpfKey, I1>(),
+        make_output_buffer_for_full<DpfKey, Is>()...
+    );
+}
+
 template <std::size_t I = 0,
           typename DpfKey>
 inline auto make_output_buffer_for_full(const DpfKey &)
 {
     return make_output_buffer_for_full<DpfKey, I>();
+}
+
+template <std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename DpfKey>
+inline auto make_output_buffer_for_full(const DpfKey &)
+{
+    return make_output_buffer_for_full<DpfKey, I0, I1, Is...>();
 }
 
 template <typename DpfKey,
@@ -115,6 +161,19 @@ auto make_output_buffer_for_subsequence(Iterator begin, Iterator end)
     return output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
 }
 
+template <typename DpfKey,
+          std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename Iterator>
+auto make_output_buffer_for_subsequence(Iterator begin, Iterator end)
+{
+    return std::make_tuple(
+        make_output_buffer_for_subsequence<DpfKey, I0>(begin, end),
+        make_output_buffer_for_subsequence<DpfKey, I1>(begin, end),
+        make_output_buffer_for_subsequence<DpfKey, Is>(begin, end)...);
+}
+
 template <std::size_t I = 0,
           typename DpfKey,
           typename Iterator>
@@ -123,10 +182,19 @@ inline auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, I
     return make_output_buffer_for_subsequence<DpfKey, I>(begin, end);
 }
 
+template <std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename DpfKey,
+          typename Iterator>
+inline auto make_output_buffer_for_subsequence(const DpfKey &, Iterator begin, Iterator end)
+{
+    return make_output_buffer_for_subsequence<DpfKey, I0, I1, Is...>(begin, end);
+}
+
 template <typename DpfKey,
-          std::size_t I = 0,
-          typename InputT>
-auto make_output_buffer_for_recipe_subsequence(const sequence_recipe<InputT> & recipe)
+          std::size_t I = 0>
+auto make_output_buffer_for_recipe_subsequence(const sequence_recipe & recipe)
 {
     using dpf_type = DpfKey;
     using output_type = typename DpfKey::concrete_output_type<I>;
@@ -136,12 +204,32 @@ auto make_output_buffer_for_recipe_subsequence(const sequence_recipe<InputT> & r
     return dpf::output_buffer<output_type>(nodes_in_sequence*dpf_type::outputs_per_leaf);
 }
 
+template <typename DpfKey,
+          std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is>
+inline auto make_output_buffer_for_recipe_subsequence(const sequence_recipe & recipe)
+{
+    return std::make_tuple(
+        make_output_buffer_for_recipe_subsequence<DpfKey, I0>(recipe),
+        make_output_buffer_for_recipe_subsequence<DpfKey, I1>(recipe),
+        make_output_buffer_for_recipe_subsequence<DpfKey, Is>(recipe)...);
+}
+
 template <std::size_t I = 0,
-          typename DpfKey,
-          typename InputT>
-inline auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe<InputT> & recipe)
+          typename DpfKey>
+inline auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe & recipe)
 {
     return make_output_buffer_for_recipe_subsequence<DpfKey, I>(recipe);
+}
+
+template <std::size_t I0,
+          std::size_t I1,
+          std::size_t ...Is,
+          typename DpfKey>
+inline auto make_output_buffer_for_recipe_subsequence(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_output_buffer_for_recipe_subsequence<DpfKey, I0, I1, Is...>(recipe);
 }
 
 }  // namespace dpf

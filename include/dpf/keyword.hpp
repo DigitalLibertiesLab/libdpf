@@ -246,6 +246,14 @@ class basic_fixed_length_string
         return val == rhs.val;
     }
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator~() const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(~this->val)};
+    }
+
     constexpr operator bool() const noexcept
     {
         return static_cast<bool>(static_cast<integral_type>(this->val));
@@ -304,13 +312,13 @@ class basic_fixed_length_string
         return val;
     }
 
+  private:
     constexpr
     // cppcheck-suppress noExplicitConstructor
     basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
     noexcept
       : val{val} { }
 
-  private:
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer
     /// @throws `std::length_error` if `str` exceeds `max_length`

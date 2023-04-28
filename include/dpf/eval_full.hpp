@@ -36,7 +36,7 @@ template <std::size_t ...Is,
           typename OutputBuffers,
           typename IntervalMemoizer,
           std::size_t ...IIs>
-auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
+auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs,
     IntervalMemoizer && memoizer, std::index_sequence<IIs...>)
 {
     using dpf_type = DpfKey;
@@ -62,7 +62,7 @@ template <std::size_t I = 0,
           typename IntervalMemoizer = dpf::basic_interval_memoizer<DpfKey>,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>, OutputBuffers>, bool> = true>
 HEDLEY_ALWAYS_INLINE
-auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
+auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs,
     IntervalMemoizer && memoizer = IntervalMemoizer{})
 {
     assert_not_wildcard<I, Is...>(dpf);

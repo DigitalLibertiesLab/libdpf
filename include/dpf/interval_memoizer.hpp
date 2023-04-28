@@ -43,6 +43,7 @@ struct interval_memoizer_base
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
+            std::cout << new_to << " - " << new_from << " > " << output_length << "\n";
             if (new_to - new_from > output_length)
             {
                 throw std::length_error("size of new interval is too large for memoizer");
@@ -133,9 +134,10 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using parent::get_nodes_at_level;
 
     explicit basic_interval_memoizer() : parent::interval_memoizer_base(0) { }
+    
     void initialize(std::size_t output_len, Allocator alloc = Allocator{})
     {
-        if (parent::output_length) throw std::runtime_error("");
+        if (parent::output_length) throw std::runtime_error("already initialized");
         parent::output_length = output_len;
         pivot = std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2);
         buf = alloc.allocate_unique_ptr(pivot+((output_len+2)>>1));
