@@ -415,14 +415,16 @@ HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     SequenceMemoizer && memoizer, ReturnType return_type = ReturnType{})
 {
-    using input_type = typename DpfKey::input_type;
     auto outbufs = std::make_tuple(
         make_output_buffer_for_recipe_subsequence<I>(dpf, recipe),
         make_output_buffer_for_recipe_subsequence<Is>(dpf, recipe)...);
 
+    // moving `outbufs` is allowed as the `outbufs` are `std::vectors`
+    //   the underlying data remains on the heap
+    //   and thus the data the iterable refers to is still valid
+    auto iterable = eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type);
     return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)),
-        eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type));
+        utils::remove_tuple_if_trivial(std::move(outbufs)), iterable);
 }
 
 template <std::size_t I = 0,
