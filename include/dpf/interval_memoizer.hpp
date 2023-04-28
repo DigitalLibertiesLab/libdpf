@@ -193,6 +193,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = std::add_pointer_t<node_type>;
+    using integral_type = typename DpfKey::integral_type;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
@@ -242,12 +243,12 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     //   for the number of nodes on each level.
     // Also note that at depth (from the root) i, there can't be more than 2^i
     //   nodes hence the `min()` function call.
-    static constexpr auto initialize_endpoints(std::size_t len)
+    static constexpr auto initialize_endpoints(integral_type len)
     {
         std::array<std::size_t, depth+1> level_endpoints{0};
         for (std::size_t level=depth; level > 0; --level)
         {
-            len = std::min(len+2 >> 1, std::size_t(1) << level-1);
+            len = std::min(len+2 >> 1, integral_type(1) << level-1);
             level_endpoints[level] = len;
         }
 
