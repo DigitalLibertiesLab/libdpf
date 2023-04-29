@@ -252,7 +252,7 @@ struct make_from_integral_value
 {
     using T_integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
     using integral_type = std::conditional_t<std::is_void_v<T_integral_type>, simde_uint128, T_integral_type>;
-    constexpr T operator()(integral_type val)
+    constexpr T operator()(integral_type val) const noexcept
     {
         return T{val};
     }
