@@ -515,7 +515,7 @@ struct make_from_integral_value<dpf::basic_fixed_length_string<N, CharT, Alpha, 
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
     using integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
-    constexpr T operator()(integral_type val)
+    constexpr T operator()(integral_type val) const noexcept
     {
         return T{val};
     }

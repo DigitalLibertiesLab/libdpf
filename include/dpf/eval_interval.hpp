@@ -131,10 +131,10 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     std::size_t nodes_in_interval = utils::get_nodes_in_interval_impl(from_node, to_node);
 
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
-    (internal::eval_interval_exterior<Is>(dpf, from_node, to_node, std::get<IIs>(outbufs), memoizer), ...);
+    (internal::eval_interval_exterior<Is>(dpf, from_node, to_node, utils::get<IIs>(outbufs), memoizer), ...);
 
     return std::make_tuple(
-        subinterval_iterable(std::begin(std::get<IIs>(outbufs)),
+        subinterval_iterable(std::begin(utils::get<IIs>(outbufs)),
         nodes_in_interval*dpf_type::outputs_per_leaf,
         mod(from, dpf_type::lg_outputs_per_leaf),
         dpf_type::outputs_per_leaf - mod(to, dpf_type::lg_outputs_per_leaf))...);
@@ -154,16 +154,8 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 {
     assert_not_wildcard<I, Is...>(dpf);
 
-    if constexpr(utils::is_tuple_v<OutputBuffers> == false)
-    {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_interval<I, Is...>(dpf, from, to, std::forward_as_tuple(outbufs), memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
-    }
-    else
-    {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
-    }
+    return utils::remove_tuple_if_trivial(
+        internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
 }
 
 template <std::size_t I = 0,

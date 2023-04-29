@@ -53,7 +53,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
 {
     auto path = make_basic_path_memoizer(dpf);
     auto rawbuf = std::make_tuple(
-        reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(std::get<IIs>(outbufs)))...
+        reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(utils::get<IIs>(outbufs)))...
     );
 
     std::size_t i = 0;
@@ -61,12 +61,12 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     auto to_integral_type = dpf::utils::to_integral_type<typename DpfKey::input_type>{};
     for (auto it = begin; it != end; ++it)
     {
-        std::tie(std::get<IIs>(rawbuf)[i]...) = std::make_tuple(
+        std::tie(utils::get<IIs>(rawbuf)[i]...) = std::make_tuple(
             dpf::eval_point<Is>(dpf, *it, path).node...);
         i++;
     }
     return std::make_tuple(
-        dpf::subsequence_iterable<DpfKey, decltype(std::begin(std::get<IIs>(outbufs))), Iterator>(std::begin(std::get<IIs>(outbufs)), begin, end)...
+        dpf::subsequence_iterable<DpfKey, decltype(std::begin(utils::get<IIs>(outbufs))), Iterator>(std::begin(utils::get<IIs>(outbufs)), begin, end)...
     );
 }
 
@@ -81,19 +81,19 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
 {
     auto path = make_basic_path_memoizer(dpf);
     auto rawbuf = std::make_tuple(
-        reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(std::get<IIs>(outbufs)))...
+        reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(utils::get<IIs>(outbufs)))...
     );
 
     std::size_t i = 0;
     DPF_UNROLL_LOOP
     for (auto it = begin; it != end; ++it)
     {
-        std::tie(std::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
+        std::tie(utils::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
             *dpf::eval_point<Is>(dpf, *it, path)...);
         i++;
     }
     return std::make_tuple(
-        dpf::subinterval_iterable(std::get<IIs>(rawbuf), i-1, 0, 0)...
+        dpf::subinterval_iterable(utils::get<IIs>(rawbuf), i-1, 0, 0)...
     );
 }
 
@@ -360,15 +360,15 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
 
     if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
-        (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
+        (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            recipe_subsequence_iterable(std::begin(std::get<IIs>(outbufs)), recipe.output_indices())...);
+            recipe_subsequence_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices())...);
     }
     else
     {
-        (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, std::get<IIs>(outbufs), memoizer), ...);
+        (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(std::get<IIs>(outbufs)), recipe.output_indices().size(), 0, 0)...
+            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(utils::get<IIs>(outbufs)), recipe.output_indices().size(), 0, 0)...
         );
     }
 }
@@ -389,16 +389,8 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
 {
     assert_not_wildcard<I, Is...>(dpf);
 
-    if constexpr(utils::is_tuple_v<OutputBuffers> == false)
-    {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_sequence<I, Is...>(dpf, recipe, std::forward_as_tuple(outbufs), memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
-    }
-    else
-    {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
-    }
+    return utils::remove_tuple_if_trivial(
+        internal::eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
 }
 
 template <std::size_t I = 0,

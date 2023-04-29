@@ -252,7 +252,7 @@ struct make_from_integral_value
 {
     using T_integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
     using integral_type = std::conditional_t<std::is_void_v<T_integral_type>, simde_uint128, T_integral_type>;
-    constexpr T operator()(integral_type val)
+    constexpr T operator()(integral_type val) const noexcept
     {
         return T{val};
     }
@@ -460,6 +460,23 @@ struct is_tuple<std::tuple<Ts...>>
 
 template <typename T>
 static constexpr bool is_tuple_v = is_tuple<T>::value;
+
+template <std::size_t I, typename T>
+auto & get(T & t)
+{
+    if constexpr(I == 0 && is_tuple_v<T> == false)
+    {
+        // if 0th value requested, return it --- even if `t` isn't a tuple
+        return t;
+    }
+    else 
+    {
+        // otherwise, just invoke `std::get<I>(t)` and let it succeed or fail
+        // as it may
+        return std::get<I>(t);
+    }
+}
+
 
 }  // namespace utils
 
