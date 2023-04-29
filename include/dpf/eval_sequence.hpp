@@ -61,12 +61,12 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     auto to_integral_type = dpf::utils::to_integral_type<typename DpfKey::input_type>{};
     for (auto it = begin; it != end; ++it)
     {
-        std::tie(std::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
-            dpf::eval_point<Is>(dpf, *it, path)...);
+        std::tie(std::get<IIs>(rawbuf)[i]...) = std::make_tuple(
+            dpf::eval_point<Is>(dpf, *it, path).node...);
         i++;
     }
     return std::make_tuple(
-        dpf::subsequence_iterable<DpfKey, typename DpfKey::concrete_output_type<Is>, Iterator>(std::begin(std::get<IIs>(rawbuf)), begin, end)...
+        dpf::subsequence_iterable<DpfKey, decltype(std::begin(std::get<IIs>(outbufs))), Iterator>(std::begin(std::get<IIs>(outbufs)), begin, end)...
     );
 }
 
@@ -93,7 +93,7 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
         i++;
     }
     return std::make_tuple(
-        dpf::subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(rawbuf, i-1, 0, 0)...
+        dpf::subinterval_iterable(std::get<IIs>(rawbuf), i-1, 0, 0)...
     );
 }
 
@@ -101,36 +101,48 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
 
 template <std::size_t I = 0,
           std::size_t ...Is,
-          typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
           typename Iterator,
-          typename OutputBuffers>
-inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs)
+          typename OutputBuffers,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true,
+          std::enable_if_t<!std::is_base_of_v<return_type_tag_, OutputBuffers>, bool> = true>
+inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end,
+    OutputBuffers && outbufs, ReturnType return_type = ReturnType{})
 {
     static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
                     std::is_same_v<ReturnType, return_output_only_tag_>);
     if constexpr(std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
-        return internal::eval_sequence_entire_node<I, Is...>(dpf, begin, end, outbufs);
+        return utils::remove_tuple_if_trivial(
+            internal::eval_sequence_entire_node<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{}));
     }
     else
     {
-        return internal::eval_sequence_output_only<I, Is...>(dpf, begin, end, outbufs);
+        return utils::remove_tuple_if_trivial(
+            internal::eval_sequence_output_only<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{}));
     }
 }
 
 template <std::size_t I = 0,
           std::size_t ...Is,
-          typename ReturnType = return_entire_node_tag_,
           typename DpfKey,
-          typename Iterator>
-auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end)
+          typename Iterator,
+          typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
+auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end,
+    ReturnType return_type = ReturnType{})
 {
     auto outbufs = std::make_tuple(
-        make_output_buffer_for_recipe_subsequence<I>(dpf, begin, end),
-        make_output_buffer_for_recipe_subsequence<Is>(dpf, begin, end)...);
-    auto iterable = eval_sequence<I>(dpf, begin, end, outbufs);
-    return std::make_tuple(std::move(iterable), std::move(outbufs));
+        make_output_buffer_for_subsequence<I>(dpf, begin, end),
+        make_output_buffer_for_subsequence<Is>(dpf, begin, end)...);
+
+    // moving `outbufs` is allowed as the `outbufs` are `std::vectors`
+    //   the underlying data remains on the heap
+    //   and thus the data the iterable refers to is still valid
+    auto iterable = eval_sequence<I, Is...>(dpf, begin, end, outbufs, return_type);
+    return std::make_pair(
+        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
 }
 
 template <std::size_t I = 0,
@@ -424,7 +436,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     //   and thus the data the iterable refers to is still valid
     auto iterable = eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type);
     return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)), iterable);
+        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
 }
 
 template <std::size_t I = 0,

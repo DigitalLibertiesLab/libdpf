@@ -199,7 +199,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     //   and thus the data the iterable refers to is still valid
     auto iterable = eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer);
     return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)), iterable);
+        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
 }
 
 template <std::size_t I = 0,
