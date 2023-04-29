@@ -461,6 +461,20 @@ struct is_tuple<std::tuple<Ts...>>
 template <typename T>
 static constexpr bool is_tuple_v = is_tuple<T>::value;
 
+template <std::size_t I, typename T>
+auto & get(T & t)
+{
+    if constexpr(is_tuple_v<T> == true)
+    {
+        return std::get<I>(t);
+    }
+    else
+    {
+        return t;
+    }
+}
+
+
 }  // namespace utils
 
 }  // namespace dpf
