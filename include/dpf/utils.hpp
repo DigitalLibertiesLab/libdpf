@@ -464,13 +464,16 @@ static constexpr bool is_tuple_v = is_tuple<T>::value;
 template <std::size_t I, typename T>
 auto & get(T & t)
 {
-    if constexpr(is_tuple_v<T> == true)
+    if constexpr(I == 0 && is_tuple_v<T> == false)
     {
-        return std::get<I>(t);
-    }
-    else
-    {
+        // if 0th value requested, return it --- even if `t` isn't a tuple
         return t;
+    }
+    else 
+    {
+        // otherwise, just invoke `std::get<I>(t)` and let it succeed or fail
+        // as it may
+        return std::get<I>(t);
     }
 }
 
