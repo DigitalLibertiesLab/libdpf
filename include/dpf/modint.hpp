@@ -706,7 +706,7 @@ class numeric_limits<dpf::modint<Nbits>>
 
     static constexpr dpf::modint<Nbits> min() noexcept { return dpf::modint<Nbits>{0}; }
     static constexpr dpf::modint<Nbits> lowest() noexcept { return dpf::modint<Nbits>{0}; }
-    static constexpr dpf::modint<Nbits> max() noexcept { return dpf::modint<Nbits>{-1}; }
+    static constexpr dpf::modint<Nbits> max() noexcept { return dpf::modint<Nbits>{typename dpf::modint<Nbits>::integral_type(-1)}; }
     static constexpr dpf::modint<Nbits> epsilon() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> round_error() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> infinity() noexcept { return 0; }

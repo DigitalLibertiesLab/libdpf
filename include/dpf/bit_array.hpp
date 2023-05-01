@@ -106,7 +106,7 @@ class bit_array_base
     /// @note guaranteed (via `static_assert`) to at most `64` bits
     static constexpr size_type bits_per_word = utils::bitlength_of<word_type>();
     static constexpr size_type lg_bits_per_word = std::log2(bits_per_word);
-    static_assert(bits_per_word <= 64, "bits_per_word not equal to 64");
+    static_assert(bits_per_word <= 64, "bits_per_word greater than 64");
 
     /// @brief default copy constructor
     inline constexpr bit_array_base(const bit_array_base &) = default;
@@ -730,7 +730,7 @@ class bit_array_base
             assert(psnip_builtin_popcount64(mask_) == 1);
         }
 
-        friend class bit_array_base;      //< access to c'tor
+        friend class bit_array_base;                                //< access to c'tor
         friend class bit_iterator_base<ConcreteBitArrayT, WordT>;   //< access to c'tor
         friend class bit_iterator<ConcreteBitArrayT, WordT>;        //< access to c'tor
         friend class const_bit_iterator<ConcreteBitArrayT, WordT>;  //< access to c'tor
@@ -811,7 +811,7 @@ class bit_iterator_base
     HEDLEY_NON_NULL()
     inline constexpr explicit bit_iterator_base(word_pointer word_ptr)
     : word_ptr_{word_ptr},
-        mask_{lsb}
+      mask_{lsb}
     {
         assert(word_ptr_ != nullptr);
     }
@@ -825,9 +825,8 @@ class bit_iterator_base
     /// @note `mask` must have exactly one bit set
     HEDLEY_NO_THROW
     HEDLEY_NON_NULL()
-    inline constexpr bit_iterator_base(word_pointer word_ptr,
-        word_type mask)
-        : word_ptr_{word_ptr},
+    inline constexpr bit_iterator_base(word_pointer word_ptr, word_type mask)
+      : word_ptr_{word_ptr},
         mask_{mask}
     {
         assert(word_ptr_ != nullptr);
