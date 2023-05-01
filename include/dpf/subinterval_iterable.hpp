@@ -37,12 +37,12 @@ class subinterval_iterable
     HEDLEY_ALWAYS_INLINE
     iterator end() const noexcept
     {
-        return it_ + length_ - postclip_ + 1;
+        return it_ + (length_ - postclip_ + 1);
     }
     HEDLEY_ALWAYS_INLINE
     iterator cend() const noexcept
     {
-        return it_ + length_ - postclip_ + 1;
+        return it_ + (length_ - postclip_ + 1);
     }
 
   private:
