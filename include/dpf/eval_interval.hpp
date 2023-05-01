@@ -163,7 +163,8 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename InputT,
           typename OutputBuffers,
-          std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>, OutputBuffers>, bool> = true>
+          std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
+              std::remove_reference_t<OutputBuffers>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     OutputBuffers & outbufs)
@@ -177,7 +178,8 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename InputT,
           typename IntervalMemoizer,
-          std::enable_if_t<std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>, IntervalMemoizer>, bool> = true>
+          std::enable_if_t<std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
+              std::remove_reference_t<IntervalMemoizer>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     IntervalMemoizer && memoizer)

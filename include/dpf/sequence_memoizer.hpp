@@ -15,9 +15,11 @@
 namespace dpf
 {
 
+struct sequence_memoizer_tag_ {};
+
 template <typename DpfKey,
           typename ReturnT = typename DpfKey::interior_node *>
-struct sequence_memoizer_base
+struct sequence_memoizer_base : public sequence_memoizer_tag_
 {
   public:
     using dpf_type = DpfKey;
