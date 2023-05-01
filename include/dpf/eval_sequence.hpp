@@ -85,7 +85,7 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
     );
 
     std::size_t i = 0;
-    DPF_UNROLL_LOOP
+    // DPF_UNROLL_LOOP
     for (auto it = begin; it != end; ++it)
     {
         std::tie(utils::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
@@ -208,10 +208,11 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template leaf<I>();
     auto buf = memo[0];
 
+    constexpr auto clz = utils::countl_zero_symmetric_difference<input_type>{};
     auto curr = begin, prev = curr;
     for (std::size_t i = 0, j = 0; i < nodes_in_sequence; ++i)
     {
-        j += *prev/dpf_type::outputs_per_leaf < *curr/dpf_type::outputs_per_leaf;
+        j += (clz(*prev, *curr)) < dpf_type::depth;
         auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
             get_if_lo_bit(cw, buf[j]));
         std::memcpy(&rawbuf[i], &leaf, sizeof(leaf));
@@ -320,14 +321,13 @@ inline auto eval_sequence_exterior_output_only(const DpfKey & dpf, const sequenc
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    auto rawbuf = reinterpret_cast<output_type*>(utils::data(outbuf));
     auto cw = dpf.template leaf<I>();
     using node_type = typename DpfKey::exterior_node;
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto buf = memoizer[dpf.depth];
 
     leaf_node_type node;
-    DPF_UNROLL_LOOP
+    // DPF_UNROLL_LOOP
     for (std::size_t i = 0, j = -1, prev = -1,
         curr = recipe.output_indices()[i]/dpf_type::outputs_per_leaf;
         i < recipe.output_indices().size();
@@ -338,7 +338,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
             ++j;
             node = dpf_type::template traverse_exterior<I>(buf[j], get_if_lo_bit(cw, buf[j]));
         }
-        rawbuf[i] = extract_leaf<node_type, output_type>(node, recipe.output_indices()[i] % dpf_type::outputs_per_leaf);
+        outbuf[i] = extract_leaf<node_type, output_type>(node, recipe.output_indices()[i] % dpf_type::outputs_per_leaf);
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }
@@ -353,9 +353,6 @@ template <std::size_t ...Is,
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     OutputBuffers && outbufs, SequenceMemoizer && memoizer, ReturnType return_type, std::index_sequence<IIs...>)
 {
-    static_assert(std::is_same_v<ReturnType, return_entire_node_tag_> ||
-                  std::is_same_v<ReturnType, return_output_only_tag_>);
-
     internal::eval_sequence_interior(dpf, recipe, memoizer);
 
     if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
@@ -368,7 +365,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     {
         (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
         return std::make_tuple(
-            subinterval_iterable<typename DpfKey::concrete_output_type<Is>>(utils::data(utils::get<IIs>(outbufs)), recipe.output_indices().size(), 0, 0)...
+            subinterval_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices().size()-1, 0, 0)...
         );
     }
 }
@@ -381,6 +378,7 @@ template <std::size_t I = 0,
           typename OutputBuffers,
           typename SequenceMemoizer,
           typename ReturnType = return_entire_node_tag_,
+          std::enable_if_t<!std::is_base_of_v<return_type_tag_, SequenceMemoizer>, bool> = true,
           std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
@@ -398,7 +396,8 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename OutputBuffers,
           typename ReturnType = return_entire_node_tag_,
-          std::enable_if_t<!std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, OutputBuffers>, bool> = true,
+          std::enable_if_t<!std::is_base_of_v<sequence_memoizer_tag_,
+              std::remove_reference_t<OutputBuffers>>, bool> = true,
           std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
@@ -413,7 +412,8 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename SequenceMemoizer,
           typename ReturnType = return_entire_node_tag_,
-          std::enable_if_t<std::is_base_of_v<dpf::sequence_memoizer_base<DpfKey>, SequenceMemoizer>, bool> = true,
+          std::enable_if_t<std::is_base_of_v<sequence_memoizer_tag_,
+              std::remove_reference_t<SequenceMemoizer>>, bool> = true,
           std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
