@@ -81,7 +81,7 @@ struct EvalPointTest : public testing::Test
 
 TYPED_TEST_SUITE_P(EvalPointTest);
 
-TYPED_TEST_P(EvalPointTest, SurroundingPoints)
+TYPED_TEST_P(EvalPointTest, Basic)
 {
     using input_type = typename std::tuple_element_t<0, TypeParam>;
 
@@ -149,7 +149,7 @@ TYPED_TEST_P(EvalPointTest, NonmemoizingPathMemoizer)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(EvalPointTest,
-    SurroundingPoints,
+    Basic,
     BasicPathMemoizer,
     NonmemoizingPathMemoizer);
 using Types = testing::Types

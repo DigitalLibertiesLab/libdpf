@@ -55,10 +55,12 @@ struct EvalIntervalTest : public testing::Test
         return std::make_pair(from_integral_type(from_int), from_integral_type(to_int));
     }
 
-    template <typename IteratorT>
+    template <typename IterableT>
     void assert_wrapper(const input_type & x, const output_type & y,
-        input_type cur, IteratorT & it0, IteratorT & it1)
+        input_type cur, const IterableT & iter0, const IterableT & iter1)
     {
+        auto it0 = std::begin(iter0),
+             it1 = std::begin(iter1);
         for (std::size_t i = 0; i <= range<<1; ++i, ++cur, ++it0, ++it1)
         {
             if (cur == x)
@@ -70,6 +72,8 @@ struct EvalIntervalTest : public testing::Test
                 ASSERT_EQ(static_cast<output_type>(*it1 - *it0), zero_output);
             }
         }
+        ASSERT_EQ(it0, std::end(iter0));
+        ASSERT_EQ(it1, std::end(iter1));
     }
 
     static constexpr auto to_integral_type = dpf::utils::to_integral_type<input_type>{};
@@ -82,26 +86,66 @@ struct EvalIntervalTest : public testing::Test
 
 TYPED_TEST_SUITE_P(EvalIntervalTest);
 
-TYPED_TEST_P(EvalIntervalTest, SurroundingInterval)
+TYPED_TEST_P(EvalIntervalTest, Basic)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
-
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
         auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to);
         auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to);
-        auto it0 = std::begin(iter0), it1 = std::begin(iter1);
 
-        this->assert_wrapper(x, y, from, it0, it1);
+        this->assert_wrapper(x, y, from, iter0, iter1);
+    }
+}
+
+TYPED_TEST_P(EvalIntervalTest, Outbuf)
+{
+    for (auto [x, y] : this->params)
+    {
+        auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+        auto [from, to] = this->get_from_to(x);
+        auto buf0 = dpf::make_output_buffer_for_interval(dpf0, from, to),
+             buf1 = dpf::make_output_buffer_for_interval(dpf1, from, to);
+        auto iter0 = dpf::eval_interval(dpf0, from, to, buf0),
+             iter1 = dpf::eval_interval(dpf1, from, to, buf1);
+
+        this->assert_wrapper(x, y, from, iter0, iter1);
     }
 }
 
 TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizer)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    for (auto [x, y] : this->params)
+    {
+        auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+        auto [from, to] = this->get_from_to(x);
+        auto memo0 = dpf::make_basic_interval_memoizer(dpf0, from, to),
+             memo1 = dpf::make_basic_interval_memoizer(dpf1, from, to);
+        auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to, memo0);
+        auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to, memo1);
 
+        this->assert_wrapper(x, y, from, iter0, iter1);
+    }
+}
+
+TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizer)
+{
+    for (auto [x, y] : this->params)
+    {
+        auto [dpf0, dpf1] = dpf::make_dpf(x, y);
+        auto [from, to] = this->get_from_to(x);
+        auto memo0 = dpf::make_full_tree_interval_memoizer(dpf0, from, to),
+             memo1 = dpf::make_full_tree_interval_memoizer(dpf1, from, to);
+        auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to, memo0);
+        auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to, memo1);
+
+        this->assert_wrapper(x, y, from, iter0, iter1);
+    }
+}
+
+TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizerOutbuf)
+{
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
@@ -112,16 +156,13 @@ TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizer)
              memo1 = dpf::make_basic_interval_memoizer(dpf1, from, to);
         auto iter0 = dpf::eval_interval(dpf0, from, to, buf0, memo0),
              iter1 = dpf::eval_interval(dpf1, from, to, buf1, memo1);
-        auto it0 = std::begin(iter0), it1 = std::begin(iter1);
 
-        this->assert_wrapper(x, y, from, it0, it1);
+        this->assert_wrapper(x, y, from, iter0, iter1);
     }
 }
 
-TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizer)
+TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizerOutbuf)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
-
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
@@ -132,16 +173,18 @@ TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizer)
              memo1 = dpf::make_full_tree_interval_memoizer(dpf1, from, to);
         auto iter0 = dpf::eval_interval(dpf0, from, to, buf0, memo0),
              iter1 = dpf::eval_interval(dpf1, from, to, buf1, memo1);
-        auto it0 = std::begin(iter0), it1 = std::begin(iter1);
 
-        this->assert_wrapper(x, y, from, it0, it1);
+        this->assert_wrapper(x, y, from, iter0, iter1);
     }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(EvalIntervalTest,
-    SurroundingInterval,
+    Basic,
+    Outbuf,
     BasicIntervalMemoizer,
-    FullTreeIntervalMemoizer);
+    FullTreeIntervalMemoizer,
+    BasicIntervalMemoizerOutbuf,
+    FullTreeIntervalMemoizerOutbuf);
 using Types = testing::Types
 <
     // base test
