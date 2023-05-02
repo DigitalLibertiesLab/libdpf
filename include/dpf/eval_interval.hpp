@@ -133,7 +133,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
     (internal::eval_interval_exterior<Is>(dpf, from_node, to_node, utils::get<IIs>(outbufs), memoizer), ...);
 
-    return std::make_tuple(
+    return utils::make_tuple(
         subinterval_iterable(std::begin(utils::get<IIs>(outbufs)),
         nodes_in_interval*dpf_type::outputs_per_leaf,
         mod(from, dpf_type::lg_outputs_per_leaf),
@@ -154,8 +154,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 {
     assert_not_wildcard<I, Is...>(dpf);
 
-    return utils::remove_tuple_if_trivial(
-        internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>()));
+    return internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>());
 }
 
 template <std::size_t I = 0,
@@ -184,7 +183,7 @@ HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     IntervalMemoizer && memoizer)
 {
-    auto outbufs = std::make_tuple(
+    auto outbufs = utils::make_tuple(
         make_output_buffer_for_interval<I>(dpf, from, to),
         make_output_buffer_for_interval<Is>(dpf, from, to)...);
 
@@ -192,8 +191,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     //   the underlying data remains on the heap
     //   and thus the data the iterable refers to is still valid
     auto iterable = eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer);
-    return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
+    return std::make_pair(std::move(outbufs), std::move(iterable));
 }
 
 template <std::size_t I = 0,

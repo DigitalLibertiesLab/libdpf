@@ -52,7 +52,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     OutputBuffers && outbufs, std::index_sequence<IIs...>)
 {
     auto path = make_basic_path_memoizer(dpf);
-    auto rawbuf = std::make_tuple(
+    auto rawbuf = utils::make_tuple(
         reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(utils::get<IIs>(outbufs)))...
     );
 
@@ -65,7 +65,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
             dpf::eval_point<Is>(dpf, *it, path).node...);
         i++;
     }
-    return std::make_tuple(
+    return utils::make_tuple(
         dpf::subsequence_iterable<DpfKey, decltype(std::begin(utils::get<IIs>(outbufs))), Iterator>(std::begin(utils::get<IIs>(outbufs)), begin, end)...
     );
 }
@@ -80,7 +80,7 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
     std::index_sequence<IIs...>)
 {
     auto path = make_basic_path_memoizer(dpf);
-    auto rawbuf = std::make_tuple(
+    auto rawbuf = utils::make_tuple(
         reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(utils::get<IIs>(outbufs)))...
     );
 
@@ -88,11 +88,11 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
     // DPF_UNROLL_LOOP
     for (auto it = begin; it != end; ++it)
     {
-        std::tie(utils::get<IIs>(rawbuf)[i]...) = std::forward_as_tuple(
+        std::tie(utils::get<IIs>(rawbuf)[i]...) = std::make_tuple(
             *dpf::eval_point<Is>(dpf, *it, path)...);
         i++;
     }
-    return std::make_tuple(
+    return utils::make_tuple(
         dpf::subinterval_iterable(utils::get<IIs>(rawbuf), i-1, 0, 0)...
     );
 }
@@ -114,13 +114,11 @@ inline auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end,
                     std::is_same_v<ReturnType, return_output_only_tag_>);
     if constexpr(std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_sequence_entire_node<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{}));
+        return internal::eval_sequence_entire_node<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{});
     }
     else
     {
-        return utils::remove_tuple_if_trivial(
-            internal::eval_sequence_output_only<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{}));
+        return internal::eval_sequence_output_only<I, Is...>(dpf, begin, end, outbufs, std::make_index_sequence<1+sizeof...(Is)>{});
     }
 }
 
@@ -133,7 +131,7 @@ template <std::size_t I = 0,
 auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end,
     ReturnType return_type = ReturnType{})
 {
-    auto outbufs = std::make_tuple(
+    auto outbufs = utils::make_tuple(
         make_output_buffer_for_subsequence<I>(dpf, begin, end),
         make_output_buffer_for_subsequence<Is>(dpf, begin, end)...);
 
@@ -141,8 +139,7 @@ auto eval_sequence(const DpfKey & dpf, Iterator begin, Iterator end,
     //   the underlying data remains on the heap
     //   and thus the data the iterable refers to is still valid
     auto iterable = eval_sequence<I, Is...>(dpf, begin, end, outbufs, return_type);
-    return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
+    return std::make_pair(std::move(outbufs), std::move(iterable));
 }
 
 template <std::size_t I = 0,
@@ -156,6 +153,10 @@ inline auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iter
     using node_type = typename DpfKey::interior_node;
     using output_type = typename DpfKey::concrete_output_type<I>;
 
+    using allocator = aligned_allocator<typename DpfKey::interior_node>;
+    using unique_ptr = typename allocator::unique_ptr;
+    allocator alloc = allocator{};
+
     if (!std::is_sorted(begin, end))
     {
         throw std::runtime_error("list must be sorted");
@@ -163,10 +164,10 @@ inline auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iter
 
     auto mask = dpf_type::msb_mask;
     std::size_t nodes_in_sequence = std::distance(begin, end);
-    std::vector<std::vector<node_type>> memo(2, std::vector<node_type>(nodes_in_sequence));
+    unique_ptr memo{alloc.allocate_unique_ptr(nodes_in_sequence*2)};
 
     bool curhalf = (dpf_type::depth ^ 1) & 1;
-    memo[!curhalf][0] = dpf.root;
+    memo[!curhalf*nodes_in_sequence + 0] = dpf.root;
 
     std::list<Iterator> splits{begin, end};
     for (std::size_t level_index = 1; level_index <= dpf_type::depth; ++level_index, mask>>=1, curhalf=!curhalf)
@@ -185,17 +186,17 @@ inline auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iter
                 [](auto a, auto b){ return a&b; });
             if (it == *lower)       // right only since first element in "block" requires right traversal
             {
-                memo[curhalf][i++] = dpf_type::traverse_interior(memo[!curhalf][j++], cw[1], 1);
+                memo[curhalf*nodes_in_sequence + i++] = dpf_type::traverse_interior(memo[!curhalf*nodes_in_sequence + j++], cw[1], 1);
             }
             else if (it == *upper)  // left only since no element in "block" requires right traversal
             {
-                memo[curhalf][i++] = dpf_type::traverse_interior(memo[!curhalf][j++], cw[0], 0);
+                memo[curhalf*nodes_in_sequence + i++] = dpf_type::traverse_interior(memo[!curhalf*nodes_in_sequence + j++], cw[0], 0);
             }
             else                    // both ways since some (non-lower) element within "block" requires right traversal
             {
-                auto cur_node = memo[!curhalf][j++];
-                memo[curhalf][i++] = dpf_type::traverse_interior(cur_node, cw[0], 0);
-                memo[curhalf][i++] = dpf_type::traverse_interior(cur_node, cw[1], 1);
+                auto cur_node = memo[!curhalf*nodes_in_sequence + j++];
+                memo[curhalf*nodes_in_sequence + i++] = dpf_type::traverse_interior(cur_node, cw[0], 0);
+                memo[curhalf*nodes_in_sequence + i++] = dpf_type::traverse_interior(cur_node, cw[1], 1);
                 splits.insert(upper, it);
             }
         }
@@ -206,7 +207,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_node_type = std::tuple_element_t<I, typename DpfKey::leaf_tuple>;
     auto rawbuf = reinterpret_cast<leaf_node_type *>(utils::data(outbuf));
     auto cw = dpf.template leaf<I>();
-    auto buf = memo[0];
+    auto buf = memo.get();
 
     constexpr auto clz = utils::countl_zero_symmetric_difference<input_type>{};
     auto curr = begin, prev = curr;
@@ -229,8 +230,12 @@ template <std::size_t I = 0,
 auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iterator end)
 {
     auto outbuf = make_output_buffer_for_subsequence<I>(dpf, begin, end);
-    return std::make_tuple(std::move(outbuf),
-        eval_sequence_breadth_first<I>(dpf, begin, end, outbuf));
+
+    // moving `outbuf` is allowed as `outbuf` is a `std::vectors`
+    //   the underlying data remains on the heap
+    //   and thus the data the iterable refers to is still valid
+    auto iterable = eval_sequence_breadth_first<I>(dpf, begin, end, outbuf);
+    return std::make_pair(std::move(outbuf), std::move(iterable));
 }
 
 namespace internal
@@ -328,11 +333,11 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 
     leaf_node_type node;
     // DPF_UNROLL_LOOP
-    for (std::size_t i = 0, j = -1, prev = -1,
-        curr = recipe.output_indices()[i]/dpf_type::outputs_per_leaf;
+    for (std::size_t i = 0, j = -1, prev = -1, curr;
         i < recipe.output_indices().size();
-        prev = curr, curr = recipe.output_indices()[++i]/dpf_type::outputs_per_leaf)
+        prev = curr, ++i)
     {
+        curr = recipe.output_indices()[i]/dpf_type::outputs_per_leaf;
         if (prev != curr)
         {
             ++j;
@@ -358,13 +363,13 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     if constexpr (std::is_same_v<ReturnType, return_entire_node_tag_>)
     {
         (internal::eval_sequence_exterior_entire_node<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
-        return std::make_tuple(
+        return utils::make_tuple(
             recipe_subsequence_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices())...);
     }
     else
     {
         (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
-        return std::make_tuple(
+        return utils::make_tuple(
             subinterval_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices().size()-1, 0, 0)...
         );
     }
@@ -387,8 +392,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
 {
     assert_not_wildcard<I, Is...>(dpf);
 
-    return utils::remove_tuple_if_trivial(
-        internal::eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>()));
+    return internal::eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type, std::make_index_sequence<1+sizeof...(Is)>());
 }
 
 template <std::size_t I = 0,
@@ -419,7 +423,7 @@ HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     SequenceMemoizer && memoizer, ReturnType return_type = ReturnType{})
 {
-    auto outbufs = std::make_tuple(
+    auto outbufs = utils::make_tuple(
         make_output_buffer_for_recipe_subsequence<I>(dpf, recipe),
         make_output_buffer_for_recipe_subsequence<Is>(dpf, recipe)...);
 
@@ -427,8 +431,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     //   the underlying data remains on the heap
     //   and thus the data the iterable refers to is still valid
     auto iterable = eval_sequence<I, Is...>(dpf, recipe, outbufs, memoizer, return_type);
-    return std::make_pair(
-        utils::remove_tuple_if_trivial(std::move(outbufs)), std::move(iterable));
+    return std::make_pair(std::move(outbufs), std::move(iterable));
 }
 
 template <std::size_t I = 0,

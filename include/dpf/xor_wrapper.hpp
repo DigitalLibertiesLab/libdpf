@@ -337,4 +337,36 @@ struct mod_pow_2<xor_wrapper<T>>
 
 }  // namespace dpf
 
+namespace std
+{
+
+/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::xor_wrapper`s
+/// @{
+
+/// @details specializes `std::numeric_limits` for `dpf::xor_wrapper<T>`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T>>
+  : public numeric_limits<T> {};
+
+/// @details specializes `std::numeric_limits` for `dpf::xor_wrapper<T> const`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> const>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::xor_wrapper<T> volatile`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> volatile>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::xor_wrapper<T> const volatile`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> const volatile>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @}
+
+}  // namespace std
+
 #endif  // LIBDPF_INCLUDE_DPF_XOR_WRAPPER_HPP__

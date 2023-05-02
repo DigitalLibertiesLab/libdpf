@@ -204,13 +204,13 @@ struct integral_type_from_bitlength
 template <std::size_t Nbits,
           std::size_t MinBits = Nbits,
           std::size_t MaxBits = std::max(Nbits, MinBits)>
-using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits>::type;
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits, MaxBits>::type;
 
 /// @brief the primitive integral type used to represent non integral types
 template <std::size_t Nbits,
           std::size_t MinBits = Nbits,
           std::size_t MaxBits  = std::max(std::size_t(128), MinBits)>
-struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
+struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits, MaxBits>
 {
     static_assert(Nbits && Nbits <= MaxBits, "representation must fit in 128 bits");
 };
@@ -218,7 +218,7 @@ struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlengt
 template <std::size_t Nbits,
           std::size_t MinBits = Nbits,
           std::size_t MaxBits = std::max(std::size_t(128), MinBits)>
-using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
+using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits, MaxBits>::type;
 
 template <typename T>
 struct to_integral_type_base
@@ -442,12 +442,12 @@ auto data(T * bar)
     return bar;
 }
 
-template <typename ...Ts>
+template <typename T, typename ...Ts>
 HEDLEY_ALWAYS_INLINE
-constexpr auto remove_tuple_if_trivial(std::tuple<Ts...> && ts) noexcept
+constexpr auto make_tuple(T && t, Ts && ...ts) noexcept
 {
-    if constexpr(sizeof...(Ts) == 1) { return std::move(std::get<0>(ts)); }
-    else { return std::forward<std::tuple<Ts...>>(ts); }
+    if constexpr(sizeof...(Ts) == 0) { return std::forward<T>(t); }
+    else { return std::forward_as_tuple(t, ts...); }
 }
 
 template <typename>

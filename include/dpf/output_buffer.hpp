@@ -116,7 +116,8 @@ auto make_output_buffer_for_full()
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
 
-    return make_output_buffer_for_interval<DpfKey, I>(input_type(0),
+    return make_output_buffer_for_interval<DpfKey, I>(
+        std::numeric_limits<input_type>::min(),
         std::numeric_limits<input_type>::max());
 }
 

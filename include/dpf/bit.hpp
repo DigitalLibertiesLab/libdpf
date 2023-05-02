@@ -175,6 +175,15 @@ template <>
 struct bitlength_of<dpf::bit>
   : public std::integral_constant<std::size_t, 1> { };
 
+template <>
+struct make_from_integral_value<dpf::bit>
+{
+    constexpr dpf::bit operator()(bool val) const noexcept
+    {
+        return val ? dpf::bit::one : dpf::bit::zero;
+    }
+};
+
 }  // namespace utils
 
 }  // namespace dpf
