@@ -186,14 +186,14 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     constexpr basic_fixed_length_string operator>>(std::size_t shift_amount) const noexcept
     {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val >> shift_amount)};
+        return basic_fixed_length_string{static_cast<integral_type>(this->reduced_value() >> shift_amount)};
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr basic_fixed_length_string & operator>>=(std::size_t shift_amount) noexcept
     {
-        this->val >>= shift_amount;
+        this->val = this->reduced_value() >> shift_amount;
         return *this;
     }
 
@@ -243,7 +243,7 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     constexpr bool operator==(const basic_fixed_length_string & rhs) const noexcept
     {
-        return val == rhs.val;
+        return this->reduced_value() == rhs.reduced_value();
     }
 
     HEDLEY_CONST
@@ -256,7 +256,7 @@ class basic_fixed_length_string
 
     constexpr operator bool() const noexcept
     {
-        return static_cast<bool>(static_cast<integral_type>(this->val));
+        return static_cast<bool>(this->reduced_value());
     }
 
     /// @brief copy assignment
@@ -301,7 +301,7 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     constexpr explicit operator integral_type() const noexcept
     {
-        return val;
+        return this->reduced_value();
     }
 
     HEDLEY_CONST
@@ -310,6 +310,11 @@ class basic_fixed_length_string
     constexpr integral_type data() const noexcept
     {
         return val;
+    }
+
+    constexpr integral_type reduced_value() const
+    {
+        return val & modulo_mask;
     }
 
   private:
@@ -346,6 +351,9 @@ class basic_fixed_length_string
         return val;
     }
 
+    /// @brief bitmask used for performing reductions modulo `2^bits`
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - bits;
+
     /// @brief the `integral_type` used to store the integer representation of
     ///        this string
     integral_type val;
@@ -367,7 +375,7 @@ class basic_fixed_length_string
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const basic_fixed_length_string & k)
     {
-        return os << k.val;
+        return os << k.reduced_value();
     }
 
     /// @brief performs stream input on a `dpf::basic_fixed_length_string`
@@ -390,28 +398,28 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     friend constexpr bool operator<(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
     {
-        return lhs.val < rhs.val;
+        return lhs.reduced_value() < rhs.reduced_value();
     }
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
     friend constexpr bool operator<=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
     {
-        return lhs.val <= rhs.val;
+        return lhs.reduced_value() <= rhs.reduced_value();
     }
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
     friend constexpr bool operator>(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
     {
-        return lhs.val > rhs.val;
+        return lhs.reduced_value() > rhs.reduced_value();
     }
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
     friend constexpr bool operator>=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
     {
-        return lhs.val >= rhs.val;
+        return lhs.reduced_value() >= rhs.reduced_value();
     }
 
     friend struct utils::msb_of<basic_fixed_length_string>;
@@ -524,5 +532,90 @@ struct make_from_integral_value<dpf::basic_fixed_length_string<N, CharT, Alpha, 
 }  // namespace utils
 
 }  // namespace dpf
+
+namespace std
+{
+
+/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::keyword`s
+/// @{
+
+/// @details specializes `std::numeric_limits` for `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+  public:
+    using keyword_type = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = false;
+    static constexpr bool is_integer = true;
+    static constexpr bool is_exact = true;
+    static constexpr bool has_infinity = false;
+    static constexpr bool has_quiet_NaN = false;
+    static constexpr bool has_signaling_NaN = false;
+    static constexpr std::float_denorm_style has_denorm = std::denorm_absent;
+    static constexpr bool has_denorm_loss = false;
+    static constexpr std::float_round_style round_style = std::round_toward_zero;
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = true;
+    static constexpr int digits = keyword_type::bits;
+    static constexpr int digits10 = keyword_type::bits * std::log10(2);  //< correct if `keyword_type::bits<129`
+    static constexpr int max_digits10 = 0;
+    static constexpr int radix = 2;
+    static constexpr int min_exponent = 0;
+    static constexpr int max_exponent = 0;
+    static constexpr int min_exponent10 = 0;
+    static constexpr int max_exponent10 = 0;
+    static constexpr bool traps
+        = std::numeric_limits<typename keyword_type::integral_type>::traps;
+    static constexpr bool tinyness_before = false;
+
+    static constexpr keyword_type min() noexcept { return keyword_type{""}; }
+    static constexpr keyword_type lowest() noexcept { return keyword_type{""}; }
+    static constexpr keyword_type max() noexcept { return ~keyword_type{""}; }
+    static constexpr keyword_type epsilon() noexcept { return 0; }
+    static constexpr keyword_type round_error() noexcept { return 0; }
+    static constexpr keyword_type infinity() noexcept { return 0; }
+    static constexpr keyword_type quiet_NaN() noexcept { return 0; }
+    static constexpr keyword_type signaling_NaN() noexcept { return 0; }
+    static constexpr keyword_type denorm_min() noexcept { return 0; }
+};
+
+/// @details specializes `std::numeric_limits` for `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> volatile`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> volatile>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const volatile`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const volatile>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @}
+
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_KEYWORD_HPP__

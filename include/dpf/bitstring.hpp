@@ -74,7 +74,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
         = utils::quotient_ceiling(Nbits, bits_per_word);
   public:
     /// @brief the primitive integral type used to represent the string
-    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits, 8, 64>;
 
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
@@ -587,6 +587,7 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     using typename parent::integral_type;
 
     static constexpr auto bits_per_word = dpf::bitstring<Nbits>::bits_per_word;
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - (Nbits % bits_per_word);
 
     HEDLEY_CONST
     HEDLEY_NO_THROW
@@ -595,12 +596,13 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     {
         if constexpr(Nbits <= bits_per_word)
         {
-            return integral_type(input.data_[0]);
+            return integral_type(input.data_[0] & modulo_mask);
         }
         else
         {
-            integral_type ret(0);
-            for (std::size_t i = 1+(Nbits-1)/bits_per_word; i > 0; --i)
+            integral_type ret = input.data_[(Nbits-1)/bits_per_word] & modulo_mask;
+
+            for (std::size_t i = (Nbits-1)/bits_per_word; i > 0; --i)
             {
                 ret <<= bits_per_word;
                 ret += input.data_[i-1];
@@ -655,5 +657,73 @@ namespace literals
 }  // namespace dpf::literals
 
 }  // namespace dpf
+
+namespace std
+{
+
+/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::bitstring`s
+/// @{
+
+/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits>`
+template<std::size_t Nbits>
+class numeric_limits<dpf::bitstring<Nbits>>
+{
+  public:
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = false;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_exact = true;
+    static constexpr bool has_infinity = false;
+    static constexpr bool has_quiet_NaN = false;
+    static constexpr bool has_signaling_NaN = false;
+    static constexpr std::float_denorm_style has_denorm = std::denorm_absent;
+    static constexpr bool has_denorm_loss = false;
+    static constexpr std::float_round_style round_style = std::round_toward_zero;
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = true;
+    static constexpr int digits = Nbits;
+    static constexpr int digits10 = Nbits * std::log10(2);
+    static constexpr int max_digits10 = 0;
+    static constexpr int radix = 2;
+    static constexpr int min_exponent = 0;
+    static constexpr int max_exponent = 0;
+    static constexpr int min_exponent10 = 0;
+    static constexpr int max_exponent10 = 0;
+    static constexpr bool traps
+        = std::numeric_limits<typename dpf::bitstring<Nbits>::integral_type>::traps;
+    static constexpr bool tinyness_before = false;
+
+    static constexpr dpf::bitstring<Nbits> min() noexcept { return dpf::bitstring<Nbits>{}; }
+    static constexpr dpf::bitstring<Nbits> lowest() noexcept { return dpf::bitstring<Nbits>{}; }
+    static constexpr dpf::bitstring<Nbits> max() noexcept { return ~dpf::bitstring<Nbits>{}; }
+    static constexpr dpf::bitstring<Nbits> epsilon() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits> round_error() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits> infinity() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits> quiet_NaN() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits> signaling_NaN() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits> denorm_min() noexcept { return 0; }
+};
+
+/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits> const`
+template<std::size_t Nbits>
+class numeric_limits<dpf::bitstring<Nbits> const>
+  : public numeric_limits<dpf::bitstring<Nbits>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::bitstring<Nbits> volatile`
+template<std::size_t Nbits>
+class numeric_limits<dpf::bitstring<Nbits> volatile>
+  : public numeric_limits<dpf::bitstring<Nbits>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::bitstring<Nbits> const volatile`
+template<std::size_t Nbits>
+class numeric_limits<dpf::bitstring<Nbits> const volatile>
+  : public numeric_limits<dpf::bitstring<Nbits>> {};
+
+/// @}
+
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_BITSTRING_HPP__

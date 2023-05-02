@@ -25,8 +25,6 @@ struct interval_memoizer_base
     using return_type = ReturnT;
     using iterator_type = return_type;
 
-    std::size_t max_size() const { return output_length; }
-
     // level 0 should access the root
     // level goes up to (and including) depth
     virtual return_type operator[](std::size_t) const noexcept = 0;
@@ -304,6 +302,16 @@ inline auto make_basic_interval_memoizer(const DpfKey &, InputT from, InputT to)
     return make_basic_interval_memoizer<DpfKey>(from, to);
 }
 
+template <typename DpfKey>
+inline auto make_basic_full_memoizer(const DpfKey &)
+{
+    using input_type = typename DpfKey::input_type;
+
+    return make_basic_interval_memoizer<DpfKey>(
+        std::numeric_limits<input_type>::min(),
+        std::numeric_limits<input_type>::max());
+}
+
 template <typename DpfKey,
           typename InputT>
 inline auto make_full_tree_interval_memoizer(InputT from, InputT to)
@@ -316,6 +324,16 @@ template <typename DpfKey,
 inline auto make_full_tree_interval_memoizer(const DpfKey &, InputT from, InputT to)
 {
     return make_full_tree_interval_memoizer<DpfKey>(from, to);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_full_memoizer(const DpfKey &)
+{
+    using input_type = typename DpfKey::input_type;
+
+    return make_full_tree_interval_memoizer<DpfKey>(
+        std::numeric_limits<input_type>::min(),
+        std::numeric_limits<input_type>::max());
 }
 
 }  // namespace dpf
