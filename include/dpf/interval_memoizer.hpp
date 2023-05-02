@@ -24,6 +24,7 @@ struct interval_memoizer_base
     using integral_type = typename DpfKey::integral_type;
     using return_type = ReturnT;
     using iterator_type = return_type;
+    using node_type = typename DpfKey::interior_node;
 
     // level 0 should access the root
     // level goes up to (and including) depth
@@ -37,7 +38,8 @@ struct interval_memoizer_base
     {
         static constexpr auto complement_of = std::bit_not{};
         if (dpf_.has_value() == false
-            || std::addressof(dpf_->get()) != std::addressof(dpf)
+            || std::memcmp(&dpf_root_, &dpf.root, sizeof(node_type)) != 0
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash, sizeof(node_type)) != 0
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
@@ -48,6 +50,8 @@ struct interval_memoizer_base
 
             this->operator[](0)[0] = dpf.root;
             dpf_ = std::cref(dpf);
+            dpf_root_ = dpf.root;
+            dpf_common_part_hash_ = dpf.common_part_hash;
             from_ = new_from;
             to_ = new_to;
             level_index = 1;
@@ -113,6 +117,8 @@ struct interval_memoizer_base
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
+    node_type dpf_root_;
+    node_type dpf_common_part_hash_;
     std::optional<integral_type> from_;
     std::optional<integral_type> to_;
 };
@@ -303,13 +309,19 @@ inline auto make_basic_interval_memoizer(const DpfKey &, InputT from, InputT to)
 }
 
 template <typename DpfKey>
-inline auto make_basic_full_memoizer(const DpfKey &)
+inline auto make_basic_full_memoizer()
 {
     using input_type = typename DpfKey::input_type;
 
     return make_basic_interval_memoizer<DpfKey>(
         std::numeric_limits<input_type>::min(),
         std::numeric_limits<input_type>::max());
+}
+
+template <typename DpfKey>
+inline auto make_basic_full_memoizer(const DpfKey &)
+{
+    return make_basic_full_memoizer<DpfKey>();
 }
 
 template <typename DpfKey,
@@ -327,13 +339,19 @@ inline auto make_full_tree_interval_memoizer(const DpfKey &, InputT from, InputT
 }
 
 template <typename DpfKey>
-inline auto make_full_tree_full_memoizer(const DpfKey &)
+inline auto make_full_tree_full_memoizer()
 {
     using input_type = typename DpfKey::input_type;
 
     return make_full_tree_interval_memoizer<DpfKey>(
         std::numeric_limits<input_type>::min(),
         std::numeric_limits<input_type>::max());
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_full_memoizer(const DpfKey &)
+{
+    return make_full_tree_full_memoizer<DpfKey>();
 }
 
 }  // namespace dpf

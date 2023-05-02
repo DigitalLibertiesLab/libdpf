@@ -102,9 +102,16 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 
 template <typename DpfKey,
           typename RandomAccessIterator>
-auto make_sequence_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
+auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 {
     return detail::make_sequence_recipe<DpfKey>(begin, end);
+}
+
+template <typename DpfKey,
+          typename RandomAccessIterator>
+auto make_sequence_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
+{
+    return make_sequence_recipe<DpfKey>(begin, end);
 }
 
 }  // namespace dpf

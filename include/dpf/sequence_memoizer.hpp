@@ -25,6 +25,7 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
     using dpf_type = DpfKey;
     using return_type = ReturnT;
     using iterator_type = return_type;
+    using node_type = typename DpfKey::interior_node;
     const sequence_recipe & recipe;
 
     // level 0 should access the root
@@ -42,10 +43,13 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
             throw std::logic_error("memoizer cannot be used with different recipe");
         }
 
-        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
+        if (dpf_.has_value() == false || std::memcmp(&dpf_root_, &dpf.root, sizeof(node_type)) != 0
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash, sizeof(node_type)) != 0)
         {
             this->operator[](0)[0] = dpf.root;
             dpf_ = std::cref(dpf);
+            dpf_root_ = dpf.root;
+            dpf_common_part_hash_ = dpf.common_part_hash;
             level_index = 1;
         }
 
@@ -115,6 +119,8 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
+    node_type dpf_root_;
+    node_type dpf_common_part_hash_;
 };
 
 namespace detail

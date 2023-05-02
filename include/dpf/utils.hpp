@@ -477,6 +477,19 @@ auto & get(T & t)
     }
 }
 
+template <typename InteriorNodeT,
+          std::size_t Depth>
+auto get_common_part_hash(const std::array<InteriorNodeT, Depth> & words, const std::array<uint8_t, Depth> & advice)
+{
+    static int ret = 0;
+    return InteriorNodeT{ret++};
+}
+
+template <typename DpfKey>
+auto get_common_part_hash(const DpfKey & dpf)
+{
+    return get_common_part_hash(dpf.correction_words, dpf.correction_advice);
+}
 
 }  // namespace utils
 
