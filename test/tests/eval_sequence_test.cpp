@@ -19,8 +19,8 @@ struct EvalSequenceTest : public testing::Test
     EvalSequenceTest()
       : params{std::get<std::vector<T>>(allParams)},
         range{std::size_t(1) << std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10))-1},
-        zero_output(output_type(0)),
-        points(get_points())
+        zero_output{from_integral_type_output(0)},
+        points{get_points()}
     { }
 
     void SetUp() override
@@ -68,6 +68,7 @@ struct EvalSequenceTest : public testing::Test
     }
 
     static constexpr auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
+    static constexpr auto from_integral_type_output = dpf::utils::make_from_integral_value<output_type>{};
 
     std::vector<T> params;
     std::size_t range;
@@ -621,7 +622,7 @@ using Types = testing::Types
     test_type<uint8_t, uint64_t>,
     test_type<simde_uint128, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
-    test_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>,
+    test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
     test_type<dpf::xor_wrapper<uint64_t>, uint64_t>,
 

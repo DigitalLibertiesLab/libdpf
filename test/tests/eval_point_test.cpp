@@ -17,7 +17,7 @@ struct EvalPointTest : public testing::Test
     EvalPointTest()
       : params{std::get<std::vector<T>>(allParams)},
         range{(std::size_t(1) << std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10))-1)-1},
-        zero_output(output_type(0))
+        zero_output{from_integral_type_output(0)}
     { }
 
     void SetUp() override
@@ -29,8 +29,8 @@ struct EvalPointTest : public testing::Test
     input_type get_start(const input_type & x)
     {
         integral_type x_int = to_integral_type(x),
-                      msb_mask = to_integral_type(dpf::utils::msb_of_v<input_type>),
-                      max_int = msb_mask | msb_mask-1, start_int;
+                      max_int = to_integral_type(std::numeric_limits<input_type>::max()),
+                      start_int;
         // set start_int so that the tested range is centered around x_int if possible
         //   use start_int = 0 if x_int smaller than 2*range
         //   or start_int = max_int-2*range if x_int larger than max_int-2*range
@@ -73,6 +73,7 @@ struct EvalPointTest : public testing::Test
 
     static constexpr auto to_integral_type = dpf::utils::to_integral_type<input_type>{};
     static constexpr auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
+    static constexpr auto from_integral_type_output = dpf::utils::make_from_integral_value<output_type>{};
 
     std::vector<T> params;
     std::size_t range;
@@ -161,7 +162,7 @@ using Types = testing::Types
     test_type<uint8_t, uint64_t>,
     test_type<simde_uint128, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
-    test_type<dpf::keyword<4, dpf::alphabets::hex>, uint64_t>,
+    test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
     test_type<dpf::xor_wrapper<uint64_t>, uint64_t>,
 
