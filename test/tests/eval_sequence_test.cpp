@@ -14,6 +14,7 @@ struct EvalSequenceTest : public testing::Test
     using input_type = typename std::tuple_element_t<0, T>;
     using output_type = typename std::tuple_element_t<1, T>;
     using integral_type = dpf::utils::integral_type_from_bitlength_t<dpf::utils::bitlength_of_v<input_type>>;
+    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
 
   protected:
     EvalSequenceTest()
@@ -118,11 +119,13 @@ TYPED_TEST_P(EvalSequenceTest, NoRecipeBasicOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, NoRecipeOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end()),
+         buf1 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_subsequence(dpf0, this->points.begin(), this->points.end()),
-             buf1 = dpf::make_output_buffer_for_subsequence(dpf1, this->points.begin(), this->points.end());
         auto iter0 = dpf::eval_sequence(dpf0, this->points.begin(), this->points.end(), buf0),
              iter1 = dpf::eval_sequence(dpf1, this->points.begin(), this->points.end(), buf1);
 
@@ -132,11 +135,13 @@ TYPED_TEST_P(EvalSequenceTest, NoRecipeOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, NoRecipeOutbufEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end()),
+         buf1 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_subsequence(dpf0, this->points.begin(), this->points.end()),
-             buf1 = dpf::make_output_buffer_for_subsequence(dpf1, this->points.begin(), this->points.end());
         auto iter0 = dpf::eval_sequence(dpf0, this->points.begin(), this->points.end(), buf0, dpf::return_entire_node_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, this->points.begin(), this->points.end(), buf1, dpf::return_entire_node_tag_{});
 
@@ -146,11 +151,13 @@ TYPED_TEST_P(EvalSequenceTest, NoRecipeOutbufEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, NoRecipeOutbufOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end()),
+         buf1 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_subsequence(dpf0, this->points.begin(), this->points.end()),
-             buf1 = dpf::make_output_buffer_for_subsequence(dpf1, this->points.begin(), this->points.end());
         auto iter0 = dpf::eval_sequence(dpf0, this->points.begin(), this->points.end(), buf0, dpf::return_output_only_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, this->points.begin(), this->points.end(), buf1, dpf::return_output_only_tag_{});
 
@@ -172,11 +179,13 @@ TYPED_TEST_P(EvalSequenceTest, BreadthFirstBasic)
 
 TYPED_TEST_P(EvalSequenceTest, BreadthFirstOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end()),
+         buf1 = dpf::make_output_buffer_for_subsequence<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_subsequence(dpf0, this->points.begin(), this->points.end()),
-             buf1 = dpf::make_output_buffer_for_subsequence(dpf1, this->points.begin(), this->points.end());
         auto iter0 = dpf::eval_sequence_breadth_first(dpf0, this->points.begin(), this->points.end(), buf0),
              iter1 = dpf::eval_sequence_breadth_first(dpf1, this->points.begin(), this->points.end(), buf1);
 
@@ -186,11 +195,13 @@ TYPED_TEST_P(EvalSequenceTest, BreadthFirstOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeBasic)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0);
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1);
 
@@ -200,11 +211,13 @@ TYPED_TEST_P(EvalSequenceTest, RecipeBasic)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeBasicEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, dpf::return_entire_node_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, dpf::return_entire_node_tag_{});
 
@@ -214,11 +227,13 @@ TYPED_TEST_P(EvalSequenceTest, RecipeBasicEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeBasicOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, dpf::return_output_only_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, dpf::return_output_only_tag_{});
 
@@ -228,13 +243,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeBasicOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1);
 
@@ -244,13 +261,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeOutbufEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, dpf::return_entire_node_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, dpf::return_entire_node_tag_{});
 
@@ -260,13 +279,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeOutbufEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeOutbufOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, dpf::return_output_only_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, dpf::return_output_only_tag_{});
 
@@ -276,13 +297,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeOutbufOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0);
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1);
 
@@ -292,13 +315,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizer)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_entire_node_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_entire_node_tag_{});
 
@@ -308,13 +333,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_output_only_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_output_only_tag_{});
 
@@ -324,13 +351,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0);
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1);
 
@@ -340,13 +369,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizer)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_entire_node_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_entire_node_tag_{});
 
@@ -356,13 +387,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_output_only_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_output_only_tag_{});
 
@@ -372,13 +405,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0);
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1);
 
@@ -388,13 +423,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizer)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_entire_node_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_entire_node_tag_{});
 
@@ -404,13 +441,15 @@ TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto [buf0, iter0] = dpf::eval_sequence(dpf0, recipe0, memo0, dpf::return_output_only_tag_{});
         auto [buf1, iter1] = dpf::eval_sequence(dpf1, recipe1, memo1, dpf::return_output_only_tag_{});
 
@@ -420,15 +459,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutputOnly)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1);
 
@@ -438,15 +479,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbufEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_entire_node_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_entire_node_tag_{});
 
@@ -456,15 +499,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbufEntir
 
 TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbufOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_inplace_reversing_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_inplace_reversing_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_inplace_reversing_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_output_only_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_output_only_tag_{});
 
@@ -474,15 +519,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeInplaceReversingSequenceMemoizerOutbufOutpu
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1);
 
@@ -492,15 +539,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbufEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_entire_node_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_entire_node_tag_{});
 
@@ -510,15 +559,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbufEntireNode
 
 TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbufOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_double_space_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_double_space_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_double_space_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_output_only_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_output_only_tag_{});
 
@@ -528,15 +579,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeDoubleSpaceSequenceMemoizerOutbufOutputOnly
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1);
 
@@ -546,15 +599,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutbuf)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutbufEntireNode)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_entire_node_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_entire_node_tag_{});
 
@@ -564,15 +619,17 @@ TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutbufEntireNode)
 
 TYPED_TEST_P(EvalSequenceTest, RecipeFullTreeSequenceMemoizerOutbufOutputOnly)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto recipe0 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end()),
+         recipe1 = dpf::make_sequence_recipe<dpf_type>(this->points.begin(), this->points.end());
+    auto buf0 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe0),
+         buf1 = dpf::make_output_buffer_for_recipe_subsequence<dpf_type>(recipe1);
+    auto memo0 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe0),
+         memo1 = dpf::make_full_tree_sequence_memoizer<dpf_type>(recipe1);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto recipe0 = dpf::make_sequence_recipe(dpf0, this->points.begin(), this->points.end()),
-             recipe1 = dpf::make_sequence_recipe(dpf1, this->points.begin(), this->points.end());
-        auto buf0 = dpf::make_output_buffer_for_recipe_subsequence(dpf0, recipe0),
-             buf1 = dpf::make_output_buffer_for_recipe_subsequence(dpf1, recipe1);
-        auto memo0 = dpf::make_full_tree_sequence_memoizer(dpf0, recipe0),
-             memo1 = dpf::make_full_tree_sequence_memoizer(dpf1, recipe1);
         auto iter0 = dpf::eval_sequence(dpf0, recipe0, buf0, memo0, dpf::return_output_only_tag_{}),
              iter1 = dpf::eval_sequence(dpf1, recipe1, buf1, memo1, dpf::return_output_only_tag_{});
 

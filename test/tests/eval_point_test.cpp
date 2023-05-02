@@ -12,6 +12,7 @@ struct EvalPointTest : public testing::Test
     using input_type = typename std::tuple_element_t<0, T>;
     using output_type = typename std::tuple_element_t<1, T>;
     using integral_type = dpf::utils::integral_type_from_bitlength_t<dpf::utils::bitlength_of_v<input_type>>;
+    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
 
   protected:
     EvalPointTest()
@@ -84,7 +85,7 @@ TYPED_TEST_SUITE_P(EvalPointTest);
 
 TYPED_TEST_P(EvalPointTest, Basic)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    using input_type = typename TestFixture::input_type;
 
     for (auto [x, y] : this->params)
     {
@@ -105,13 +106,14 @@ TYPED_TEST_P(EvalPointTest, Basic)
 
 TYPED_TEST_P(EvalPointTest, BasicPathMemoizer)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    using input_type = typename TestFixture::input_type;
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_basic_path_memoizer<dpf_type>(),
+         memo1 = dpf::make_basic_path_memoizer<dpf_type>();
 
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto memo0 = dpf::make_basic_path_memoizer(dpf0),
-             memo1 = dpf::make_basic_path_memoizer(dpf1);
 
         this->assert_wrapper(x, y,
             [&dpf0, &memo0](input_type cur)
@@ -128,13 +130,14 @@ TYPED_TEST_P(EvalPointTest, BasicPathMemoizer)
 
 TYPED_TEST_P(EvalPointTest, NonmemoizingPathMemoizer)
 {
-    using input_type = typename std::tuple_element_t<0, TypeParam>;
+    using input_type = typename TestFixture::input_type;
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_nonmemoizing_path_memoizer<dpf_type>(),
+         memo1 = dpf::make_nonmemoizing_path_memoizer<dpf_type>();
 
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto memo0 = dpf::make_nonmemoizing_path_memoizer(dpf0),
-             memo1 = dpf::make_nonmemoizing_path_memoizer(dpf1);
 
         this->assert_wrapper(x, y,
             [&dpf0, &memo0](input_type cur)

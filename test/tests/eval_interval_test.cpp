@@ -14,12 +14,14 @@ struct EvalIntervalTest : public testing::Test
     using input_type = typename std::tuple_element_t<0, T>;
     using output_type = typename std::tuple_element_t<1, T>;
     using integral_type = dpf::utils::integral_type_from_bitlength_t<dpf::utils::bitlength_of_v<input_type>>;
+    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
 
   protected:
     EvalIntervalTest()
       : params{std::get<std::vector<T>>(allParams)},
         range{(std::size_t(1) << std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10))-1)-1},
-        zero_output{from_integral_type_output(0)}
+        zero_output{from_integral_type_output(0)},
+        max_from_to{get_max_from_to()}
     { }
 
     void SetUp() override
@@ -76,6 +78,26 @@ struct EvalIntervalTest : public testing::Test
         ASSERT_EQ(it1, std::end(iter1));
     }
 
+    std::pair<input_type, input_type> get_max_from_to()
+    {
+        input_type max_from, max_to;
+        std::size_t max_range = 0;
+
+        for (auto [x, y] : this->params)
+        {
+            auto [from, to] = this->get_from_to(x);
+            std::size_t cur_range = dpf::utils::get_nodes_in_interval<dpf_type>(from, to);
+            if (cur_range > max_range)
+            {
+                max_range = cur_range;
+                max_from = from;
+                max_to = to;
+            }
+        }
+
+        return std::make_pair(max_from, max_to);
+    }
+
     static constexpr auto to_integral_type = dpf::utils::to_integral_type<input_type>{};
     static constexpr auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
     static constexpr auto from_integral_type_output = dpf::utils::make_from_integral_value<output_type>{};
@@ -83,6 +105,7 @@ struct EvalIntervalTest : public testing::Test
     std::vector<T> params;
     std::size_t range;
     output_type zero_output;
+    std::pair<input_type, input_type> max_from_to;
 };
 
 TYPED_TEST_SUITE_P(EvalIntervalTest);
@@ -102,12 +125,14 @@ TYPED_TEST_P(EvalIntervalTest, Basic)
 
 TYPED_TEST_P(EvalIntervalTest, Outbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         buf1 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
-        auto buf0 = dpf::make_output_buffer_for_interval(dpf0, from, to),
-             buf1 = dpf::make_output_buffer_for_interval(dpf1, from, to);
         auto iter0 = dpf::eval_interval(dpf0, from, to, buf0),
              iter1 = dpf::eval_interval(dpf1, from, to, buf1);
 
@@ -117,12 +142,14 @@ TYPED_TEST_P(EvalIntervalTest, Outbuf)
 
 TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_basic_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         memo1 = dpf::make_basic_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
-        auto memo0 = dpf::make_basic_interval_memoizer(dpf0, from, to),
-             memo1 = dpf::make_basic_interval_memoizer(dpf1, from, to);
         auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to, memo0);
         auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to, memo1);
 
@@ -132,12 +159,14 @@ TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizer)
 
 TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_full_tree_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         memo1 = dpf::make_full_tree_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
-        auto memo0 = dpf::make_full_tree_interval_memoizer(dpf0, from, to),
-             memo1 = dpf::make_full_tree_interval_memoizer(dpf1, from, to);
         auto [buf0, iter0] = dpf::eval_interval(dpf0, from, to, memo0);
         auto [buf1, iter1] = dpf::eval_interval(dpf1, from, to, memo1);
 
@@ -147,14 +176,16 @@ TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizer)
 
 TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         buf1 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+    auto memo0 = dpf::make_basic_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         memo1 = dpf::make_basic_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
-        auto buf0 = dpf::make_output_buffer_for_interval(dpf0, from, to),
-             buf1 = dpf::make_output_buffer_for_interval(dpf1, from, to);
-        auto memo0 = dpf::make_basic_interval_memoizer(dpf0, from, to),
-             memo1 = dpf::make_basic_interval_memoizer(dpf1, from, to);
         auto iter0 = dpf::eval_interval(dpf0, from, to, buf0, memo0),
              iter1 = dpf::eval_interval(dpf1, from, to, buf1, memo1);
 
@@ -164,14 +195,16 @@ TYPED_TEST_P(EvalIntervalTest, BasicIntervalMemoizerOutbuf)
 
 TYPED_TEST_P(EvalIntervalTest, FullTreeIntervalMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         buf1 = dpf::make_output_buffer_for_interval<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+    auto memo0 = dpf::make_full_tree_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second),
+         memo1 = dpf::make_full_tree_interval_memoizer<dpf_type>(this->max_from_to.first, this->max_from_to.second);
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
         auto [from, to] = this->get_from_to(x);
-        auto buf0 = dpf::make_output_buffer_for_interval(dpf0, from, to),
-             buf1 = dpf::make_output_buffer_for_interval(dpf1, from, to);
-        auto memo0 = dpf::make_full_tree_interval_memoizer(dpf0, from, to),
-             memo1 = dpf::make_full_tree_interval_memoizer(dpf1, from, to);
         auto iter0 = dpf::eval_interval(dpf0, from, to, buf0, memo0),
              iter1 = dpf::eval_interval(dpf1, from, to, buf1, memo1);
 

@@ -11,6 +11,7 @@ struct EvalFullTest : public testing::Test
   public:
     using input_type = typename std::tuple_element_t<0, T>;
     using output_type = typename std::tuple_element_t<1, T>;
+    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
 
   protected:
     EvalFullTest()
@@ -71,11 +72,13 @@ TYPED_TEST_P(EvalFullTest, Basic)
 
 TYPED_TEST_P(EvalFullTest, Outbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_full<dpf_type>(),
+         buf1 = dpf::make_output_buffer_for_full<dpf_type>();
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_full(dpf0),
-             buf1 = dpf::make_output_buffer_for_full(dpf1);
         auto iter0 = dpf::eval_full(dpf0, buf0),
              iter1 = dpf::eval_full(dpf1, buf1);
 
@@ -83,13 +86,15 @@ TYPED_TEST_P(EvalFullTest, Outbuf)
     }
 }
 
-TYPED_TEST_P(EvalFullTest, BasicIntervalMemoizer)
+TYPED_TEST_P(EvalFullTest, BasicFullMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
+         memo1 = dpf::make_basic_full_memoizer<dpf_type>();
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto memo0 = dpf::make_basic_full_memoizer(dpf0),
-             memo1 = dpf::make_basic_full_memoizer(dpf1);
         auto [buf0, iter0] = dpf::eval_full(dpf0, memo0);
         auto [buf1, iter1] = dpf::eval_full(dpf1, memo1);
 
@@ -97,13 +102,15 @@ TYPED_TEST_P(EvalFullTest, BasicIntervalMemoizer)
     }
 }
 
-TYPED_TEST_P(EvalFullTest, FullTreeIntervalMemoizer)
+TYPED_TEST_P(EvalFullTest, FullTreeFullMemoizer)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto memo0 = dpf::make_full_tree_full_memoizer<dpf_type>(),
+         memo1 = dpf::make_full_tree_full_memoizer<dpf_type>();
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto memo0 = dpf::make_full_tree_full_memoizer(dpf0),
-             memo1 = dpf::make_full_tree_full_memoizer(dpf1);
         auto [buf0, iter0] = dpf::eval_full(dpf0, memo0);
         auto [buf1, iter1] = dpf::eval_full(dpf1, memo1);
 
@@ -111,15 +118,17 @@ TYPED_TEST_P(EvalFullTest, FullTreeIntervalMemoizer)
     }
 }
 
-TYPED_TEST_P(EvalFullTest, BasicIntervalMemoizerOutbuf)
+TYPED_TEST_P(EvalFullTest, BasicFullMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_full<dpf_type>(),
+         buf1 = dpf::make_output_buffer_for_full<dpf_type>();
+    auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
+         memo1 = dpf::make_basic_full_memoizer<dpf_type>();
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_full(dpf0),
-             buf1 = dpf::make_output_buffer_for_full(dpf1);
-        auto memo0 = dpf::make_basic_full_memoizer(dpf0),
-             memo1 = dpf::make_basic_full_memoizer(dpf1);
         auto iter0 = dpf::eval_full(dpf0, buf0, memo0),
              iter1 = dpf::eval_full(dpf1, buf1, memo1);
 
@@ -127,15 +136,17 @@ TYPED_TEST_P(EvalFullTest, BasicIntervalMemoizerOutbuf)
     }
 }
 
-TYPED_TEST_P(EvalFullTest, FullTreeIntervalMemoizerOutbuf)
+TYPED_TEST_P(EvalFullTest, FullTreeFullMemoizerOutbuf)
 {
+    using dpf_type = typename TestFixture::dpf_type;
+    auto buf0 = dpf::make_output_buffer_for_full<dpf_type>(),
+         buf1 = dpf::make_output_buffer_for_full<dpf_type>();
+    auto memo0 = dpf::make_full_tree_full_memoizer<dpf_type>(),
+         memo1 = dpf::make_full_tree_full_memoizer<dpf_type>();
+
     for (auto [x, y] : this->params)
     {
         auto [dpf0, dpf1] = dpf::make_dpf(x, y);
-        auto buf0 = dpf::make_output_buffer_for_full(dpf0),
-             buf1 = dpf::make_output_buffer_for_full(dpf1);
-        auto memo0 = dpf::make_full_tree_full_memoizer(dpf0),
-             memo1 = dpf::make_full_tree_full_memoizer(dpf1);
         auto iter0 = dpf::eval_full(dpf0, buf0, memo0),
              iter1 = dpf::eval_full(dpf1, buf1, memo1);
 
@@ -146,11 +157,10 @@ TYPED_TEST_P(EvalFullTest, FullTreeIntervalMemoizerOutbuf)
 REGISTER_TYPED_TEST_SUITE_P(EvalFullTest,
     Basic,
     Outbuf,
-    BasicIntervalMemoizer,
-    FullTreeIntervalMemoizer,
-    BasicIntervalMemoizerOutbuf,
-    FullTreeIntervalMemoizerOutbuf);
-
+    BasicFullMemoizer,
+    FullTreeFullMemoizer,
+    BasicFullMemoizerOutbuf,
+    FullTreeFullMemoizerOutbuf);
 using Types = testing::Types
 <
     test_type<uint8_t, uint64_t>,
