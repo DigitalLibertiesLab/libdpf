@@ -58,8 +58,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     std::size_t assign_x(const dpf_type & dpf, input_type new_x) noexcept override
     {
         static constexpr auto clz_xor = utils::countl_zero_symmetric_difference<input_type>{};
-        if (dpf_.has_value() == true
-            && std::addressof(dpf_->get()) == std::addressof(dpf))
+        if (dpf_.has_value() == true && std::memcmp(&dpf_root_, &dpf.root, sizeof(node_type)) == 0
+            && std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash, sizeof(node_type)) == 0)
         {
             static constexpr auto complement_of = std::bit_not{};
             input_type old_x = x_.value_or(complement_of(new_x));
@@ -69,6 +69,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
         this->operator[](0) = dpf.root;
         dpf_ = std::cref(dpf);
+        dpf_root_ = dpf.root;
+        dpf_common_part_hash_ = dpf.common_part_hash;
         x_ = new_x;
         return 1;
     }
@@ -97,6 +99,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
+    node_type dpf_root_;
+    node_type dpf_common_part_hash_;
     std::optional<input_type> x_;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

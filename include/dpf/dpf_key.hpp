@@ -86,7 +86,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         mutable_beaver_tuple{std::forward<beaver_tuple>(beavers_)},
         root{root_},
         correction_words{correction_words_},
-        correction_advice{correction_advice_}
+        correction_advice{correction_advice_},
+        common_part_hash{utils::get_common_part_hash(correction_words, correction_advice)}
     { }
     dpf_key(const dpf_key &) = delete;
     dpf_key(dpf_key &&) = default;
@@ -103,6 +104,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
+    const interior_node common_part_hash;
 
     template <typename PeerT,
             typename ValueT,
@@ -535,6 +537,29 @@ static T basic_uniform_root_sampler()
     return ret;
 }
 
+namespace utils
+{
+
+template <typename InteriorPRG,
+          typename ExteriorPRG,
+          typename InputT,
+          typename OutputT,
+          typename... OutputTs>
+struct dpf_type
+{
+    using type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
+                                   OutputT, OutputTs...>;
+};
+
+template <typename InteriorPRG,
+          typename ExteriorPRG,
+          typename InputT,
+          typename OutputT,
+          typename ...OutputTs>
+using dpf_type_t = typename dpf_type<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>::type;
+
+}  // namespace utils
+
 template <typename InteriorPRG = dpf::prg::aes128,
           typename ExteriorPRG = InteriorPRG,
           dpf::root_sampler_t<InteriorPRG> RootSampler
@@ -544,8 +569,8 @@ template <typename InteriorPRG = dpf::prg::aes128,
           typename... OutputTs>
 auto make_dpf(InputT x, OutputT y = dpf::bit::one, OutputTs... ys)
 {
-    using dpf_type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
-                                   OutputT, OutputTs...>;
+    using dpf_type = utils::dpf_type_t<InteriorPRG, ExteriorPRG, InputT,
+                                       OutputT, OutputTs...>;
     using interior_node = typename dpf_type::interior_node;
 
     constexpr auto depth = dpf_type::depth;
@@ -625,6 +650,16 @@ auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, Input
         std::move(ds.second),
         ds.first.async_send_dpf(peer0, token),
         ds.second.async_send_dpf(peer1, token));
+}
+
+template <typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
+          typename InputT,
+          typename OutputT = dpf::bit,
+          typename ...OutputTs>
+auto deduce_dpf_type(InputT x, OutputT y = dpf::bit::one, OutputTs ...ys)
+{
+    return utils::dpf_type<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>{};
 }
 
 }  // namespace dpf
