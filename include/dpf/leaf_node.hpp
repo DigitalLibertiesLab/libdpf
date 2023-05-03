@@ -142,7 +142,6 @@ template <bool isWildcard,
           std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
 struct beaver final { };
 
-
 template <typename NodeT,
           typename OutputT>
 struct beaver<true, NodeT, OutputT, 1> final

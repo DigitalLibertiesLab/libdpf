@@ -161,7 +161,6 @@ struct xor_wrapper
         return *this;
     }
 
-
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr xor_wrapper & operator++() noexcept

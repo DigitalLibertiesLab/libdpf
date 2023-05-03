@@ -713,7 +713,6 @@ template <> struct multiply_t<dpf::bit, simde__m256i> final
 };
 template <typename T, typename NodeT> struct multiply_t<xor_wrapper<T>, NodeT> final : public std::bit_and<xor_wrapper<T>> {};
 
-
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }  // namespace dpf::leaf_arithmetic
 

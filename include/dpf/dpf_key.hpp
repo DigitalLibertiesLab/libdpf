@@ -406,7 +406,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             token, peer);
     }
 
-
     template <std::size_t I = 0,
             typename OutputType,
             typename StreamT,
@@ -487,7 +486,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         return mutable_leaf_tuple;
     }
-
 
     template <std::size_t I = 0>
     HEDLEY_ALWAYS_INLINE
