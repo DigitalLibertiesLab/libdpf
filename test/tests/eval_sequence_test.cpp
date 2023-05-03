@@ -91,7 +91,6 @@ TYPED_TEST_P(EvalSequenceTest, NoRecipeBasic)
     }
 }
 
-
 TYPED_TEST_P(EvalSequenceTest, NoRecipeBasicEntireNode)
 {
     for (auto [x, y] : this->params)
@@ -103,7 +102,6 @@ TYPED_TEST_P(EvalSequenceTest, NoRecipeBasicEntireNode)
         this->assert_wrapper(x, y, iter0, iter1);
     }
 }
-
 
 TYPED_TEST_P(EvalSequenceTest, NoRecipeBasicOutputOnly)
 {
