@@ -68,7 +68,7 @@ class setbit_index_iterable
     }
 
   private:
-    bit_array_base<ChildT> & arr_;
+    const bit_array_base<ChildT> & arr_;
     size_type base_index_;
 };  // class dpf::setbit_index_iterable
 
@@ -76,14 +76,14 @@ template <typename ChildT>
 class const_setbit_iterator
 {
     using array_type = bit_array_base<ChildT>;
-    public:
+  public:
     using value_type = typename array_type::size_type;
     using reference = value_type;
     using const_reference = reference;
     using pointer = std::add_pointer_t<reference>;
     using iterator_category = std::bidirectional_iterator_tag;
     using word_type = typename array_type::word_type;
-    using word_pointer = typename array_type::word_pointer;
+    using word_pointer = typename array_type::const_word_pointer;
     using size_type = typename array_type::size_type;
     using difference_type = std::ptrdiff_t;
     static constexpr auto bits_per_word = array_type::bits_per_word;

@@ -49,7 +49,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     }
     static simde_array build_vecs(word_pointer cur_word)
     {
-        return {simde_mm256_loadu_si256(reinterpret_cast<simde_ptr>(cur_word)) };
+        return { simde_mm256_loadu_si256(reinterpret_cast<simde_ptr>(cur_word)) };
     }
 };  // struct parallel_bit_iterable_helper<2>
 
