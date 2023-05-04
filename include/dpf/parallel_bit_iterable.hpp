@@ -28,7 +28,7 @@ template <std::size_t BatchSize,
 class parallel_bit_iterable
 {
   public:
-    using word_pointer = typename bit_array_base<ChildT>::word_pointer;
+    using word_pointer = typename bit_array_base<ChildT>::const_word_pointer;
     static constexpr auto batch_size = BatchSize;
     using const_iterator = parallel_const_bit_iterator<batch_size, ChildT>;
 
@@ -110,19 +110,19 @@ class parallel_const_bit_iterator
   private:
     using word_type = typename bit_array_base<ChildT>::word_type;
     using word_array = std::array<word_type, N>;
-    using word_pointer = typename bit_array_base<ChildT>::word_pointer;
+    using word_pointer = typename bit_array_base<ChildT>::const_word_pointer;
     using word_pointer_array = std::array<word_pointer, N>;
     static constexpr std::size_t lg_batch_size = (N <= 2)
                                      ? 2 : std::ceil(std::log2(N));
     using helper = dpf::parallel_bit_iterable_helper<lg_batch_size, ChildT>;
     using element_type = typename helper::element_type;
-    using simde_type = typename helper::type;
+    using simde_type = typename helper::simde_type;
     static constexpr auto bits_per_word = bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = helper::bits_per_element;
     static constexpr auto bytes_per_batch = N * (bits_per_element/CHAR_BIT);
     static_assert(CHAR_BIT == 8, "CHAR_BIT not equal to 8");
     static constexpr auto elements_per_word = helper::elements_per_word;
-    using simde_array = typename helper::array;
+    using simde_array = typename helper::simde_array;
 
   public:
     static constexpr auto batch_size = N;
