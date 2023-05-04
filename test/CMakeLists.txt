@@ -23,22 +23,33 @@ if(COVERAGE)
 endif()
 
 add_executable(all_test tests/all_test.cpp)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_executable(dpf_key_test tests/dpf_key_test.cpp)
+
 add_executable(eval_point_test tests/eval_point_test.cpp)
 add_executable(eval_interval_test tests/eval_interval_test.cpp)
 add_executable(eval_full_test tests/eval_full_test.cpp)
 add_executable(eval_sequence_test tests/eval_sequence_test.cpp)
+
+add_executable(advice_bit_iterable_test tests/advice_bit_iterable_test.cpp)
+add_executable(parallel_bit_iterable_test tests/parallel_bit_iterable_test.cpp)
+add_executable(setbit_index_iterable_test tests/setbit_index_iterable_test.cpp)
 
 # add_executable(value_param_test tests/value_param_test.cpp)
 # add_executable(type_param_test tests/type_param_test.cpp)
 
 include(GoogleTest)
 gtest_discover_tests(dpf_key_test)
+
 gtest_discover_tests(eval_point_test)
 gtest_discover_tests(eval_interval_test)
 gtest_discover_tests(eval_full_test)
 gtest_discover_tests(eval_sequence_test)
+
+gtest_discover_tests(advice_bit_iterable_test)
+gtest_discover_tests(parallel_bit_iterable_test)
+gtest_discover_tests(setbit_index_iterable_test)
 
 # gtest_discover_tests(value_param_test)
 # gtest_discover_tests(type_param_test)

@@ -11,7 +11,7 @@ simde__m128i fake_root_sampler()
     return ret;
 }
 
-TEST(DpfKeyTest, SimpleGen)
+TEST(DpfKeyTest, HardCodedGenCheck)
 {
     using input_type = uint8_t;
     using output_type = uint32_t;
