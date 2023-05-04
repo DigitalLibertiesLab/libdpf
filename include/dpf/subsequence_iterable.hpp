@@ -30,6 +30,7 @@ class subsequence_iterable
     static constexpr std::size_t lg_outputs_per_leaf = DpfKey::lg_outputs_per_leaf;
     static constexpr auto mod = utils::mod_pow_2<input_type>{};
     class const_iterator;  // forward declaration
+    using iterator = const_iterator;
 
     subsequence_iterable(output_iterator out_it, points_iterator begin, points_iterator end)
       : out_it_{out_it}, begin_{begin}, end_{end}, count_{std::distance(begin_, end_)}
@@ -225,10 +226,11 @@ class recipe_subsequence_iterable
 {
   public:
     using output_type = typename std::iterator_traits<IteratorT>::value_type;
-    using iterator = IteratorT;
+    using output_iterator = IteratorT;
     class const_iterator;  // forward declaration
+    using iterator = const_iterator;
 
-    recipe_subsequence_iterable(iterator out_it, const std::vector<std::size_t> & indices)
+    recipe_subsequence_iterable(output_iterator out_it, const std::vector<std::size_t> & indices)
       : out_it_{out_it}, indices_{indices}
     {
     }
@@ -275,7 +277,7 @@ class recipe_subsequence_iterable
         using subsequence_iterator_type = typename std::vector<std::size_t>::const_iterator;
 
         HEDLEY_ALWAYS_INLINE
-        constexpr const_iterator(iterator out_it, subsequence_iterator_type it) noexcept
+        constexpr const_iterator(output_iterator out_it, subsequence_iterator_type it) noexcept
           : out_it_{out_it}, it_{it}
         { }
 
@@ -403,12 +405,12 @@ class recipe_subsequence_iterable
         }
 
       private:
-        iterator out_it_;
+        output_iterator out_it_;
         subsequence_iterator_type it_;
     };  // class dpf::recipe_subsequence_iterable::const_iterator
 
   private:
-    const iterator out_it_;
+    const output_iterator out_it_;
     const std::vector<std::size_t> & indices_;
 };  // class dpf::recipe_subsequence_iterable
 

@@ -447,7 +447,7 @@ HEDLEY_ALWAYS_INLINE
 constexpr auto make_tuple(T && t, Ts && ...ts) noexcept
 {
     if constexpr(sizeof...(Ts) == 0) { return std::forward<T>(t); }
-    else { return std::forward_as_tuple(t, ts...); }
+    else { return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...); }
 }
 
 template <typename>

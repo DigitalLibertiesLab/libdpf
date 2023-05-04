@@ -84,7 +84,11 @@ struct zip_iterator
         std::apply([](auto && ...its){ (--its, ...); }, wrapped_iterators);
         return old;
     }
-    bool operator!=(zip_iterator & rhs)
+    bool operator==(const zip_iterator & rhs) const
+    {
+        return wrapped_iterators == rhs.wrapped_iterators;
+    }
+    bool operator!=(const zip_iterator & rhs) const
     {
         return wrapped_iterators != rhs.wrapped_iterators;
     }
