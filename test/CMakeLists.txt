@@ -32,6 +32,11 @@ add_executable(eval_interval_test tests/eval_interval_test.cpp)
 add_executable(eval_full_test tests/eval_full_test.cpp)
 add_executable(eval_sequence_test tests/eval_sequence_test.cpp)
 
+add_executable(eval_point_multi_test tests/eval_point_multi_test.cpp)
+add_executable(eval_interval_multi_test tests/eval_interval_multi_test.cpp)
+add_executable(eval_full_multi_test tests/eval_full_multi_test.cpp)
+add_executable(eval_sequence_multi_test tests/eval_sequence_multi_test.cpp)
+
 add_executable(advice_bit_iterable_test tests/advice_bit_iterable_test.cpp)
 add_executable(parallel_bit_iterable_test tests/parallel_bit_iterable_test.cpp)
 add_executable(setbit_index_iterable_test tests/setbit_index_iterable_test.cpp)
@@ -46,6 +51,11 @@ gtest_discover_tests(eval_point_test)
 gtest_discover_tests(eval_interval_test)
 gtest_discover_tests(eval_full_test)
 gtest_discover_tests(eval_sequence_test)
+
+gtest_discover_tests(eval_point_multi_test)
+gtest_discover_tests(eval_interval_multi_test)
+gtest_discover_tests(eval_full_multi_test)
+gtest_discover_tests(eval_sequence_multi_test)
 
 gtest_discover_tests(advice_bit_iterable_test)
 gtest_discover_tests(parallel_bit_iterable_test)
