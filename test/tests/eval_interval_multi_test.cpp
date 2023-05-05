@@ -233,22 +233,23 @@ REGISTER_TYPED_TEST_SUITE_P(EvalIntervalMultiTest,
 using Types = testing::Types
 <
     // base test
-    test_type<uint64_t, uint64_t>,
+    test_type<uint16_t, uint64_t>,
 
     // test input types
     test_type<uint8_t, uint64_t>,
+    test_type<uint64_t, uint64_t>,
     test_type<simde_uint128, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
-    test_type<dpf::xor_wrapper<uint64_t>, uint64_t>,
+    test_type<dpf::xor_wrapper<uint16_t>, uint64_t>,
 
     // test output types
-    test_type<uint64_t, uint8_t>,
-    test_type<uint64_t, simde_uint128>,
-    test_type<uint64_t, dpf::bit>,
-    // test_type<uint64_t, dpf::bitstring<10>>,
-    test_type<uint64_t, dpf::xor_wrapper<uint64_t>>
+    test_type<uint16_t, uint8_t>,
+    test_type<uint16_t, simde_uint128>,
+    test_type<uint16_t, dpf::bit>,
+    // test_type<uint16_t, dpf::bitstring<10>>,
+    test_type<uint16_t, dpf::xor_wrapper<uint64_t>>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalIntervalMultiTestInstantiation, EvalIntervalMultiTest, Types);
 
