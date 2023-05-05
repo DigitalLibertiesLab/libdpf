@@ -312,7 +312,7 @@ template <typename ExteriorPRG,
           typename ...OutputTs,
           typename Indices = std::make_index_sequence<1+sizeof...(OutputTs)>>
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
-    bool sign, OutputT y, OutputTs... ys)
+    bool sign, OutputT y, OutputTs ...ys)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

@@ -80,7 +80,7 @@ class parallel_bit_iterable
 
     template <typename F,
               typename Iter,
-              std::size_t... Is>
+              std::size_t ...Is>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     static constexpr array_type init_array_impl(Iter it,
@@ -252,7 +252,7 @@ class parallel_const_bit_iterator
     static constexpr element_type element_lsb = element_type(1);
     static constexpr element_type element_msb = element_lsb << (bits_per_element-1);
 
-    template<std::size_t... Is>
+    template<std::size_t ...Is>
     word_array dereferencing_initializer_impl(
         const word_pointer_array & arr, std::index_sequence<Is...>)
     {
@@ -300,10 +300,10 @@ auto batch_of(Iter it) noexcept
 }
 
 template <typename ChildT,
-          typename... Ts>
+          typename ...Ts>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-auto batch_of(const dpf::bit_array_base<ChildT> & t, const Ts & ... ts) noexcept
+auto batch_of(const dpf::bit_array_base<ChildT> & t, const Ts & ...ts) noexcept
 {
     return dpf::parallel_bit_iterable<1+sizeof...(Ts), ChildT>{t, ts...};
 }
@@ -318,9 +318,9 @@ void for_each_bit_parallel(Iter it, UnaryFunction f)
 
 template <typename ChildT,
           typename UnaryFunction,
-          typename... Ts>
+          typename ...Ts>
 HEDLEY_ALWAYS_INLINE
-void for_each_bit_parallel(const dpf::bit_array_base<ChildT> & t, const Ts & ... ts, UnaryFunction f)
+void for_each_bit_parallel(const dpf::bit_array_base<ChildT> & t, const Ts & ...ts, UnaryFunction f)
 {
     for (auto i : batch_of<1+sizeof...(Ts), ChildT>(t, ts...)) f(i);
 }

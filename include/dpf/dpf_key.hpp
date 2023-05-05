@@ -30,7 +30,7 @@ template <typename InteriorPRG,
           typename ExteriorPRG,
           typename InputT,
           typename OutputT,
-          typename... OutputTs>
+          typename ...OutputTs>
 struct dpf_key
 {
   public:
@@ -542,7 +542,7 @@ template <typename InteriorPRG,
           typename ExteriorPRG,
           typename InputT,
           typename OutputT,
-          typename... OutputTs>
+          typename ...OutputTs>
 struct dpf_type
 {
     using type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
@@ -564,8 +564,8 @@ template <typename InteriorPRG = dpf::prg::aes128,
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
           typename OutputT = dpf::bit,
-          typename... OutputTs>
-auto make_dpf(InputT x, OutputT y = dpf::bit::one, OutputTs... ys)
+          typename ...OutputTs>
+auto make_dpf(InputT x, OutputT y = dpf::bit::one, OutputTs ...ys)
 {
     using dpf_type = utils::dpf_type_t<InteriorPRG, ExteriorPRG, InputT,
                                        OutputT, OutputTs...>;
@@ -639,8 +639,8 @@ template <typename PeerT,
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
           typename OutputT,
-          typename... OutputTs>
-auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y, OutputTs... ys)
+          typename ...OutputTs>
+auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y, OutputTs ...ys)
 {
     auto ds = dpf::make_dpf(x, y, ys...);
     return std::make_tuple(

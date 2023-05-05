@@ -89,8 +89,8 @@ template <typename T>
 using make_unsigned_t = typename make_unsigned<T>::type;
 
 /// @brief Make an `std::bitset` from a variadic list of `bool`s
-template <typename... Bools>
-auto make_bitset(Bools... bs)
+template <typename ...Bools>
+auto make_bitset(Bools ...bs)
 {
     std::bitset<sizeof...(bs)> ret;
     std::size_t i = 0;
