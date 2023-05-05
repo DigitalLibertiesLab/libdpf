@@ -291,6 +291,9 @@ using xchar_t = xor_wrapper<unsigned char>;    ///< `xor_wrapper<unsigned char>`
 namespace utils
 {
 
+template <typename T>
+struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
+
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::xor_wrapper`
 template <typename T>
 struct bitlength_of<xor_wrapper<T>>
@@ -304,7 +307,9 @@ struct msb_of<xor_wrapper<T>>
 };
 
 template <typename T>
-struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
+struct countl_zero_symmetric_difference<xor_wrapper<T>>
+  : public countl_zero_symmetric_difference<T>
+{ };
 
 template <typename T>
 struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
