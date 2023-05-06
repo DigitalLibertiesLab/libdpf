@@ -646,7 +646,7 @@ namespace literals
     ///          equal neither to `0` nor to `1`, excluding the `"_bitstring"`
     ///          suffix itsef.
     /// @return the `dpf::bitstring`
-    template <char... bits>
+    template <char ...bits>
     constexpr static auto operator "" _bitstring()
     {
         dpf::bitstring<sizeof...(bits)> bs;

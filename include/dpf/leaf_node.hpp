@@ -312,7 +312,7 @@ template <typename ExteriorPRG,
           typename ...OutputTs,
           typename Indices = std::make_index_sequence<1+sizeof...(OutputTs)>>
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
-    bool sign, OutputT y, OutputTs... ys)
+    bool sign, OutputT y, OutputTs ...ys)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -342,26 +342,26 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     // only a single pass over each of the tuples being looped over
 
     // loop over the original inputs (to interrogate their output_types)
-    std::apply([x, &return_tuple, &leaves](auto && ...output_types)
+    std::apply([x, &sign, &return_tuple, &leaves](auto && ...output_types)
     {
         // loop over the elements of `leaves`, our "template" for a leaf tuple
-        std::apply([x, &return_tuple, &output_types...](auto && ...args0)
+        std::apply([x, &sign, &return_tuple, &output_types...](auto && ...args0)
         {
             // and also over the elements of `return_tuple.first.first`, the first leaf tuple
-            std::apply([x, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
+            std::apply([x, &sign, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
             {
                 // and also `return_tuple.second.first`, the secound leaf tuple
-                std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
+                std::apply([x, &sign, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
                 {
                     // plus `return_tuple.first.second`, the first beaver tuple
-                    std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
+                    std::apply([x, &sign, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
                     {
                         // and `return_tuple.second.second`, the secound beaver tuple
-                        std::apply([x, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
+                        std::apply([x, &sign, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
                         {
                             // lambda to decide whether to copy the leaf (for concrete output_types)
                             // or whether to secret share it (for wildcard output_types)
-                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1)
+                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1, bool sign)
                             {
                                 using output_type = typename std::remove_reference_t<decltype(type)>;
                                 if constexpr(dpf::is_wildcard_v<output_type>)
@@ -380,7 +380,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
                                         }
                                         else
                                         {
-                                            vector = make_naked_leaf<node_type>(x, concrete_type(1));
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(2*sign-1));
                                         }
 
                                         uniform_fill(beaver0.output_blind);
@@ -404,7 +404,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
                                     leaf0 = leaf;
                                     leaf1 = leaf;
                                 }
-                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1), ...);
+                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1, sign), ...);
                         }, return_tuple.second.second);
                     }, return_tuple.first.second);
                 }, return_tuple.second.first);
