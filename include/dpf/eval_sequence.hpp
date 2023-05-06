@@ -148,6 +148,8 @@ template <std::size_t I = 0,
           typename OutputBuffer>
 inline auto eval_sequence_breadth_first(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffer && outbuf)
 {
+    assert_not_wildcard<I>(dpf);
+
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
     using node_type = typename DpfKey::interior_node;
