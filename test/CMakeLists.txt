@@ -26,6 +26,7 @@ add_executable(all_test tests/all_test.cpp)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 add_executable(dpf_key_test tests/dpf_key_test.cpp)
+add_executable(wildcard_test tests/wildcard_test.cpp)
 
 add_executable(eval_point_test tests/eval_point_test.cpp)
 add_executable(eval_interval_test tests/eval_interval_test.cpp)
@@ -46,6 +47,7 @@ add_executable(setbit_index_iterable_test tests/setbit_index_iterable_test.cpp)
 
 include(GoogleTest)
 gtest_discover_tests(dpf_key_test)
+gtest_discover_tests(wildcard_test)
 
 gtest_discover_tests(eval_point_test)
 gtest_discover_tests(eval_interval_test)
