@@ -491,6 +491,18 @@ auto get_common_part_hash(const DpfKey & dpf)
     return get_common_part_hash(dpf.correction_words, dpf.correction_advice);
 }
 
+template <typename OutputT, typename Enable = void>
+struct has_operators_plus_minus : public std::false_type { };
+
+template <typename OutputT>
+struct has_operators_plus_minus<OutputT,
+    std::enable_if_t<std::conjunction_v<std::is_member_pointer<decltype(&OutputT::operator+)>,
+                                        std::is_member_pointer<decltype(&OutputT::operator-)>>, void>>
+  : public std::true_type { };
+
+template <typename OutputT>
+static constexpr bool has_operators_plus_minus_v = has_operators_plus_minus<OutputT>::value;
+
 }  // namespace utils
 
 }  // namespace dpf
