@@ -129,7 +129,11 @@ TEST(DpfKeyTest, HardCodedGenCheck)
     ASSERT_EQ(dpf0.leaf<1>()[1], dpf1.leaf<1>()[1]);
     ASSERT_EQ(dpf0.leaf<1>()[0], dpf1.leaf<1>()[0]);
 
-    simde__m128i vector{0x0000000000000000, 0x0000000000000001},  // [0|0|1|0] which corresponds to input x
+    // vector:
+    //     [0|0|1|0] which corresponds to input x
+    //     lsb of "dpf0 after leaf 5" is 0 (used as sign bit)
+    //         => output_type(2*sign-1) = output_type(2*0-1) = 0xFFFFFFFF
+    simde__m128i vector{0x0000000000000000, 0x00000000FFFFFFFF},
                  blinded0 = simde_mm_add_epi32(vector, dpf1.beaver<2>().vector_blind),
                  blinded1 = simde_mm_add_epi32(vector, dpf0.beaver<2>().vector_blind),
                  mulleaf0 = simde_mm_mullo_epi32(dpf0.beaver<2>().vector_blind, simde_mm_set1_epi32(dpf1.beaver<2>().output_blind)),

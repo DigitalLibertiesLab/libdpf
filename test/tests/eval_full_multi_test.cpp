@@ -187,6 +187,9 @@ using Types = testing::Types
     test_type<uint16_t, simde_uint128>,
     test_type<uint16_t, dpf::bit>,
     // test_type<uint16_t, dpf::bitstring<10>>,
-    test_type<uint16_t, dpf::xor_wrapper<uint64_t>>
+    test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
+
+    // custom types
+    test_type<uint16_t, output_type_large>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalFullMultiTestInstantiation, EvalFullMultiTest, Types);

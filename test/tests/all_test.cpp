@@ -3,6 +3,7 @@
 int main()
 {
     system("./bin/dpf_key_test");
+    system("./bin/wildcard_test");
 
     system("./bin/eval_point_test");
     system("./bin/eval_interval_test");

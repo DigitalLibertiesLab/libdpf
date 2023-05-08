@@ -1,6 +1,8 @@
 #ifndef LIBDPF_TEST_TESTS_HELPERS_EVAL_COMMON_MULTI_DATA_HPP__
 #define LIBDPF_TEST_TESTS_HELPERS_EVAL_COMMON_MULTI_DATA_HPP__
 
+#include "custom_output_type_large.hpp"
+
 template <typename InputT,
           typename OutputT>
 using test_type = std::tuple<InputT, OutputT, OutputT, OutputT, OutputT>;
@@ -28,7 +30,10 @@ static std::tuple
     param_type<uint16_t, simde_uint128>,
     param_type<uint16_t, dpf::bit>,
     param_type<uint16_t, dpf::bitstring<10>>,
-    param_type<uint16_t, dpf::xor_wrapper<uint64_t>>
+    param_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
+
+    // custom types
+    param_type<uint16_t, output_type_large>
 > allParams
 {
     {
@@ -369,6 +374,32 @@ static std::tuple
                                           dpf::xor_wrapper<uint64_t>(uint64_t(0x5555555555555555)),
                                           dpf::xor_wrapper<uint64_t>(uint64_t(0xAAAAAAAAAAAAAAAA)),
                                           dpf::xor_wrapper<uint64_t>(uint64_t(0xFFFFFFFFFFFFFFFF)))
+    },
+    {
+        std::make_tuple(uint16_t(0x0000), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x5555), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x7FFF), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x8000), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xAAAA), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xFFFF), output_type_large(uint64_t(0x0000000000000001)),
+                                          output_type_large(uint64_t(0x5555555555555555)),
+                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF)))
     }
 };
 
