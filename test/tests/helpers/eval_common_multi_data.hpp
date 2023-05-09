@@ -1,7 +1,10 @@
 #ifndef LIBDPF_TEST_TESTS_HELPERS_EVAL_COMMON_MULTI_DATA_HPP__
 #define LIBDPF_TEST_TESTS_HELPERS_EVAL_COMMON_MULTI_DATA_HPP__
 
-#include "custom_output_type_large.hpp"
+#include "custom_input_type.hpp"
+#include "custom_output_type_small.hpp"
+#include "custom_output_type_large_plus_minus.hpp"
+#include "custom_output_type_large_xor.hpp"
 
 template <typename InputT,
           typename OutputT>
@@ -33,7 +36,10 @@ static std::tuple
     param_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types
-    param_type<uint16_t, output_type_large>
+    param_type<custom_input_type, uint64_t>,
+    param_type<uint16_t, custom_output_type_small>,
+    param_type<uint16_t, custom_output_type_large_plus_minus>,
+    param_type<uint16_t, custom_output_type_large_xor>
 > allParams
 {
     {
@@ -376,30 +382,108 @@ static std::tuple
                                           dpf::xor_wrapper<uint64_t>(uint64_t(0xFFFFFFFFFFFFFFFF)))
     },
     {
-        std::make_tuple(uint16_t(0x0000), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
-        std::make_tuple(uint16_t(0x5555), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
-        std::make_tuple(uint16_t(0x7FFF), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
-        std::make_tuple(uint16_t(0x8000), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
-        std::make_tuple(uint16_t(0xAAAA), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF))),
-        std::make_tuple(uint16_t(0xFFFF), output_type_large(uint64_t(0x0000000000000001)),
-                                          output_type_large(uint64_t(0x5555555555555555)),
-                                          output_type_large(uint64_t(0xAAAAAAAAAAAAAAAA)),
-                                          output_type_large(uint64_t(0xFFFFFFFFFFFFFFFF)))
+        std::make_tuple(custom_input_type(0x0000), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(custom_input_type(0x5555), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(custom_input_type(0x7FFF), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(custom_input_type(0x8000), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(custom_input_type(0xAAAA), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF)),
+        std::make_tuple(custom_input_type(0xFFFF), uint64_t(0x0000000000000001),
+                                                   uint64_t(0x5555555555555555),
+                                                   uint64_t(0xAAAAAAAAAAAAAAAA),
+                                                   uint64_t(0xFFFFFFFFFFFFFFFF))
+    },
+    {
+        std::make_tuple(uint16_t(0x0000), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x5555), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x7FFF), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x8000), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xAAAA), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xFFFF), custom_output_type_small(uint64_t(0x0000000000000001)),
+                                          custom_output_type_small(uint64_t(0x5555555555555555)),
+                                          custom_output_type_small(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_small(uint64_t(0xFFFFFFFFFFFFFFFF)))
+    },
+    {
+        std::make_tuple(uint16_t(0x0000), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x5555), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x7FFF), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x8000), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xAAAA), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xFFFF), custom_output_type_large_plus_minus(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_plus_minus(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_plus_minus(uint64_t(0xFFFFFFFFFFFFFFFF)))
+    },
+    {
+        std::make_tuple(uint16_t(0x0000), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x5555), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x7FFF), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0x8000), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xAAAA), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF))),
+        std::make_tuple(uint16_t(0xFFFF), custom_output_type_large_xor(uint64_t(0x0000000000000001)),
+                                          custom_output_type_large_xor(uint64_t(0x5555555555555555)),
+                                          custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
+                                          custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF)))
     }
 };
 

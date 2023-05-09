@@ -669,6 +669,9 @@ using Types = testing::Types
     test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types
-    test_type<uint16_t, output_type_large>
+    test_type<custom_input_type, uint64_t>,
+    test_type<uint16_t, custom_output_type_small>,
+    test_type<uint16_t, custom_output_type_large_plus_minus>,
+    test_type<uint16_t, custom_output_type_large_xor>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalSequenceMultiTestInstantiation, EvalSequenceMultiTest, Types);
