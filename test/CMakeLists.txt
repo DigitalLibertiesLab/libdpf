@@ -42,9 +42,6 @@ add_executable(advice_bit_iterable_test tests/advice_bit_iterable_test.cpp)
 add_executable(parallel_bit_iterable_test tests/parallel_bit_iterable_test.cpp)
 add_executable(setbit_index_iterable_test tests/setbit_index_iterable_test.cpp)
 
-# add_executable(value_param_test tests/value_param_test.cpp)
-# add_executable(type_param_test tests/type_param_test.cpp)
-
 include(GoogleTest)
 gtest_discover_tests(dpf_key_test)
 gtest_discover_tests(wildcard_test)
@@ -62,6 +59,3 @@ gtest_discover_tests(eval_sequence_multi_test)
 gtest_discover_tests(advice_bit_iterable_test)
 gtest_discover_tests(parallel_bit_iterable_test)
 gtest_discover_tests(setbit_index_iterable_test)
-
-# gtest_discover_tests(value_param_test)
-# gtest_discover_tests(type_param_test)
