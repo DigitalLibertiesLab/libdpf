@@ -24,6 +24,8 @@
 
 #include "dpf/eval_interval.hpp"
 
+#include "dpf/eval_full.hpp"
+
 #include "dpf/eval_point.hpp"
 
 #include "dpf/eval_sequence.hpp"
@@ -78,12 +80,6 @@
 
 #include "dpf/xor_wrapper.hpp"
 
-#ifdef HAS_NLOHMANN_JSON
-  #ifndef NLOHMANN_JSON_VERSION_MAJOR
-    // was told you use nlohmann::json, but it's not available!
-  #else
-    #include "dpf/json.hpp"
-  #endif
-#endif
+#include "dpf/zip_iterable.hpp"
 
 #endif  // LIBDPF_INCLUDE_DPF_HPP__

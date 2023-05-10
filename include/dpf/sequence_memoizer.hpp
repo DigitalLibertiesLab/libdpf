@@ -15,16 +15,18 @@
 namespace dpf
 {
 
+struct sequence_memoizer_tag_ {};
+
 template <typename DpfKey,
           typename ReturnT = typename DpfKey::interior_node *>
-struct sequence_memoizer_base
+struct sequence_memoizer_base : public sequence_memoizer_tag_
 {
   public:
     using dpf_type = DpfKey;
-    using input_type = typename DpfKey::input_type;
     using return_type = ReturnT;
     using iterator_type = return_type;
-    const sequence_recipe<input_type> & recipe;
+    using node_type = typename DpfKey::interior_node;
+    const sequence_recipe & recipe;
 
     // level 0 should access the root
     // level goes up to (and including) depth
@@ -34,17 +36,20 @@ struct sequence_memoizer_base
     virtual return_type begin() const noexcept = 0;
     virtual return_type end() const noexcept = 0;
 
-    virtual std::size_t assign_dpf(const dpf_type & dpf, const sequence_recipe<input_type> & r)
+    virtual std::size_t assign_dpf(const dpf_type & dpf, const sequence_recipe & r)
     {
         if (&recipe != &r)
         {
             throw std::logic_error("memoizer cannot be used with different recipe");
         }
 
-        if (dpf_.has_value() == false || std::addressof(dpf_->get()) != std::addressof(dpf))
+        if (dpf_.has_value() == false || std::memcmp(&dpf_root_, &dpf.root, sizeof(node_type)) != 0
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash, sizeof(node_type)) != 0)
         {
             this->operator[](0)[0] = dpf.root;
             dpf_ = std::cref(dpf);
+            dpf_root_ = dpf.root;
+            dpf_common_part_hash_ = dpf.common_part_hash;
             level_index = 1;
         }
 
@@ -70,10 +75,10 @@ struct sequence_memoizer_base
 
         if (level == depth)
         {
-            return recipe.num_leaf_nodes;
+            return recipe.num_leaf_nodes();
         }
 
-        return recipe.level_endpoints[level+1] - recipe.level_endpoints[level];
+        return recipe.level_endpoints()[level+1] - recipe.level_endpoints()[level];
     }
 
     // returns true if first traversal should be taken
@@ -81,7 +86,7 @@ struct sequence_memoizer_base
     // if it is working in reverse, this could be a right traversal
     virtual bool traverse_first(std::size_t step) const
     {
-        return recipe.recipe_steps[step] > int8_t(-1);
+        return recipe.recipe_steps()[step] > int8_t(-1);
     }
 
     // returns true if second traversal should be taken
@@ -89,7 +94,7 @@ struct sequence_memoizer_base
     // if it is working in reverse, this could be a left traversal
     virtual bool traverse_second(std::size_t step) const
     {
-        return recipe.recipe_steps[step] < int8_t(1);
+        return recipe.recipe_steps()[step] < int8_t(1);
     }
 
     // returns true if traversal should be done to the right
@@ -105,15 +110,17 @@ struct sequence_memoizer_base
     std::size_t depth;
     std::size_t level_index;  // indicates current level being built
 
-    explicit sequence_memoizer_base(const sequence_recipe<input_type> & r)
+    explicit sequence_memoizer_base(const sequence_recipe & r)
       : recipe{r},
-        depth{recipe.level_endpoints.size()-1},
+        depth{recipe.level_endpoints().size()-1},
         level_index{0},
         dpf_{std::nullopt}
     { }
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
+    node_type dpf_root_;
+    node_type dpf_common_part_hash_;
 };
 
 namespace detail
@@ -254,7 +261,6 @@ struct inplace_reversing_sequence_memoizer final
         detail::pointer_facade<typename DpfKey::interior_node *, std::reverse_iterator<typename DpfKey::interior_node *>>>
 {
   public:
-    using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
     using forward_iter = typename DpfKey::interior_node *;
     using reverse_iter = std::reverse_iterator<forward_iter>;
@@ -267,10 +273,10 @@ struct inplace_reversing_sequence_memoizer final
     using parent::level_index;
     using parent::get_nodes_at_level;
 
-    explicit inplace_reversing_sequence_memoizer(const sequence_recipe<input_type> & r,
+    explicit inplace_reversing_sequence_memoizer(const sequence_recipe & r,
         Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(r.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(r.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
@@ -285,12 +291,12 @@ struct inplace_reversing_sequence_memoizer final
         if (level == level_index-1 && level != depth)
         {
             std::size_t nodes_at_level = get_nodes_at_level(level);
-            return return_type(!flip, &buf[recipe.num_leaf_nodes-nodes_at_level],
+            return return_type(!flip, &buf[recipe.num_leaf_nodes()-nodes_at_level],
                 std::make_reverse_iterator(&buf[nodes_at_level]));
         }
 
         return return_type(flip, &buf[0],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()]));
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -301,7 +307,7 @@ struct inplace_reversing_sequence_memoizer final
         // flip false => forward traversal
         bool flip = (depth ^ level) & 1;
         return return_type(flip, &buf[0],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()]));
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -313,23 +319,23 @@ struct inplace_reversing_sequence_memoizer final
         bool flip = (depth ^ level) & 1;
         std::size_t nodes_at_level = get_nodes_at_level(level);
         return return_type(flip, &buf[nodes_at_level],
-            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes-nodes_at_level]));
+            std::make_reverse_iterator(&buf[recipe.num_leaf_nodes()-nodes_at_level]));
     }
 
     bool traverse_first(std::size_t step) const override
     {
         // flip false => forward traversal
         bool flip = (depth ^ level_index) & 1;
-        step = !flip ? step : recipe.level_endpoints[level_index] - step - 1 + recipe.level_endpoints[level_index-1];
-        return !flip ? (recipe.recipe_steps[step] > int8_t(-1)) : (recipe.recipe_steps[step] < int8_t(1));
+        step = !flip ? step : recipe.level_endpoints()[level_index] - step - 1 + recipe.level_endpoints()[level_index-1];
+        return !flip ? (recipe.recipe_steps()[step] > int8_t(-1)) : (recipe.recipe_steps()[step] < int8_t(1));
     }
 
     bool traverse_second(std::size_t step) const override
     {
         // flip false => forward traversal
         bool flip = (depth ^ level_index) & 1;
-        step = !flip ? step : recipe.level_endpoints[level_index] - step - 1 + recipe.level_endpoints[level_index-1];
-        return !flip ? (recipe.recipe_steps[step] < int8_t(1)) : (recipe.recipe_steps[step] > int8_t(-1));
+        step = !flip ? step : recipe.level_endpoints()[level_index] - step - 1 + recipe.level_endpoints()[level_index-1];
+        return !flip ? (recipe.recipe_steps()[step] < int8_t(1)) : (recipe.recipe_steps()[step] > int8_t(-1));
     }
 
     bool get_direction(bool right) const override
@@ -351,7 +357,6 @@ struct double_space_sequence_memoizer final
   private:
     using parent = sequence_memoizer_base<DpfKey>;
   public:
-    using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = typename DpfKey::interior_node *;
     using parent::recipe;
@@ -359,9 +364,9 @@ struct double_space_sequence_memoizer final
     using parent::level_index;
     using parent::get_nodes_at_level;
 
-    explicit double_space_sequence_memoizer(const sequence_recipe<input_type> & r, Allocator alloc = Allocator{})
+    explicit double_space_sequence_memoizer(const sequence_recipe & r, Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(2*recipe.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(2*recipe.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
@@ -369,7 +374,7 @@ struct double_space_sequence_memoizer final
     return_type operator[](std::size_t level) const noexcept override
     {
         auto b = (depth ^ level) & 1;
-        return Allocator::assume_aligned(&buf[recipe.num_leaf_nodes*b]);
+        return Allocator::assume_aligned(&buf[recipe.num_leaf_nodes()*b]);
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -398,23 +403,22 @@ struct full_tree_sequence_memoizer final
   private:
     using parent = sequence_memoizer_base<DpfKey>;
   public:
-    using input_type = typename DpfKey::input_type;
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = typename DpfKey::interior_node *;
     using parent::recipe;
     using parent::level_index;
     using parent::get_nodes_at_level;
 
-    explicit full_tree_sequence_memoizer(const sequence_recipe<input_type> & r, Allocator alloc = Allocator{})
+    explicit full_tree_sequence_memoizer(const sequence_recipe & r, Allocator alloc = Allocator{})
       : parent::sequence_memoizer_base(r),
-        buf{alloc.allocate_unique_ptr(recipe.level_endpoints[recipe.level_endpoints.size()-1] + recipe.num_leaf_nodes)}
+        buf{alloc.allocate_unique_ptr(recipe.level_endpoints()[recipe.level_endpoints().size()-1] + recipe.num_leaf_nodes())}
     { }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     return_type operator[](std::size_t level) const noexcept override
     {
-        return Allocator::assume_aligned(&buf[recipe.level_endpoints[level]]);
+        return Allocator::assume_aligned(&buf[recipe.level_endpoints()[level]]);
     }
 
     HEDLEY_ALWAYS_INLINE
@@ -438,10 +442,9 @@ struct full_tree_sequence_memoizer final
 namespace detail
 {
 
-template <typename MemoizerT,
-          typename InputT>
+template <typename MemoizerT>
 HEDLEY_ALWAYS_INLINE
-auto make_sequence_memoizer(const sequence_recipe<InputT> & recipe)
+auto make_sequence_memoizer(const sequence_recipe & recipe)
 {
     return MemoizerT(recipe);
 }
@@ -450,25 +453,40 @@ auto make_sequence_memoizer(const sequence_recipe<InputT> & recipe)
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
+template <typename DpfKey>
+inline auto make_inplace_reversing_sequence_memoizer(const sequence_recipe & recipe)
 {
-    return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey>, InputT>(recipe);
+    return detail::make_sequence_memoizer<inplace_reversing_sequence_memoizer<DpfKey>>(recipe);
 }
 
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_double_space_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
+template <typename DpfKey>
+inline auto make_inplace_reversing_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
 {
-    return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey>, InputT>(recipe);
+    return make_inplace_reversing_sequence_memoizer<DpfKey>(recipe);
 }
 
-template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_full_tree_sequence_memoizer(const DpfKey &, const sequence_recipe<InputT> & recipe)
+template <typename DpfKey>
+inline auto make_double_space_sequence_memoizer(const sequence_recipe & recipe)
 {
-    return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey>, InputT>(recipe);
+    return detail::make_sequence_memoizer<double_space_sequence_memoizer<DpfKey>>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_double_space_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_double_space_sequence_memoizer<DpfKey>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_sequence_memoizer(const sequence_recipe & recipe)
+{
+    return detail::make_sequence_memoizer<full_tree_sequence_memoizer<DpfKey>>(recipe);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_sequence_memoizer(const DpfKey &, const sequence_recipe & recipe)
+{
+    return make_full_tree_sequence_memoizer<DpfKey>(recipe);
 }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 

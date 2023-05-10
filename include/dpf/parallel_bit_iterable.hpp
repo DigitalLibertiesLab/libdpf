@@ -2,7 +2,7 @@
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @brief
 /// @details
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others]{@ref authors}
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref GPLv2) for details.
 
@@ -19,16 +19,18 @@
 namespace dpf
 {
 
-template <std::size_t BatchSize>
+template <std::size_t BatchSize,
+          typename ChildT>
 class parallel_const_bit_iterator;  // forward declaration
 
-template <std::size_t BatchSize>
+template <std::size_t BatchSize,
+          typename ChildT>
 class parallel_bit_iterable
 {
   public:
-    using word_pointer = bit_array_base::word_pointer;
+    using word_pointer = typename bit_array_base<ChildT>::const_word_pointer;
     static constexpr auto batch_size = BatchSize;
-    using const_iterator = parallel_const_bit_iterator<batch_size>;
+    using const_iterator = parallel_const_bit_iterator<batch_size, ChildT>;
 
     template <typename Iter>
     explicit parallel_bit_iterable(Iter it)
@@ -38,7 +40,8 @@ class parallel_bit_iterable
             [](Iter it){ return it->data() + it->data_length(); })}
     { }
 
-    template <typename T, typename ...Ts>
+    template <typename T,
+              typename ...Ts>
     explicit parallel_bit_iterable(const T & t, const Ts & ...ts)
       : begin_{t.data(), ts.data()...},
         end_{t.data()+t.data_length(), ts.data()+ts.data_length()...}
@@ -75,7 +78,9 @@ class parallel_bit_iterable
   private:
     using array_type = std::array<word_pointer, batch_size>;
 
-    template <typename F, typename Iter, std::size_t... Is>
+    template <typename F,
+              typename Iter,
+              std::size_t ...Is>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     static constexpr array_type init_array_impl(Iter it,
@@ -84,8 +89,9 @@ class parallel_bit_iterable
         return {{ ((void)Is, lambda(it++))... }};
     }
 
-    template <typename F, typename Iter,
-        class Indices = std::make_index_sequence<batch_size>>
+    template <typename F,
+              typename Iter,
+              typename Indices = std::make_index_sequence<batch_size>>
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     static constexpr array_type init_array(Iter it,
@@ -97,25 +103,26 @@ class parallel_bit_iterable
     const array_type begin_, end_;
 };  // class dpf::parallel_bit_iterable
 
-template <std::size_t N>
+template <std::size_t N,
+          typename ChildT>
 class parallel_const_bit_iterator
 {
   private:
-    using word_type = bit_array_base::word_type;
+    using word_type = typename bit_array_base<ChildT>::word_type;
     using word_array = std::array<word_type, N>;
-    using word_pointer = bit_array_base::word_pointer;
+    using word_pointer = typename bit_array_base<ChildT>::const_word_pointer;
     using word_pointer_array = std::array<word_pointer, N>;
     static constexpr std::size_t lg_batch_size = (N <= 2)
                                      ? 2 : std::ceil(std::log2(N));
-    using helper = dpf::parallel_bit_iterable_helper<lg_batch_size>;
+    using helper = dpf::parallel_bit_iterable_helper<lg_batch_size, ChildT>;
     using element_type = typename helper::element_type;
-    using simde_type = typename helper::type;
-    static constexpr auto bits_per_word = bit_array_base::bits_per_word;
+    using simde_type = typename helper::simde_type;
+    static constexpr auto bits_per_word = bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = helper::bits_per_element;
     static constexpr auto bytes_per_batch = N * (bits_per_element/CHAR_BIT);
     static_assert(CHAR_BIT == 8, "CHAR_BIT not equal to 8");
     static constexpr auto elements_per_word = helper::elements_per_word;
-    using simde_array = typename helper::array;
+    using simde_array = typename helper::simde_array;
 
   public:
     static constexpr auto batch_size = N;
@@ -245,7 +252,7 @@ class parallel_const_bit_iterator
     static constexpr element_type element_lsb = element_type(1);
     static constexpr element_type element_msb = element_lsb << (bits_per_element-1);
 
-    template<std::size_t... Is>
+    template<std::size_t ...Is>
     word_array dereferencing_initializer_impl(
         const word_pointer_array & arr, std::index_sequence<Is...>)
     {
@@ -278,38 +285,44 @@ class parallel_const_bit_iterator
     simde_type vec_mask_;
     simde_array all_vecs_;
 
-    friend parallel_const_bit_iterator parallel_bit_iterable<batch_size>::begin() const noexcept;
-    friend parallel_const_bit_iterator parallel_bit_iterable<batch_size>::end() const noexcept;
+    friend parallel_const_bit_iterator parallel_bit_iterable<batch_size, ChildT>::begin() const noexcept;
+    friend parallel_const_bit_iterator parallel_bit_iterable<batch_size, ChildT>::end() const noexcept;
 };  // class dpf::parallel_const_bit_iterator
 
-template <std::size_t N, typename Iter>
+template <std::size_t N,
+          typename ChildT,
+          typename Iter>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
 auto batch_of(Iter it) noexcept
 {
-    return dpf::parallel_bit_iterable<N>{it};
+    return dpf::parallel_bit_iterable<N, ChildT>{it};
 }
 
-template <typename... Ts>
+template <typename ChildT,
+          typename ...Ts>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-auto batch_of(const dpf::bit_array_base & t, const Ts & ... ts) noexcept
+auto batch_of(const dpf::bit_array_base<ChildT> & t, const Ts & ...ts) noexcept
 {
-    return dpf::parallel_bit_iterable<1+sizeof...(Ts)>{t, ts...};
+    return dpf::parallel_bit_iterable<1+sizeof...(Ts), ChildT>{t, ts...};
 }
 
-template <std::size_t N, typename Iter, class UnaryFunction>
+template <std::size_t N, typename Iter,
+          typename UnaryFunction>
 HEDLEY_ALWAYS_INLINE
 void for_each_bit_parallel(Iter it, UnaryFunction f)
 {
     for (auto i : batch_of<N>(it)) f(i);
 }
 
-template <class UnaryFunction, typename... Ts>
+template <typename ChildT,
+          typename UnaryFunction,
+          typename ...Ts>
 HEDLEY_ALWAYS_INLINE
-void for_each_bit_parallel(const dpf::bit_array_base & t, const Ts & ... ts, UnaryFunction f)
+void for_each_bit_parallel(const dpf::bit_array_base<ChildT> & t, const Ts & ...ts, UnaryFunction f)
 {
-    for (auto i : batch_of<1+sizeof...(Ts)>(t, ts...)) f(i);
+    for (auto i : batch_of<1+sizeof...(Ts), ChildT>(t, ts...)) f(i);
 }
 
 }  // namespace dpf
@@ -317,11 +330,11 @@ void for_each_bit_parallel(const dpf::bit_array_base & t, const Ts & ... ts, Una
 namespace std
 {
 
-template <std::size_t N>
-struct iterator_traits<typename dpf::parallel_const_bit_iterator<N>>
+template <std::size_t N, typename ChildT>
+struct iterator_traits<typename dpf::parallel_const_bit_iterator<N, ChildT>>
 {
   private:
-    using type = dpf::parallel_const_bit_iterator<N>;
+    using type = dpf::parallel_const_bit_iterator<N, ChildT>;
   public:
     using iterator_category = typename type::iterator_category;
     using difference_type = typename type::difference_type;

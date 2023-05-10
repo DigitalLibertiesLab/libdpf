@@ -17,25 +17,30 @@ namespace dpf
 {
 
 template <typename DpfKey,
-          typename OutputT,
-          typename Iterator>
+          typename OutputIterT,
+          typename PointsIterT>
 class subsequence_iterable
 {
   public:
-    using output_type = OutputT;
+    using output_type = typename std::iterator_traits<OutputIterT>::value_type;
+    using input_type = typename DpfKey::input_type;
+    using output_iterator = OutputIterT;
+    using points_iterator = PointsIterT;
     static constexpr std::size_t outputs_per_leaf = DpfKey::outputs_per_leaf;
-    static constexpr std::size_t mask = (1 << DpfKey::lg_outputs_per_leaf) - 1;
+    static constexpr std::size_t lg_outputs_per_leaf = DpfKey::lg_outputs_per_leaf;
+    static constexpr auto mod = utils::mod_pow_2<input_type>{};
     class const_iterator;  // forward declaration
+    using iterator = const_iterator;
 
-    subsequence_iterable(const output_type * seq, Iterator begin, Iterator end)
-      : seq_{seq}, begin_{begin}, end_{end}, count_{std::distance(begin_, end_)}
+    subsequence_iterable(output_iterator out_it, points_iterator begin, points_iterator end)
+      : out_it_{out_it}, begin_{begin}, end_{end}, count_{std::distance(begin_, end_)}
     { }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return const_iterator(seq_, begin_);
+        return const_iterator(out_it_, begin_);
     }
 
     HEDLEY_NO_THROW
@@ -49,7 +54,7 @@ class subsequence_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator(seq_ + count_ * outputs_per_leaf, end_);
+        return const_iterator(out_it_ + count_ * outputs_per_leaf, end_);
     }
 
     HEDLEY_NO_THROW
@@ -70,11 +75,11 @@ class subsequence_iterable
         using size_type = std::size_t;
         using difference_type = std::ptrdiff_t;
 
-        using subsequence_iterator_type = Iterator;
+        using subsequence_iterator_type = points_iterator;
 
         HEDLEY_ALWAYS_INLINE
-        constexpr const_iterator(const output_type * seq, subsequence_iterator_type it) noexcept
-          : seq_{seq}, it_{it}
+        constexpr const_iterator(output_iterator out_it, subsequence_iterator_type it) noexcept
+          : out_it_{out_it}, it_{it}
         { }
 
         HEDLEY_ALWAYS_INLINE
@@ -91,7 +96,7 @@ class subsequence_iterable
         HEDLEY_ALWAYS_INLINE
         constexpr reference operator*() const noexcept
         {
-            return seq_[*it_&mask];
+            return out_it_[mod(*it_, lg_outputs_per_leaf)];
         }
 
         HEDLEY_NO_THROW
@@ -99,7 +104,7 @@ class subsequence_iterable
         constexpr const_iterator & operator++() noexcept
         {
             ++it_;
-            seq_ += outputs_per_leaf;
+            out_it_ += outputs_per_leaf;
             return *this;
         }
 
@@ -116,7 +121,7 @@ class subsequence_iterable
         const_iterator & operator--() noexcept
         {
             --it_;
-            seq_ -= outputs_per_leaf;
+            out_it_ -= outputs_per_leaf;
             return *this;
         }
 
@@ -131,25 +136,25 @@ class subsequence_iterable
         const_iterator & operator+=(std::size_t n) noexcept
         {
             it_ += n;
-            seq_ += outputs_per_leaf*n;
+            out_it_ += outputs_per_leaf*n;
             return *this;
         }
 
         const_iterator operator+(std::size_t n) const noexcept
         {
-            return const_iterator(seq_ + outputs_per_leaf*n, it_ + n);
+            return const_iterator(out_it_ + outputs_per_leaf*n, it_ + n);
         }
 
         const_iterator & operator-=(std::size_t n) noexcept
         {
             it_ -= n;
-            seq_ -= outputs_per_leaf*n;
+            out_it_ -= outputs_per_leaf*n;
             return *this;
         }
 
         const_iterator operator-(std::size_t n) const noexcept
         {
-            return const_iterator(seq_ - outputs_per_leaf*n, it_ - n);
+            return const_iterator(out_it_ - outputs_per_leaf*n, it_ - n);
         }
 
         difference_type operator-(const_iterator rhs) const noexcept
@@ -159,21 +164,21 @@ class subsequence_iterable
 
         reference operator[](std::size_t i) const noexcept
         {
-            return seq_[i*outputs_per_leaf + it_[i]&mask];
+            return out_it_[i*outputs_per_leaf + mod(it_[i], lg_outputs_per_leaf)];
         }
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
         constexpr bool operator==(const const_iterator & rhs) const noexcept
         {
-            return seq_ == rhs.seq_ && it_ == rhs.it_;
+            return out_it_ == rhs.out_it_ && it_ == rhs.it_;
         }
 
         HEDLEY_NO_THROW
         HEDLEY_ALWAYS_INLINE
         constexpr bool operator<(const const_iterator & rhs) const noexcept
         {
-            return seq_ < rhs.seq_ && it_ < rhs.it_;
+            return out_it_ < rhs.out_it_ && it_ < rhs.it_;
         }
 
         HEDLEY_NO_THROW
@@ -205,33 +210,36 @@ class subsequence_iterable
         }
 
       private:
-        const output_type * seq_;
+        output_iterator out_it_;
         subsequence_iterator_type it_;
     };  // class dpf::subsequence_iterable::const_iterator
 
   private:
-    const output_type * seq_;
-    const Iterator begin_;
-    const Iterator end_;
-    const typename std::iterator_traits<Iterator>::difference_type count_;
+    const output_iterator out_it_;
+    const points_iterator begin_;
+    const points_iterator end_;
+    const typename std::iterator_traits<points_iterator>::difference_type count_;
 };  // class dpf::subsequence_iterable
 
-template <typename OutputT>
+template <typename IteratorT>
 class recipe_subsequence_iterable
 {
   public:
-    using output_type = OutputT;
+    using output_type = typename std::iterator_traits<IteratorT>::value_type;
+    using output_iterator = IteratorT;
     class const_iterator;  // forward declaration
+    using iterator = const_iterator;
 
-    recipe_subsequence_iterable(const output_type * seq, const std::vector<std::size_t> & indices)
-      : seq_{seq}, indices_{indices}
-    { }
+    recipe_subsequence_iterable(output_iterator out_it, const std::vector<std::size_t> & indices)
+      : out_it_{out_it}, indices_{indices}
+    {
+    }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return const_iterator(seq_, std::begin(indices_));
+        return const_iterator(out_it_, std::begin(indices_));
     }
 
     HEDLEY_NO_THROW
@@ -245,7 +253,7 @@ class recipe_subsequence_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator(seq_, std::end(indices_));
+        return const_iterator(out_it_, std::end(indices_));
     }
 
     HEDLEY_NO_THROW
@@ -269,8 +277,8 @@ class recipe_subsequence_iterable
         using subsequence_iterator_type = typename std::vector<std::size_t>::const_iterator;
 
         HEDLEY_ALWAYS_INLINE
-        constexpr const_iterator(const output_type * seq, subsequence_iterator_type it) noexcept
-          : seq_{seq}, it_{it}
+        constexpr const_iterator(output_iterator out_it, subsequence_iterator_type it) noexcept
+          : out_it_{out_it}, it_{it}
         { }
 
         HEDLEY_ALWAYS_INLINE
@@ -287,7 +295,7 @@ class recipe_subsequence_iterable
         HEDLEY_ALWAYS_INLINE
         constexpr reference operator*() const noexcept
         {
-            return seq_[*it_];
+            return out_it_[*it_];
         }
 
         HEDLEY_NO_THROW
@@ -351,7 +359,7 @@ class recipe_subsequence_iterable
 
         reference operator[](std::size_t i) const noexcept
         {
-            return seq_[it_[i]];
+            return out_it_[it_[i]];
         }
 
         HEDLEY_NO_THROW
@@ -397,13 +405,13 @@ class recipe_subsequence_iterable
         }
 
       private:
-        output_type * seq_;
+        output_iterator out_it_;
         subsequence_iterator_type it_;
     };  // class dpf::recipe_subsequence_iterable::const_iterator
 
   private:
-    output_type * seq_;
-    std::vector<std::size_t> & indices_;
+    const output_iterator out_it_;
+    const std::vector<std::size_t> & indices_;
 };  // class dpf::recipe_subsequence_iterable
 
 }  // namespace dpf

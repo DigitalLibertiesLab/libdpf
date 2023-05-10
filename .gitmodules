@@ -13,3 +13,6 @@
 [submodule "thirdparty/simde"]
 	path = thirdparty/simde
 	url = https://github.com/DigitalLibertiesLab/simde.git
+[submodule "thirdparty/asio"]
+	path = thirdparty/asio
+	url = git@github.com:DigitalLibertiesLab/asio.git

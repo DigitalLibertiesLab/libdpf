@@ -40,7 +40,8 @@ class modint
     ///          modulo `2^Nbits`.
     /// @param value the value to initialize with
     HEDLEY_ALWAYS_INLINE
-    constexpr modint(integral_type value)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    constexpr modint(integral_type value)  // NOLINT(runtime/explicit)
         : val{value}
     { }
 
@@ -150,7 +151,6 @@ class modint
     /// @brief pre-increment operator
     /// @details Increments this `modint` and returns a reference to the
     ///          result.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator++() noexcept
@@ -161,7 +161,6 @@ class modint
     /// @brief post-increment operator
     /// @details Creates a copy of this `modint`, and then increments this
     ///          `modint` and returns the copy from before the increment.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator++(int) noexcept
@@ -230,7 +229,6 @@ class modint
     /// @brief pre-decrement operator
     /// @details Decrements this `modint` and returns a reference to the
     ///          result.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint & operator--() noexcept
@@ -241,7 +239,6 @@ class modint
     /// @brief post-decrement operator
     /// @details Creates a copy of this `modint`, and then decrements this
     ///          `modint` and returns the copy from before the decrement.
-    HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator--(int) noexcept
@@ -478,7 +475,7 @@ class modint
     HEDLEY_ALWAYS_INLINE
     constexpr modint operator~() const noexcept
     {
-        return modint{~this->val};
+        return modint{static_cast<integral_type>(~this->val)};
     }
 
     /// @brief convert this `modint` to the equivalent `integeral_type`
@@ -499,8 +496,8 @@ class modint
     }
 
     template <typename CharT,
-              class Traits = std::char_traits<CharT>,
-              class Allocator = std::allocator<CharT>>
+              typename Traits = std::char_traits<CharT>,
+              typename Allocator = std::allocator<CharT>>
     friend std::basic_ostream<CharT, Traits> &
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const modint & i)
@@ -509,8 +506,8 @@ class modint
     }
 
     template <typename CharT,
-              class Traits = std::char_traits<CharT>,
-              class Allocator = std::allocator<CharT>>
+              typename Traits = std::char_traits<CharT>,
+              typename Allocator = std::allocator<CharT>>
     friend std::basic_istream<CharT, Traits> &
     operator>>(std::basic_istream<CharT, Traits> & is,
         const modint & i)
@@ -530,10 +527,12 @@ class modint
 
   private:
     /// @brief bitmask used for performing reductions modulo `2^Nbits`
-    static constexpr integral_type modulo_mask = ~integral_type{0} >> utils::bitlength_of_v<integral_type> - Nbits;
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - Nbits;
 
     /// @brief The `integral_type` used to represent this `modint`
     integral_type val;
+
+    friend struct utils::mod_pow_2<modint>;
 };
 
 /// @brief Multiplies a `modint<Nbits>` with an `modint::integral_type`.
@@ -638,7 +637,7 @@ struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
     {
         using T = typename dpf::modint<Nbits>::integral_type;
         constexpr auto xor_op = std::bit_xor<T>{};
-        constexpr auto adjust = bitlength_of_v<T> - Nbits;
+        constexpr auto adjust = 64 - Nbits;
         auto diff = xor_op(static_cast<T>(lhs), static_cast<T>(rhs));
 
         if constexpr (std::is_same_v<T, simde_uint128>)
@@ -652,6 +651,16 @@ struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
         {
             return psnip_builtin_clz64(static_cast<uint64_t>(diff))-adjust;
         }
+    }
+};
+
+template <std::size_t Nbits>
+struct mod_pow_2<dpf::modint<Nbits>>
+{
+    using T = dpf::modint<Nbits>;
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val.val % (1ul << n));
     }
 };
 
@@ -697,24 +706,26 @@ class numeric_limits<dpf::modint<Nbits>>
 
     static constexpr dpf::modint<Nbits> min() noexcept { return dpf::modint<Nbits>{0}; }
     static constexpr dpf::modint<Nbits> lowest() noexcept { return dpf::modint<Nbits>{0}; }
-    static constexpr dpf::modint<Nbits> max() noexcept { return dpf::modint<Nbits>{-1}; }
+    static constexpr dpf::modint<Nbits> max() noexcept { return ~dpf::modint<Nbits>{0}; }
     static constexpr dpf::modint<Nbits> epsilon() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> round_error() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> infinity() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> quiet_NaN() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> signaling_NaN() noexcept { return 0; }
     static constexpr dpf::modint<Nbits> denorm_min() noexcept { return 0; }
-
 };
+
 /// @details specializes `std::numeric_limits` for `dpf::modint<Nbits> const`
 template<std::size_t Nbits>
 class numeric_limits<dpf::modint<Nbits> const>
   : public numeric_limits<dpf::modint<Nbits>> {};
+
 /// @details specializes `std::numeric_limits` for
 ///          `dpf::modint<Nbits> volatile`
 template<std::size_t Nbits>
 class numeric_limits<dpf::modint<Nbits> volatile>
   : public numeric_limits<dpf::modint<Nbits>> {};
+
 /// @details specializes `std::numeric_limits` for
 ///          `dpf::modint<Nbits> const volatile`
 template<std::size_t Nbits>

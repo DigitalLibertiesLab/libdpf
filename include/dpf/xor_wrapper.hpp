@@ -28,6 +28,7 @@ struct xor_wrapper
     static constexpr auto bit_xor = std::bit_xor<value_type>{};
     static constexpr auto bit_and = std::bit_and<value_type>{};
     static constexpr auto bit_or = std::bit_or<value_type>{};
+    static constexpr auto bit_not = std::bit_not<value_type>{};
 
     static constexpr std::size_t bits = utils::bitlength_of_v<value_type>;
     using integral_type = utils::integral_type_from_bitlength_t<bits>;
@@ -44,7 +45,8 @@ struct xor_wrapper
     constexpr xor_wrapper(xor_wrapper &&) noexcept = default;
 
     /// @brief Value c'tor
-    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    constexpr xor_wrapper(T v) noexcept : value{v} { }  // NOLINT(runtime/explicit)
 
     /// @}
 
@@ -159,6 +161,40 @@ struct xor_wrapper
         return *this;
     }
 
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper & operator++() noexcept
+    {
+        ++value;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper operator++(int) noexcept
+    {
+        auto ret = *this;
+        this->operator++();
+        return ret;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper & operator--() noexcept
+    {
+        --value;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr xor_wrapper operator--(int) noexcept
+    {
+        auto ret = *this;
+        this->operator--();
+        return ret;
+    }
+
   private:
     value_type value;
 
@@ -212,6 +248,13 @@ struct xor_wrapper
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
+    friend constexpr xor_wrapper operator~(const xor_wrapper & val) noexcept
+    {
+        return xor_wrapper(xor_wrapper::bit_not(val.value));
+    }
+
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
     friend constexpr xor_wrapper operator<<(const xor_wrapper & val, std::size_t amount)
     {
         return xor_wrapper(val.value << amount);
@@ -234,7 +277,8 @@ struct xor_wrapper
         return is >> val.value;
     }
 
-    friend struct utils::to_integral_type<xor_wrapper<T>>;
+    friend struct utils::to_integral_type<xor_wrapper>;
+    friend struct utils::mod_pow_2<xor_wrapper>;
 };
 
 using xint128_t = xor_wrapper<simde_uint128>;  ///< `xor_wrapper<simde_uint128>`
@@ -246,6 +290,9 @@ using xchar_t = xor_wrapper<unsigned char>;    ///< `xor_wrapper<unsigned char>`
 
 namespace utils
 {
+
+template <typename T>
+struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
 
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::xor_wrapper`
 template <typename T>
@@ -260,7 +307,9 @@ struct msb_of<xor_wrapper<T>>
 };
 
 template <typename T>
-struct is_xor_wrapper<xor_wrapper<T>> : std::true_type {};
+struct countl_zero_symmetric_difference<xor_wrapper<T>>
+  : public countl_zero_symmetric_difference<T>
+{ };
 
 template <typename T>
 struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
@@ -272,14 +321,56 @@ struct to_integral_type<xor_wrapper<T>> : public to_integral_type_base<T>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(xor_wrapper<T> & input) const noexcept
+    constexpr integral_type operator()(const xor_wrapper<T> & input) const noexcept
     {
         return to_integral_type_cast(input.value);
+    }
+};
+
+template <typename T>
+struct mod_pow_2<xor_wrapper<T>>
+{
+    static constexpr auto mod = mod_pow_2<T>{};
+    std::size_t operator()(xor_wrapper<T> val, std::size_t n) const noexcept
+    {
+        return mod(val.value, n);
     }
 };
 
 }  // namespace utils
 
 }  // namespace dpf
+
+namespace std
+{
+
+/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::xor_wrapper`s
+/// @{
+
+/// @details specializes `std::numeric_limits` for `dpf::xor_wrapper<T>`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T>>
+  : public numeric_limits<T> {};
+
+/// @details specializes `std::numeric_limits` for `dpf::xor_wrapper<T> const`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> const>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::xor_wrapper<T> volatile`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> volatile>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::xor_wrapper<T> const volatile`
+template<typename T>
+class numeric_limits<dpf::xor_wrapper<T> const volatile>
+  : public numeric_limits<dpf::xor_wrapper<T>> {};
+
+/// @}
+
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_XOR_WRAPPER_HPP__

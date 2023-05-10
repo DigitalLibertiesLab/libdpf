@@ -89,8 +89,8 @@ template <typename T>
 using make_unsigned_t = typename make_unsigned<T>::type;
 
 /// @brief Make an `std::bitset` from a variadic list of `bool`s
-template <typename... Bools>
-auto make_bitset(Bools... bs)
+template <typename ...Bools>
+auto make_bitset(Bools ...bs)
 {
     std::bitset<sizeof...(bs)> ret;
     std::size_t i = 0;
@@ -107,7 +107,7 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m128i single_bit_mask<simde__m128i>(std::size_t i)
 {
-    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i <= 63), uint64_t(i >= 64)), i % 64);
+    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i >= 64), uint64_t(i <= 63)), i % 64);
 }
 
 template <>
@@ -116,10 +116,10 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
 {
-    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i <= 63),
+    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i >= 192),
+                                     uint64_t(i >= 128 && i <= 191),
                                      uint64_t(i >= 64 && i <= 127),
-                                     uint64_t(i >= 127 && i <= 191),
-                                     uint64_t(i >= 192)), i % 64);
+                                     uint64_t(i <= 63)), i % 64);
 }
 
 template <typename ExteriorT, typename InteriorT>
@@ -133,22 +133,22 @@ template <> simde__m128i to_exterior_node<simde__m128i, simde__m256i>(simde__m25
 template <typename T>
 struct bitlength_of
   : public std::integral_constant<std::size_t,
-        std::numeric_limits<T>::is_specialized ? 
-            std::numeric_limits<T>::digits
+        std::is_integral_v<T> ?
+            // we cannot leverage `std::make_unsigned_t` here since `T` might
+            // not be an integral type at all (i.e., this ternary might take
+            // the other path); thus, we resort to a bit of a hack.
+            // If `T==bool`, then `digits==1`; otherwise, if `T` is a signed
+            // integral type, then `digits==bitlength-1`; otherwise if, `T` is
+            // an unsigned integral type, then `digits==bitlength`; otherwise,
+            // we take the other branch.
+            //
+            // We want each of these to return the `bitlength`. So we add
+            // `CHAR_BIT-1` so that `bool` maps to `8`, signed types with
+            // `8l-1` digits map to `8l+6`, and unsigned types with `8l`
+            // digits map to `8l+7`. We then use integer division and
+            // multiplication to round down to the nearest multiple of `8`.
+            ((static_cast<unsigned int>(std::numeric_limits<T>::digits)+CHAR_BIT-1)/CHAR_BIT)*CHAR_BIT
           : CHAR_BIT * sizeof(T)> { };
-
-// template <typename T>
-// struct bitlength_of
-//   : public std::integral_constant<std::size_t,
-//         std::conditional_t<std::numeric_limits<T>::is_specialized,
-//             std::conditional_t<std::numeric_limits<T>::is_signed,
-//                 std::numeric_limits<make_unsigned_t<T>>::digits,
-//                 std::numeric_limits<T>::digits
-//             >,
-//             CHAR_BIT * sizeof(T)
-//         >
-//     >
-// { };
 
 template <typename T>
 static constexpr std::size_t bitlength_of_v = bitlength_of<T>::value;
@@ -181,10 +181,13 @@ struct bitlength_of<std::array<T, N>>
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
 /// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(Nbits, MinBits)>
 struct integral_type_from_bitlength
 {
-    static constexpr auto effective_Nbits = std::max(Nbits, MinBits);
+    static_assert(MinBits <= MaxBits);
+    static constexpr auto effective_Nbits = std::min(std::max(Nbits, MinBits), MaxBits);
     static constexpr auto less_equal = std::less_equal<void>{};
     using type = std::conditional_t<less_equal(effective_Nbits, 128),
         std::conditional_t<less_equal(effective_Nbits, 64),
@@ -198,23 +201,30 @@ struct integral_type_from_bitlength
     void>;
 };
 
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
-using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits>::type;
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(Nbits, MinBits)>
+using integral_type_from_bitlength_t = typename integral_type_from_bitlength<Nbits, MinBits, MaxBits>::type;
 
 /// @brief the primitive integral type used to represent non integral types
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
-struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits>
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits  = std::max(std::size_t(128), MinBits)>
+struct nonvoid_integral_type_from_bitlength : public integral_type_from_bitlength<Nbits, MinBits, MaxBits>
 {
-    static_assert(Nbits && Nbits <= 128, "representation must fit in 128 bits");
+    static_assert(Nbits && Nbits <= MaxBits, "representation must fit in 128 bits");
 };
 
-template <std::size_t Nbits, std::size_t MinBits = Nbits>
-using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits>::type;
+template <std::size_t Nbits,
+          std::size_t MinBits = Nbits,
+          std::size_t MaxBits = std::max(std::size_t(128), MinBits)>
+using nonvoid_integral_type_from_bitlength_t = typename nonvoid_integral_type_from_bitlength<Nbits, MinBits, MaxBits>::type;
 
 template <typename T>
 struct to_integral_type_base
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
+    // Select integer type larger than or equal to size of std::size_t
     using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
     static_assert(!std::is_void_v<integral_type>, "cannot convert to void type");
 };
@@ -231,11 +241,32 @@ struct to_integral_type : public to_integral_type_base<T>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(T & input) const noexcept
+    constexpr integral_type operator()(const T & input) const noexcept
     {
         return static_cast<integral_type>(static_cast<T_integral_type>(input));
     }
 };
+
+template <typename T>
+struct make_from_integral_value
+{
+    using T_integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
+    using integral_type = std::conditional_t<std::is_void_v<T_integral_type>, simde_uint128, T_integral_type>;
+    constexpr T operator()(integral_type val) const noexcept
+    {
+        return T{val};
+    }
+};
+
+template <typename DpfKey,
+          typename InputT = typename DpfKey::input_type,
+          typename IntegralT = typename DpfKey::integral_type>
+static constexpr IntegralT get_node_mask(InputT mask, std::size_t level_index)
+{
+    using dpf_type = DpfKey;
+    constexpr auto to_int = to_integral_type<InputT>{};
+    return static_cast<IntegralT>(to_int(mask) >> (level_index-1 + dpf_type::lg_outputs_per_leaf));
+}
 
 template <typename DpfKey,
           typename InputT = typename DpfKey::input_type,
@@ -271,6 +302,15 @@ static constexpr std::size_t get_nodes_in_interval(InputT from, InputT to)
     return get_nodes_in_interval_impl(get_from_node<DpfKey, InputT, IntegralT>(from),
         get_to_node<DpfKey, InputT, IntegralT>(to));
 }
+
+template <typename T>
+struct mod_pow_2
+{
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val % (1ul << n));
+    }
+};
 
 template <typename T>
 struct msb_of
@@ -362,24 +402,6 @@ struct countl_zero<simde__m256i>
     }
 };
 
-template <typename T>
-struct is_xor_wrapper : std::false_type {};
-
-template <typename T>
-static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
-
-template <typename T>
-auto data(T & bar)
-{
-    return std::data(bar);
-}
-
-template <typename T>
-auto data(T * bar)
-{
-    return bar;
-}
-
 // template <>
 // struct countl_zero<simde__m512i>
 // {
@@ -401,6 +423,85 @@ auto data(T * bar)
 //     }
 // };
 HEDLEY_PRAGMA(GCC diagnostic pop)
+
+template <typename T>
+struct is_xor_wrapper : std::false_type {};
+
+template <typename T>
+static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
+
+template <typename T>
+auto data(T & bar)
+{
+    return std::data(bar);
+}
+
+template <typename T>
+auto data(T * bar)
+{
+    return bar;
+}
+
+template <typename T, typename ...Ts>
+HEDLEY_ALWAYS_INLINE
+constexpr auto make_tuple(T && t, Ts && ...ts) noexcept
+{
+    if constexpr(sizeof...(Ts) == 0) { return std::forward<T>(t); }
+    else { return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...); }
+}
+
+template <typename>
+struct is_tuple
+  : std::false_type {};
+
+template <typename ...Ts>
+struct is_tuple<std::tuple<Ts...>>
+  : std::true_type { };
+
+template <typename T>
+static constexpr bool is_tuple_v = is_tuple<T>::value;
+
+template <std::size_t I, typename T>
+auto & get(T & t)
+{
+    if constexpr(I == 0 && is_tuple_v<T> == false)
+    {
+        // if 0th value requested, return it --- even if `t` isn't a tuple
+        return t;
+    }
+    else 
+    {
+        // otherwise, just invoke `std::get<I>(t)` and let it succeed or fail
+        // as it may
+        return std::get<I>(t);
+    }
+}
+
+template <typename InteriorNodeT,
+          std::size_t Depth>
+auto get_common_part_hash(const std::array<InteriorNodeT, Depth> & words, const std::array<uint8_t, Depth> & advice)
+{
+    static int ret = 0;
+    return InteriorNodeT{ret++};
+}
+
+template <typename DpfKey>
+auto get_common_part_hash(const DpfKey & dpf)
+{
+    return get_common_part_hash(dpf.correction_words, dpf.correction_advice);
+}
+
+template <typename OutputT, typename Enable = void>
+struct has_operators_plus_minus : public std::false_type { };
+
+template <typename OutputT>
+struct has_operators_plus_minus<OutputT,
+    std::enable_if_t<std::conjunction_v<std::is_member_pointer<decltype(&OutputT::operator+)>,
+                                        std::is_member_pointer<decltype(&OutputT::operator-)>>, void>>
+  : public std::true_type { };
+
+template <typename OutputT>
+static constexpr bool has_operators_plus_minus_v = has_operators_plus_minus<OutputT>::value;
 
 }  // namespace utils
 

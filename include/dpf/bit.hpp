@@ -81,7 +81,7 @@ static constexpr dpf::bit to_bit(bool value) noexcept
 ///          `static_cast<dpf::bit>(1)` if `value==1`
 /// @throws std::domain_error if `value != zero && value != one`
 template <typename CharT,
-          class Traits = std::char_traits<CharT>>
+          typename Traits = std::char_traits<CharT>>
 HEDLEY_CONST
 HEDLEY_ALWAYS_INLINE
 static constexpr dpf::bit to_bit(
@@ -106,9 +106,9 @@ static constexpr dpf::bit to_bit(
 /// @param zero character to use to represent `false`/`0` (default: ``CharT('0')``)
 /// @param one character to use to represent `true`/`1` (default: ``CharT('1')``)
 /// @return `(value == 0) ? zero : one`
-template <class CharT = char,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+template <typename CharT = char,
+          typename Traits = std::char_traits<CharT>,
+          typename Allocator = std::allocator<CharT>>
 static std::basic_string<CharT, Traits, Allocator> to_string(
     dpf::bit value,
     CharT zero = CharT('0'),
@@ -132,8 +132,8 @@ static std::basic_string<CharT, Traits, Allocator> to_string(
 /// @param os a character output stream
 /// @param value the `dpf::bit` to insert into the output stream
 /// @return `os`
-template <class CharT,
-          class Traits>
+template <typename CharT,
+          typename Traits>
 std::basic_ostream<CharT, Traits> &
 operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 {
@@ -151,8 +151,8 @@ operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 /// @param value the `dpf::bit` to extract from the input stream
 /// @return `is`
 /// @throws std::domain_error if `value != zero && value != one`
-template <class CharT,
-          class Traits>
+template <typename CharT,
+          typename Traits>
 std::basic_istream<CharT, Traits> &
 operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 {
@@ -174,6 +174,15 @@ namespace utils
 template <>
 struct bitlength_of<dpf::bit>
   : public std::integral_constant<std::size_t, 1> { };
+
+template <>
+struct make_from_integral_value<dpf::bit>
+{
+    constexpr dpf::bit operator()(bool val) const noexcept
+    {
+        return val ? dpf::bit::one : dpf::bit::zero;
+    }
+};
 
 }  // namespace utils
 

@@ -26,38 +26,53 @@ namespace dpf
 template <typename InteriorPRG>
 using root_sampler_t = std::add_pointer_t<typename InteriorPRG::block_type()>;
 
-template <class InteriorPRG,
-          class ExteriorPRG,
+template <typename InteriorPRG,
+          typename ExteriorPRG,
           typename InputT,
           typename OutputT,
-          typename... OutputTs>
+          typename ...OutputTs>
 struct dpf_key
 {
   public:
     using interior_prg = InteriorPRG;
     using interior_node = typename InteriorPRG::block_type;
+
     using exterior_prg = ExteriorPRG;
     using exterior_node = typename ExteriorPRG::block_type;
+
     using input_type = InputT;
     using integral_type = utils::integral_type_from_bitlength_t<utils::bitlength_of_v<input_type>, utils::bitlength_of_v<std::size_t>>;
+
     using outputs_tuple = std::tuple<OutputT, OutputTs...>;
+    template <std::size_t I>
+    using output_type = std::tuple_element_t<I, outputs_tuple>;
+
     using concrete_outputs_tuple
         = std::tuple<concrete_type_t<OutputT>, concrete_type_t<OutputTs>...>;
+    template <std::size_t I>
+    using concrete_output_type = std::tuple_element_t<I, concrete_outputs_tuple>;
+
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using leaf_tuple = dpf::leaf_tuple_t<exterior_node, OutputT, OutputTs...>;
     using beaver_tuple = dpf::beaver_tuple_t<exterior_node, OutputT, OutputTs...>;
 HEDLEY_PRAGMA(GCC diagnostic pop)
+
     static constexpr std::size_t outputs_per_leaf = dpf::outputs_per_leaf_v<OutputT, exterior_node>;
     static constexpr std::size_t lg_outputs_per_leaf = dpf::lg_outputs_per_leaf_v<OutputT, exterior_node>;
     static constexpr std::size_t depth
         = utils::bitlength_of_v<input_type> - lg_outputs_per_leaf;
     static constexpr auto msb_mask = utils::msb_of_v<input_type>;
 
+    static_assert(((dpf::utils::bitlength_of_v<OutputT> == dpf::utils::bitlength_of_v<OutputTs>) && ...),
+        "all output types must be the same length");
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,
         "all output types must be trivially copyable");
-    static_assert(std::has_unique_object_representations_v<input_type>);
+    static_assert(std::conjunction_v<std::is_standard_layout<OutputT>,
+                                     std::is_standard_layout<OutputTs>...>,
+        "all output types must be standard layout");
+    // static_assert(std::has_unique_object_representations_v<input_type>);
 
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node root_,
@@ -71,7 +86,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         mutable_beaver_tuple{std::forward<beaver_tuple>(beavers_)},
         root{root_},
         correction_words{correction_words_},
-        correction_advice{correction_advice_}
+        correction_advice{correction_advice_},
+        common_part_hash{utils::get_common_part_hash(correction_words, correction_advice)}
     { }
     dpf_key(const dpf_key &) = delete;
     dpf_key(dpf_key &&) = default;
@@ -88,6 +104,7 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
+    const interior_node common_part_hash;
 
     template <typename PeerT,
             typename ValueT,
@@ -307,9 +324,12 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         static_assert(std::is_same_v<OutputType, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>);
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         auto my_output = std::make_unique<OutputType>(output);
         auto peer_output = std::make_unique<OutputType>();
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 #include <asio/yield.hpp>
         return asio::async_compose<
@@ -386,25 +406,27 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             token, peer);
     }
 
-
     template <std::size_t I = 0,
             typename OutputType,
             typename StreamT,
             typename CompletionToken>
     auto async_assign_leaf(StreamT & peer, const OutputType & output, CompletionToken && token)
     {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         using leaf_type = std::tuple_element_t<I, leaf_tuple>;
         using output_type = concrete_type_t<std::tuple_element_t<I, outputs_tuple>>;
         static_assert(std::is_same_v<OutputType, output_type>);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
 #include <asio/yield.hpp>
         return asio::async_compose<
             CompletionToken, void(asio::error_code)>(
                 [
                     &peer,
-                    &wildcard_mask = this->wildcard_mask,
+                    &wildcard_mask = this->mutable_wildcard_mask,
                     &output,
-                    &leaf = std::get<I>(this->mutable_exterior_cw),
+                    &leaf = std::get<I>(this->mutable_leaf_tuple),
                     &beaver = std::get<I>(this->mutable_beaver_tuple),
                     coro = asio::coroutine()
                 ]
@@ -465,7 +487,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         return mutable_leaf_tuple;
     }
 
-
     template <std::size_t I = 0>
     HEDLEY_ALWAYS_INLINE
     const auto & beaver() const
@@ -514,17 +535,40 @@ static T basic_uniform_root_sampler()
     return ret;
 }
 
-template <class InteriorPRG = dpf::prg::aes128,
-          class ExteriorPRG = InteriorPRG,
+namespace utils
+{
+
+template <typename InteriorPRG,
+          typename ExteriorPRG,
+          typename InputT,
+          typename OutputT,
+          typename ...OutputTs>
+struct dpf_type
+{
+    using type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
+                                   OutputT, OutputTs...>;
+};
+
+template <typename InteriorPRG,
+          typename ExteriorPRG,
+          typename InputT,
+          typename OutputT,
+          typename ...OutputTs>
+using dpf_type_t = typename dpf_type<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>::type;
+
+}  // namespace utils
+
+template <typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
           dpf::root_sampler_t<InteriorPRG> RootSampler
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
-          typename OutputT,
-          typename... OutputTs>
-auto make_dpf(InputT x, OutputT y, OutputTs... ys)
+          typename OutputT = dpf::bit,
+          typename ...OutputTs>
+auto make_dpf(InputT x, OutputT y = dpf::bit::one, OutputTs ...ys)
 {
-    using dpf_type = dpf_key<InteriorPRG, ExteriorPRG, InputT,
-                                   OutputT, OutputTs...>;
+    using dpf_type = utils::dpf_type_t<InteriorPRG, ExteriorPRG, InputT,
+                                       OutputT, OutputTs...>;
     using interior_node = typename dpf_type::interior_node;
 
     constexpr auto depth = dpf_type::depth;
@@ -589,14 +633,14 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
 template <typename PeerT,
           typename CompletionToken,
-          class InteriorPRG = dpf::prg::aes128,
-          class ExteriorPRG = InteriorPRG,
+          typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
           dpf::root_sampler_t<InteriorPRG> RootSampler
               = &dpf::basic_uniform_root_sampler,
           typename InputT,
           typename OutputT,
-          typename... OutputTs>
-auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y, OutputTs... ys)
+          typename ...OutputTs>
+auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y, OutputTs ...ys)
 {
     auto ds = dpf::make_dpf(x, y, ys...);
     return std::make_tuple(
@@ -604,6 +648,16 @@ auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, Input
         std::move(ds.second),
         ds.first.async_send_dpf(peer0, token),
         ds.second.async_send_dpf(peer1, token));
+}
+
+template <typename InteriorPRG = dpf::prg::aes128,
+          typename ExteriorPRG = InteriorPRG,
+          typename InputT,
+          typename OutputT = dpf::bit,
+          typename ...OutputTs>
+auto deduce_dpf_type(InputT x, OutputT y = dpf::bit::one, OutputTs ...ys)
+{
+    return utils::dpf_type<InteriorPRG, ExteriorPRG, InputT, OutputT, OutputTs...>{};
 }
 
 }  // namespace dpf

@@ -41,7 +41,6 @@ struct adl_serializer<beaver<true, NodeT, OutputT, outputs_per_leaf>>
     }
 };
 
-
 template <>
 struct adl_serializer<simde__m128i>
 {

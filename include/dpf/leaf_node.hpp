@@ -76,8 +76,8 @@ template <typename OutputT,
           typename InputT>
 constexpr std::size_t offset_within_block(InputT x) noexcept
 {
-    constexpr auto to_int = utils::to_integral_type<InputT>{};
-    return static_cast<std::size_t>(to_int(x) % dpf::outputs_per_leaf_v<OutputT, NodeT>);
+    constexpr auto mod = utils::mod_pow_2<InputT>{};
+    return mod(x, dpf::lg_outputs_per_leaf_v<OutputT, NodeT>);
 }
 
 template <std::size_t I,
@@ -141,7 +141,6 @@ template <bool isWildcard,
           typename OutputT,
           std::size_t outputs_per_leaf = outputs_per_leaf_v<OutputT, NodeT>>
 struct beaver final { };
-
 
 template <typename NodeT,
           typename OutputT>
@@ -313,7 +312,7 @@ template <typename ExteriorPRG,
           typename ...OutputTs,
           typename Indices = std::make_index_sequence<1+sizeof...(OutputTs)>>
 auto make_leaves(InputT x, const ExteriorBlock & seed0, const ExteriorBlock & seed1,
-    bool sign, OutputT y, OutputTs... ys)
+    bool sign, OutputT y, OutputTs ...ys)
 {
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
@@ -338,32 +337,31 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::pair<
         std::pair<leaf_type, beaver_type>,
         std::pair<leaf_type, beaver_type> > return_tuple;
-HEDLEY_PRAGMA(GCC diagnostic pop)
 
     // N.B.: Despite the nesting, the loops below advance in lockstep, making
     // only a single pass over each of the tuples being looped over
 
     // loop over the original inputs (to interrogate their output_types)
-    std::apply([x, &return_tuple, &leaves](auto && ...output_types)
+    std::apply([x, &sign, &return_tuple, &leaves](auto && ...output_types)
     {
         // loop over the elements of `leaves`, our "template" for a leaf tuple
-        std::apply([x, &return_tuple, &output_types...](auto && ...args0)
+        std::apply([x, &sign, &return_tuple, &output_types...](auto && ...args0)
         {
             // and also over the elements of `return_tuple.first.first`, the first leaf tuple
-            std::apply([x, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
+            std::apply([x, &sign, &return_tuple, &output_types..., &args0...](auto && ...leaves0)
             {
                 // and also `return_tuple.second.first`, the secound leaf tuple
-                std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
+                std::apply([x, &sign, &return_tuple, &output_types..., &args0..., &leaves0...](auto && ...leaves1)
                 {
                     // plus `return_tuple.first.second`, the first beaver tuple
-                    std::apply([x, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
+                    std::apply([x, &sign, &return_tuple, &output_types..., &args0..., &leaves0..., &leaves1...](auto && ...beavers0)
                     {
                         // and `return_tuple.second.second`, the secound beaver tuple
-                        std::apply([x, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
+                        std::apply([x, &sign, &output_types..., &args0..., &leaves0..., &leaves1..., &beavers0...](auto && ...beavers1)
                         {
                             // lambda to decide whether to copy the leaf (for concrete output_types)
                             // or whether to secret share it (for wildcard output_types)
-                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1)
+                            ([](auto & x, auto & type, auto & leaf, auto & leaf0, auto & leaf1, auto & beaver0, auto & beaver1, bool sign)
                             {
                                 using output_type = typename std::remove_reference_t<decltype(type)>;
                                 if constexpr(dpf::is_wildcard_v<output_type>)
@@ -382,7 +380,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                         }
                                         else
                                         {
-                                            vector = make_naked_leaf<node_type>(x, concrete_type(1));
+                                            vector = make_naked_leaf<node_type>(x, concrete_type(2*sign-1));
                                         }
 
                                         uniform_fill(beaver0.output_blind);
@@ -394,9 +392,9 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                         beaver0.blinded_vector = dpf::add_leaf<output_type>(vector, beaver1.vector_blind);
                                         beaver1.blinded_vector = dpf::add_leaf<output_type>(vector, beaver0.vector_blind);
 
-                                        leaf0= dpf::add_leaf<output_type>(leaf0,
+                                        leaf0 = dpf::add_leaf<output_type>(leaf0,
                                             dpf::multiply_leaf(beaver0.vector_blind, beaver1.output_blind));
-                                        leaf1= dpf::add_leaf<output_type>(leaf1,
+                                        leaf1 = dpf::add_leaf<output_type>(leaf1,
                                             dpf::multiply_leaf(beaver1.vector_blind, beaver0.output_blind));
                                     }
                                 }
@@ -406,13 +404,15 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
                                     leaf0 = leaf;
                                     leaf1 = leaf;
                                 }
-                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1), ...);
+                            }(x, output_types, args0, leaves0, leaves1, beavers0, beavers1, sign), ...);
                         }, return_tuple.second.second);
                     }, return_tuple.first.second);
                 }, return_tuple.second.first);
             }, return_tuple.first.first);
         }, leaves);
     }, std::make_tuple(y, ys...));
+
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     return return_tuple;
 }

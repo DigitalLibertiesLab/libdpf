@@ -81,8 +81,8 @@ namespace alphabets
 template <std::size_t N,
           typename CharT = char,
           const CharT * Alphabet = alphabets::printable_ascii,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+          typename Traits = std::char_traits<CharT>,
+          typename Allocator = std::allocator<CharT>>
 class basic_fixed_length_string
 {
   public:
@@ -135,7 +135,8 @@ class basic_fixed_length_string
     ///          initialized to the integer representation of `str`.
     /// @param str the string to initialize with
     constexpr
-    basic_fixed_length_string(string_view str)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(string_view str)  // NOLINT(runtime/explicit)
     noexcept
       : val{encode_(str)} { }
 
@@ -144,14 +145,10 @@ class basic_fixed_length_string
     ///          initialized to the integer representation of `str`.
     /// @param str the string to initialize with
     constexpr
-    basic_fixed_length_string(const CharT * str)  // NOLINT
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(const CharT * str)  // NOLINT(runtime/explicit)
     noexcept
       : val{encode_(str)} { }
-
-    constexpr
-    basic_fixed_length_string(integral_type val)
-    noexcept
-      : val{val} { }
 
     /// @}
 
@@ -166,22 +163,6 @@ class basic_fixed_length_string
     {
         val = encode_(str);
         return *this;
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator+(basic_fixed_length_string rhs) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val + rhs.val)};
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator-(basic_fixed_length_string rhs) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val - rhs.val)};
     }
 
     HEDLEY_CONST
@@ -205,15 +186,49 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     constexpr basic_fixed_length_string operator>>(std::size_t shift_amount) const noexcept
     {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val >> shift_amount)};
+        return basic_fixed_length_string{static_cast<integral_type>(this->reduced_value() >> shift_amount)};
     }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr basic_fixed_length_string & operator>>=(std::size_t shift_amount) noexcept
     {
-        this->val >>= shift_amount;
+        this->val = this->reduced_value() >> shift_amount;
         return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator++() noexcept
+    {
+        val += 1;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator++(int) noexcept
+    {
+        auto ret = *this;
+        this->operator++();
+        return ret;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string & operator--() noexcept
+    {
+        val -= 1;
+        return *this;
+    }
+
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator--(int) noexcept
+    {
+        auto ret = *this;
+        this->operator--();
+        return ret;
     }
 
     HEDLEY_CONST
@@ -224,9 +239,24 @@ class basic_fixed_length_string
         return basic_fixed_length_string{static_cast<integral_type>(this->val & rhs.val)};
     }
 
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr bool operator==(const basic_fixed_length_string & rhs) const noexcept
+    {
+        return this->reduced_value() == rhs.reduced_value();
+    }
+
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator~() const noexcept
+    {
+        return basic_fixed_length_string{static_cast<integral_type>(~this->val)};
+    }
+
     constexpr operator bool() const noexcept
     {
-        return static_cast<bool>(static_cast<integral_type>(this->val));
+        return static_cast<bool>(this->reduced_value());
     }
 
     /// @brief copy assignment
@@ -271,7 +301,7 @@ class basic_fixed_length_string
     HEDLEY_ALWAYS_INLINE
     constexpr explicit operator integral_type() const noexcept
     {
-        return val;
+        return this->reduced_value();
     }
 
     HEDLEY_CONST
@@ -282,7 +312,18 @@ class basic_fixed_length_string
         return val;
     }
 
+    constexpr integral_type reduced_value() const
+    {
+        return val & modulo_mask;
+    }
+
   private:
+    constexpr
+    // cppcheck-suppress noExplicitConstructor
+    basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
+    noexcept
+      : val{val} { }
+
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer
     /// @throws `std::length_error` if `str` exceeds `max_length`
@@ -292,7 +333,7 @@ class basic_fixed_length_string
     static constexpr integral_type encode_(string_view str)
     {
         constexpr auto npos = string_view::npos;
-        using namespace std::string_literals;
+        using std::string_literals::operator""s;
 
         utils::constexpr_maybe_throw<std::length_error>(
             str.size() > max_length,
@@ -309,6 +350,9 @@ class basic_fixed_length_string
         }
         return val;
     }
+
+    /// @brief bitmask used for performing reductions modulo `2^bits`
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - bits;
 
     /// @brief the `integral_type` used to store the integer representation of
     ///        this string
@@ -331,7 +375,7 @@ class basic_fixed_length_string
     operator<<(std::basic_ostream<CharT, Traits> & os,
         const basic_fixed_length_string & k)
     {
-        return os << k.val;
+        return os << k.reduced_value();
     }
 
     /// @brief performs stream input on a `dpf::basic_fixed_length_string`
@@ -349,6 +393,38 @@ class basic_fixed_length_string
     }
 
     /// @}
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator<(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.reduced_value() < rhs.reduced_value();
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator<=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.reduced_value() <= rhs.reduced_value();
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator>(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.reduced_value() > rhs.reduced_value();
+    }
+
+    HEDLEY_CONST
+    HEDLEY_ALWAYS_INLINE
+    friend constexpr bool operator>=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
+    {
+        return lhs.reduced_value() >= rhs.reduced_value();
+    }
+
+    friend struct utils::msb_of<basic_fixed_length_string>;
+    friend struct utils::mod_pow_2<basic_fixed_length_string>;
+    friend struct utils::make_from_integral_value<basic_fixed_length_string>;
 };  // class dpf::basic_fixed_length_string
 
 /// @brief instantiation of the `dpf::basic_fixed_length_string` class that
@@ -366,8 +442,8 @@ using keyword = basic_fixed_length_string<N, char, Alphabet>;
 template <std::size_t N,
           typename CharT,
           const CharT * Alphabet,
-          class Traits = std::char_traits<CharT>,
-          class Allocator = std::allocator<CharT>>
+          typename Traits = std::char_traits<CharT>,
+          typename Allocator = std::allocator<CharT>>
 static constexpr std::basic_string<CharT, Traits, Allocator>
 to_string(basic_fixed_length_string<N, CharT, Alphabet, Traits, Allocator>
     str) noexcept
@@ -382,8 +458,8 @@ namespace utils
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct bitlength_of<
     dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
   : public std::integral_constant<std::size_t,
@@ -393,8 +469,8 @@ struct bitlength_of<
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
@@ -407,8 +483,8 @@ struct msb_of<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 template <std::size_t N,
           typename CharT,
           const CharT * Alpha,
-          class Traits,
-          class Alloc>
+          typename Traits,
+          typename Alloc>
 struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
 {
     using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
@@ -424,8 +500,122 @@ struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT,
     }
 };
 
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    std::size_t operator()(T val, std::size_t n) const noexcept
+    {
+        return static_cast<std::size_t>(val.val % (1ul << n));
+    }
+};
+
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+struct make_from_integral_value<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    using integral_type = integral_type_from_bitlength_t<bitlength_of_v<T>>;
+    constexpr T operator()(integral_type val) const noexcept
+    {
+        return T{val};
+    }
+};
+
 }  // namespace utils
 
 }  // namespace dpf
+
+namespace std
+{
+
+/// @brief specializes `std::numeric_limits` for CV-qualified `dpf::keyword`s
+/// @{
+
+/// @details specializes `std::numeric_limits` for `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
+{
+  public:
+    using keyword_type = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
+    static constexpr bool is_specialized = true;
+    static constexpr bool is_signed = false;
+    static constexpr bool is_integer = true;
+    static constexpr bool is_exact = true;
+    static constexpr bool has_infinity = false;
+    static constexpr bool has_quiet_NaN = false;
+    static constexpr bool has_signaling_NaN = false;
+    static constexpr std::float_denorm_style has_denorm = std::denorm_absent;
+    static constexpr bool has_denorm_loss = false;
+    static constexpr std::float_round_style round_style = std::round_toward_zero;
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = true;
+    static constexpr int digits = keyword_type::bits;
+    static constexpr int digits10 = keyword_type::bits * std::log10(2);  //< correct if `keyword_type::bits<129`
+    static constexpr int max_digits10 = 0;
+    static constexpr int radix = 2;
+    static constexpr int min_exponent = 0;
+    static constexpr int max_exponent = 0;
+    static constexpr int min_exponent10 = 0;
+    static constexpr int max_exponent10 = 0;
+    static constexpr bool traps
+        = std::numeric_limits<typename keyword_type::integral_type>::traps;
+    static constexpr bool tinyness_before = false;
+
+    static constexpr keyword_type min() noexcept { return keyword_type{""}; }
+    static constexpr keyword_type lowest() noexcept { return keyword_type{""}; }
+    static constexpr keyword_type max() noexcept { return ~keyword_type{""}; }
+    static constexpr keyword_type epsilon() noexcept { return 0; }
+    static constexpr keyword_type round_error() noexcept { return 0; }
+    static constexpr keyword_type infinity() noexcept { return 0; }
+    static constexpr keyword_type quiet_NaN() noexcept { return 0; }
+    static constexpr keyword_type signaling_NaN() noexcept { return 0; }
+    static constexpr keyword_type denorm_min() noexcept { return 0; }
+};
+
+/// @details specializes `std::numeric_limits` for `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> volatile`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> volatile>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @details specializes `std::numeric_limits` for
+///          `dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const volatile`
+template <std::size_t N,
+          typename CharT,
+          const CharT * Alpha,
+          typename Traits,
+          typename Alloc>
+class numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc> const volatile>
+  : public numeric_limits<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>> {};
+
+/// @}
+
+}  // namespace std
 
 #endif  // LIBDPF_INCLUDE_DPF_KEYWORD_HPP__

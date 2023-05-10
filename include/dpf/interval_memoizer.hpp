@@ -24,6 +24,7 @@ struct interval_memoizer_base
     using integral_type = typename DpfKey::integral_type;
     using return_type = ReturnT;
     using iterator_type = return_type;
+    using node_type = typename DpfKey::interior_node;
 
     // level 0 should access the root
     // level goes up to (and including) depth
@@ -37,7 +38,8 @@ struct interval_memoizer_base
     {
         static constexpr auto complement_of = std::bit_not{};
         if (dpf_.has_value() == false
-            || std::addressof(dpf_->get()) != std::addressof(dpf)
+            || std::memcmp(&dpf_root_, &dpf.root, sizeof(node_type)) != 0
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash, sizeof(node_type)) != 0
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
@@ -48,6 +50,8 @@ struct interval_memoizer_base
 
             this->operator[](0)[0] = dpf.root;
             dpf_ = std::cref(dpf);
+            dpf_root_ = dpf.root;
+            dpf_common_part_hash_ = dpf.common_part_hash;
             from_ = new_from;
             to_ = new_to;
             level_index = 1;
@@ -113,6 +117,8 @@ struct interval_memoizer_base
 
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
+    node_type dpf_root_;
+    node_type dpf_common_part_hash_;
     std::optional<integral_type> from_;
     std::optional<integral_type> to_;
 };
@@ -153,7 +159,9 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
       : parent::interval_memoizer_base(output_len),
         pivot{std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2)},
         buf{alloc.allocate_unique_ptr(pivot+((output_len+2)>>1))}
-    { }
+    {
+        if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
+    }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -193,6 +201,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = std::add_pointer_t<node_type>;
+    using integral_type = typename DpfKey::integral_type;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
@@ -202,7 +211,9 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
       : parent::interval_memoizer_base(output_len),
         level_endpoints{initialize_endpoints(output_len)},
         buf{alloc.allocate_unique_ptr(level_endpoints[depth] + output_len)}
-    { }
+    {
+        if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
+    }
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -242,12 +253,12 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     //   for the number of nodes on each level.
     // Also note that at depth (from the root) i, there can't be more than 2^i
     //   nodes hence the `min()` function call.
-    static constexpr auto initialize_endpoints(std::size_t len)
+    static constexpr auto initialize_endpoints(integral_type len)
     {
         std::array<std::size_t, depth+1> level_endpoints{0};
         for (std::size_t level=depth; level > 0; --level)
         {
-            len = std::min(len+2 >> 1, std::size_t(1) << level-1);
+            len = std::min(len+2 >> 1, integral_type(1) << level-1);
             level_endpoints[level] = len;
         }
 
@@ -284,19 +295,63 @@ auto make_interval_memoizer(InputT from, InputT to)
 }  // namespace dpf::detail
 
 template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_basic_interval_memoizer(const DpfKey &, InputT from = 0,
-    InputT to = std::numeric_limits<InputT>::max())
+          typename InputT>
+inline auto make_basic_interval_memoizer(InputT from, InputT to)
 {
     return detail::make_interval_memoizer<DpfKey, basic_interval_memoizer<DpfKey>, InputT>(from, to);
 }
 
 template <typename DpfKey,
-          typename InputT = typename DpfKey::input_type>
-auto make_full_tree_interval_memoizer(const DpfKey &, InputT from = 0,
-    InputT to = std::numeric_limits<InputT>::max())
+          typename InputT>
+inline auto make_basic_interval_memoizer(const DpfKey &, InputT from, InputT to)
+{
+    return make_basic_interval_memoizer<DpfKey>(from, to);
+}
+
+template <typename DpfKey>
+inline auto make_basic_full_memoizer()
+{
+    using input_type = typename DpfKey::input_type;
+
+    return make_basic_interval_memoizer<DpfKey>(
+        std::numeric_limits<input_type>::min(),
+        std::numeric_limits<input_type>::max());
+}
+
+template <typename DpfKey>
+inline auto make_basic_full_memoizer(const DpfKey &)
+{
+    return make_basic_full_memoizer<DpfKey>();
+}
+
+template <typename DpfKey,
+          typename InputT>
+inline auto make_full_tree_interval_memoizer(InputT from, InputT to)
 {
     return detail::make_interval_memoizer<DpfKey, full_tree_interval_memoizer<DpfKey>, InputT>(from, to);
+}
+
+template <typename DpfKey,
+          typename InputT>
+inline auto make_full_tree_interval_memoizer(const DpfKey &, InputT from, InputT to)
+{
+    return make_full_tree_interval_memoizer<DpfKey>(from, to);
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_full_memoizer()
+{
+    using input_type = typename DpfKey::input_type;
+
+    return make_full_tree_interval_memoizer<DpfKey>(
+        std::numeric_limits<input_type>::min(),
+        std::numeric_limits<input_type>::max());
+}
+
+template <typename DpfKey>
+inline auto make_full_tree_full_memoizer(const DpfKey &)
+{
+    return make_full_tree_full_memoizer<DpfKey>();
 }
 
 }  // namespace dpf
