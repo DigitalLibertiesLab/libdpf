@@ -11,14 +11,14 @@
 ///          following helper functions:
 ///            - `advice_bits_of`: wraps an iterable type to simplify notation
 ///              for range-based loops. For example, it lets you write
-///               ```cpp
+///               \code{cpp}
 ///               for (auto b : advice_bits_of(my_iterable)) foo(b);
-///               ```
+///               \end{code}
 ///               instead of
-///               ```cpp
+///               \code{cpp}
 ///               advice_bit_iterable advice_bits{my_iterable};
 ///               for (auto b : advice_bits) foo(b);
-///               ```
+///               \endcode
 ///            - `for_each_advice_bit`: iterate through and apply a given
 ///              function to each advice bit
 ///            - `bit_array_from_advice_bits`: constructs a
