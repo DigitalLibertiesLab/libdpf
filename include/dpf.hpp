@@ -3,10 +3,14 @@
 /// @brief includes all headers needed for basic libdpf++ functionality
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see [LICENSE.md](@ref GPLv2) for details.
+///          see [LICENSE.md](@ref license) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_HPP__
 #define LIBDPF_INCLUDE_DPF_HPP__
+
+#ifdef LIBDPF_HAS_ASIO
+  #include <asio.hpp>
+#endif  // LIBDPF_HAS_ASIO
 
 #include "dpf/advice_bit_iterable.hpp"
 
@@ -32,13 +36,13 @@
 
 #include "dpf/interval_memoizer.hpp"
 
-#ifdef HAS_NLOHMANN_JSON
+#ifdef LIBDPF_HAS_NLOHMANN_JSON
   #ifndef NLOHMANN_JSON_VERSION_MAJOR
     // was told you use nlohmann::json, but it's not available!
   #else
     #include "dpf/json.hpp"
-  #endif
-#endif
+  #endif  // NLOHMANN_JSON_VERSION_MAJOR
+#endif  // LIBDPF_HAS_NLOHMANN_JSON
 
 #include "dpf/keyword.hpp"
 

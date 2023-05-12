@@ -4,7 +4,7 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see [LICENSE.md](@ref GPLv2) for details.
+///          see [LICENSE.md](@ref license) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_DPF_KEY_HPP__
 #define LIBDPF_INCLUDE_DPF_DPF_KEY_HPP__
@@ -106,362 +106,16 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     const std::array<uint8_t, depth> correction_advice;
     const interior_node common_part_hash;
 
-    template <typename PeerT,
-            typename ValueT,
-            typename CompletionToken>
-    auto async_shift_input(PeerT & peer, ValueT input, ValueT offset, CompletionToken && token)
-    {
-        auto peer_share = std::make_unique<ValueT>();
-
-    #include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(ValueT, asio::error_code)>(
-                [
-                    &peer,
-                    my_share = input - offset,
-                    peer_share = std::move(peer_share),
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    const asio::error_code & error = {},
-                    std::size_t = 0
-                )
-                mutable
-                {
-                    reenter (coro)
-                    {
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_share, sizeof(ValueT)),
-                            std::move(self));
-                        
-                        yield asio::async_read(peer,
-                            asio::buffer(peer_share.get(), sizeof(ValueT)),
-                            std::move(self));
-
-                        self.complete(
-                            my_share + *peer_share,
-                            error);
-                    }
-                },
-            token, peer);
-    #include <asio/unyield.hpp>
-    }
-
-    template <typename PeerT,
-            typename CompletionToken>
-    auto async_send_dpf(PeerT & peer, CompletionToken && token)
-    {
-        // auto my_leaf_tuple = std::make_unique<>();
-
-    #include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(asio::error_code)>(
-                [
-                    &peer,
-                    my_wildcard_mask = mutable_wildcard_mask.to_ullong(),
-                    my_leaf_tuple = mutable_leaf_tuple,
-                    my_root = root,
-                    my_ca = correction_advice,
-                    my_cw = correction_words,
-                    my_bvr = mutable_beaver_tuple,
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    const asio::error_code & error = {},
-                    std::size_t = 0
-                )
-                mutable
-                {
-                    reenter (coro)
-                    {
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_wildcard_mask, sizeof(my_wildcard_mask)),
-                            std::move(self));
-
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_leaf_tuple, sizeof(my_leaf_tuple)),
-                            std::move(self));
-
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_root, sizeof(my_root)),
-                            std::move(self));
-
-                        yield asio::async_write(peer,
-                            asio::buffer(my_ca.data(), sizeof(std::array<uint8_t, depth>)),
-                            std::move(self));
-
-                        yield asio::async_write(peer,
-                            asio::buffer(my_cw.data(), sizeof(std::array<interior_node, depth>)),
-                            std::move(self));
-
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_bvr, sizeof(my_bvr)),
-                            std::move(self));
-
-                        self.complete(error);
-                    }
-                },
-            token, peer);
-    #include <asio/unyield.hpp>
-    }
-
-    template < //typename OutputType,
-              typename PeerT,
-              typename CompletionToken>
-    static auto async_recv_dpf(PeerT &peer, CompletionToken &&token)
-    {
-        auto wildcard_mask_val = std::make_unique<size_t>();
-        auto leaf_tuple_val = std::make_unique<leaf_tuple>();
-        auto root_val = std::make_unique<interior_node>();
-        auto ca_val = std::make_unique<std::array<uint8_t, depth>>();
-        auto cw_val = std::make_unique<std::array<interior_node, depth>>();
-        auto bvr_tuple_val = std::make_unique<beaver_tuple>();
-
-#include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(dpf_key, asio::error_code)>(
-            [&peer,
-             wildcard_mask_val = std::move(wildcard_mask_val),
-             leaf_tuple_val = std::move(leaf_tuple_val),
-             root_val = std::move(root_val),
-             ca_val = std::move(ca_val),
-             cw_val = std::move(cw_val),
-             bvr_tuple_val = std::move(bvr_tuple_val),
-             coro = asio::coroutine()](
-                auto &self,
-                const asio::error_code &error = {},
-                std::size_t = 0) mutable
-            {
-                reenter(coro)
-                {
-                    yield asio::async_read(peer,
-                        asio::buffer(wildcard_mask_val.get(), sizeof(size_t)),
-                        std::move(self));
-
-                    yield asio::async_read(peer,
-                        asio::buffer(leaf_tuple_val.get(), sizeof(leaf_tuple)),
-                        std::move(self));
-
-                    yield asio::async_read(peer,
-                        asio::buffer(root_val.get(), sizeof(interior_node)),
-                        std::move(self));
-
-                    yield asio::async_read(peer,
-                        asio::buffer(ca_val->data(), sizeof(std::array<uint8_t, depth>)),
-                        std::move(self));
-
-                    yield asio::async_read(peer,
-                        asio::buffer(cw_val->data(), sizeof(std::array<interior_node, depth>)),
-                        std::move(self));
-
-                    yield asio::async_read(peer,
-                        asio::buffer(bvr_tuple_val.get(), sizeof(beaver_tuple)),
-                        std::move(self));
-
-                    self.complete(
-                        dpf_key(*root_val, *cw_val, *ca_val, *leaf_tuple_val, std::bitset<sizeof...(OutputTs)+1>(*wildcard_mask_val), std::move(*bvr_tuple_val)),
-                        error);
-                }
-            },
-            token, peer);
-#include <asio/unyield.hpp>
-    }
-
-    template <typename OutputType,
-              typename PeerT,
-              typename LeafT,
-              typename CompletionToken>
-    static auto async_exchange_and_reconstruct_leaf_shares(PeerT & peer,
-        const LeafT & share, CompletionToken && token)
-    {
-        auto peer_share = std::make_unique<LeafT>();
-
-#include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(LeafT, asio::error_code)>(
-                [
-                    &peer,
-                    my_share = share,
-                    peer_share = std::move(peer_share),
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    const asio::error_code & error = {},
-                    std::size_t = 0
-                )
-                mutable
-                {
-                    reenter (coro)
-                    {
-                        yield asio::async_write(peer,
-                            asio::buffer(&my_share, sizeof(LeafT)),
-                            std::move(self));
-
-                        yield asio::async_read(peer,
-                            asio::buffer(peer_share.get(), sizeof(LeafT)),
-                            std::move(self));
-
-                        self.complete(
-                            add_leaf<OutputType>(my_share, *peer_share),
-                            error);
-                    }
-                },
-            token, peer);
-#include <asio/unyield.hpp>
-    }
-
-    template <std::size_t I,
-              typename PeerT,
-              typename OutputType,
-              typename BeaverT,
-              typename CompletionToken,
-              std::enable_if_t<std::greater{}(outputs_per_leaf_v<OutputType, exterior_node>, 1), bool> = true>
-    static auto async_compute_naked_leaf_share(PeerT & peer,
-        OutputType output, const BeaverT & beaver, CompletionToken && token)
-    {
-        static_assert(std::is_same_v<OutputType, concrete_type_t<std::tuple_element_t<I, outputs_tuple>>>);
-
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
-        auto my_output = std::make_unique<OutputType>(output);
-        auto peer_output = std::make_unique<OutputType>();
-HEDLEY_PRAGMA(GCC diagnostic pop)
-
-#include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(leaf_type, asio::error_code)>(
-                [
-                    &peer,
-                    output,
-                    &output_blind = beaver.output_blind,
-                    &blinded_vector = beaver.blinded_vector,
-                    &vector_blind = beaver.vector_blind,
-                    my_output = std::move(my_output),
-                    peer_output = std::move(peer_output),
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    const asio::error_code & error = {},
-                    std::size_t = 0
-                )
-                mutable
-                {
-                    reenter (coro)
-                    {
-                        *my_output += output_blind;
-                        yield asio::async_write(peer,
-                            asio::buffer(my_output.get(), sizeof(OutputType)),
-                            std::move(self));
-
-                        yield asio::async_read(peer,
-                            asio::buffer(peer_output.get(), sizeof(OutputType)),
-                            std::move(self));
-
-                        self.complete(
-                            subtract_leaf<OutputType>(
-                                multiply_leaf(blinded_vector, output),
-                                multiply_leaf(vector_blind, *peer_output)),
-                            error);
-                    }
-                },
-            token, peer);
-#include <asio/unyield.hpp>
-    }
-
-    template <std::size_t I,
-              typename PeerT,
-              typename OutputType,
-              typename BeaverT,
-              typename CompletionToken,
-              std::enable_if_t<std::equal_to(outputs_per_leaf_v<OutputType, exterior_node>, 1), bool> = true>
-    static auto async_compute_naked_leaf_share(PeerT & peer,
-        const OutputType & output, const BeaverT & beaver, CompletionToken && token)
-    {
-        static_assert(std::is_same_v<OutputType, std::tuple_element_t<I, outputs_tuple>>);
-
-        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
-
-        return asio::async_compose<
-            CompletionToken, void(leaf_type, asio::error_code)>(
-                [
-                    &output,
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    const asio::error_code & error = {},
-                    std::size_t = 0
-                )
-                mutable
-                {
-                    leaf_type out;
-                    std::memcpy(&out, &output, sizeof(leaf_type));
-                    self.complete(out, error);
-                },
-            token, peer);
-    }
-
+#ifndef LIBDPF_HAS_ASIO
     template <std::size_t I = 0,
             typename OutputType,
             typename StreamT,
             typename CompletionToken>
-    auto async_assign_leaf(StreamT & peer, const OutputType & output, CompletionToken && token)
-    {
-HEDLEY_PRAGMA(GCC diagnostic push)
-HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-        using leaf_type = std::tuple_element_t<I, leaf_tuple>;
-        using output_type = concrete_type_t<std::tuple_element_t<I, outputs_tuple>>;
-        static_assert(std::is_same_v<OutputType, output_type>);
-HEDLEY_PRAGMA(GCC diagnostic pop)
-
-#include <asio/yield.hpp>
-        return asio::async_compose<
-            CompletionToken, void(asio::error_code)>(
-                [
-                    &peer,
-                    &wildcard_mask = this->mutable_wildcard_mask,
-                    &output,
-                    &leaf = std::get<I>(this->mutable_leaf_tuple),
-                    &beaver = std::get<I>(this->mutable_beaver_tuple),
-                    coro = asio::coroutine()
-                ]
-                (
-                    auto & self,
-                    leaf_type && leaf_buf = leaf_type{},
-                    const asio::error_code & error = {}
-                )
-                mutable
-                {
-                    reenter (coro)
-                    {
-                        if (wildcard_mask.test(I) == false)
-                        {
-                            throw std::logic_error("not a wildcard");
-                        }
-                        if (beaver.is_locked->test_and_set())
-                        {
-                            // once locked, *never* locked
-                            // (even in event of failure)
-                            throw std::logic_error("already locked");
-                        }
-
-                        yield async_compute_naked_leaf_share<I>(peer, output, beaver, std::move(self));
-                        leaf = add_leaf<OutputType>(leaf, leaf_buf);
-                        yield async_exchange_and_reconstruct_leaf_shares<OutputType>(peer, leaf, std::move(self));
-                        leaf = leaf_buf;
-                        wildcard_mask[I] = false;
-
-                        self.complete(error);
-                    }
-                },
-            token, peer);
-#include <asio/unyield.hpp>
-    }
+    auto async_assign_leaf(StreamT & peer, const OutputType & output,
+        CompletionToken && token);
+#else
+    #include "dpf_key_asio.hpp"
+#endif  // LIBDPF_HAS_ASIO
 
     HEDLEY_ALWAYS_INLINE
     bool is_wildcard(std::size_t i) const
@@ -631,24 +285,24 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             leaves1, mutable_wildcard_mask, std::move(beavers1)});
 }  // make_dpf
 
-template <typename PeerT,
-          typename CompletionToken,
-          typename InteriorPRG = dpf::prg::aes128,
-          typename ExteriorPRG = InteriorPRG,
-          dpf::root_sampler_t<InteriorPRG> RootSampler
-              = &dpf::basic_uniform_root_sampler,
-          typename InputT,
-          typename OutputT,
-          typename ...OutputTs>
-auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y, OutputTs ...ys)
-{
-    auto ds = dpf::make_dpf(x, y, ys...);
-    return std::make_tuple(
-        std::move(ds.first),
-        std::move(ds.second),
-        ds.first.async_send_dpf(peer0, token),
-        ds.second.async_send_dpf(peer1, token));
-}
+// template <typename PeerT,
+//           typename CompletionToken,
+//           typename InteriorPRG = dpf::prg::aes128,
+//           typename ExteriorPRG = InteriorPRG,
+//           dpf::root_sampler_t<InteriorPRG> RootSampler
+//               = &dpf::basic_uniform_root_sampler,
+//           typename InputT,
+//           typename OutputT,
+//           typename ...OutputTs>
+// auto make_dpf_send(PeerT & peer0, PeerT & peer1, CompletionToken && token, InputT x, OutputT y = dpf::bit::one, OutputTs ...ys)
+// {
+//     auto [dpf0, dpf1] = dpf::make_dpf(x, y, ys...);
+//     return std::make_tuple(
+//         std::move(ds.first),
+//         std::move(ds.second),
+//         ds.first.async_send_dpf(peer0, token),
+//         ds.second.async_send_dpf(peer1, token));
+// }
 
 template <typename InteriorPRG = dpf::prg::aes128,
           typename ExteriorPRG = InteriorPRG,

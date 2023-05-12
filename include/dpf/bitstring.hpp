@@ -17,7 +17,7 @@
 ///          value constructor that initializes the first `M` bit positions with
 ///          the bits of the given value, where `M` is the smaller of `Nbits` and
 ///          `64`. It also defines the user-defined numeric literal
-///          `::operator "" _bitstring()` for creating `dpf::bitstring<Nbits>` objects
+///          `dpf::literals::operator "" _bitstring()` for creating `dpf::bitstring<Nbits>` objects
 ///          at compile time, where `Nbits` is the length of the numeric literal
 ///          (i.e., minus the ``"_bitstring"`` suffix). For example, the expression
 ///          \code{.cpp}
@@ -31,7 +31,7 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see [LICENSE.md](@ref GPLv2) for details.
+///          see [LICENSE.md](@ref license) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
 #define LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
@@ -191,7 +191,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     ///              bool bit = !!(mask & x);
     ///              // ...
     ///          }
-    ///          \end{code}
+    ///          \endcode
     ///          to iterate iver the individual bits of a `dpf::bitstring`
     ///          efficiently.
     struct bit_mask

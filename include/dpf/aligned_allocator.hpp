@@ -16,7 +16,7 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and others
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
-///          see [LICENSE.md](@ref GPLv2) for details.
+///          see [LICENSE.md](@ref license) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
 #define LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
@@ -106,7 +106,7 @@ class aligned_allocator
 
     /// @}
 
-    /// {@
+    /// @{
     aligned_allocator & operator=(const aligned_allocator &) noexcept = default;
 
     aligned_allocator & operator=(aligned_allocator &&) noexcept = default;
@@ -131,7 +131,7 @@ class aligned_allocator
     /// @details Allocates `num * sizeof(T)` bytes of uninitialized
     ///          storage by invoking
     ///          `std::aligned_alloc(alignment, num * sizeof(T))`.
-    /// @param n the number of instances of `T` to allocate storage for
+    /// @param num the number of instances of `T` to allocate storage for
     /// @return Pointer to the first element of an array of `num` instaces
     ///         of type `T` whose elements have not been constructed yet.
     /// @throws std::bad_array_new_length if `max_size() < num`
