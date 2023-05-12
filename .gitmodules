@@ -7,6 +7,7 @@
 [submodule "thirdparty/doxygen-awesome-css"]
 	path = thirdparty/doxygen-awesome-css
 	url = https://github.com/DigitalLibertiesLab/doxygen-awesome-css.git
+	branch = libdpf
 [submodule "thirdparty/json"]
 	path = thirdparty/json
 	url = https://github.com/DigitalLibertiesLab/json.git
@@ -15,7 +16,7 @@
 	url = https://github.com/DigitalLibertiesLab/simde.git
 [submodule "thirdparty/asio"]
 	path = thirdparty/asio
-	url = git@github.com:DigitalLibertiesLab/asio.git
+	url = https://github.com:DigitalLibertiesLab/asio.git
 [submodule "test/googletest"]
 	path = test/googletest
 	url = https://github.com/google/googletest.git
