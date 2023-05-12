@@ -6,7 +6,7 @@
 ///          for an instance of type `T`, which can be assigned later. Its
 ///          intended to wrap an [output type](@ref output_types) of a DPF.
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 

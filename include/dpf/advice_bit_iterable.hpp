@@ -13,7 +13,7 @@
 ///              for range-based loops. For example, it lets you write
 ///               \code{cpp}
 ///               for (auto b : advice_bits_of(my_iterable)) foo(b);
-///               \end{code}
+///               \endcode
 ///               instead of
 ///               \code{cpp}
 ///               advice_bit_iterable advice_bits{my_iterable};
@@ -26,7 +26,7 @@
 ///              underlying iterable.
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and others
+/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
