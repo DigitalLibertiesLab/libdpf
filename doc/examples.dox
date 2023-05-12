@@ -1,0 +1,102 @@
+// input_types
+/// @{
+
+/// @example input_types/integral_types.cpp integral_types.cpp
+/// @brief an example of `int` in use
+
+/// @example input_types/extended_types.cpp extended_types.cpp
+/// @brief an example of `int128_t` in use
+
+/// @example input_types/modint.cpp modint.cpp
+/// @brief an example of `dpf::modint` in use
+
+/// @example input_types/bitstring.cpp bitstring.cpp
+/// @brief an example of `dpf::bitstring` in use
+
+/// @example input_types/keyword.cpp keyword.cpp
+/// @brief an example of `dpf::keyword` in use
+
+/// @example input_types/xor_wrapper.cpp xor_wrapper.cpp
+/// @brief an example of `dpf::memoizers` in use
+
+/// @example input_types/custom.cpp custom.cpp
+/// @brief an example of `dpf::output_buffers` in use
+
+/// @}
+
+
+
+// output_types
+/// @{
+
+/// @example output_types/integral_types.cpp integral_types.cpp
+/// @brief an example of `dpf::eval_point` in use
+
+/// @example output_types/extended_types.cpp extended_types.cpp
+/// @brief an example of `dpf::eval_interval` in use
+
+/// @example output_types/bit.cpp bit.cpp
+/// @brief an example of `dpf::eval_full` in use
+
+/// @example output_types/bitstring.cpp bitstring.cpp
+/// @brief an example of `dpf::eval_sequence` in use
+
+/// @example output_types/wildcard.cpp wildcard.cpp
+/// @brief an example of `dpf::eval_sequence` in use
+
+/// @example output_types/xor_wrapper.cpp xor_wrapper.cpp
+/// @brief an example of `dpf::memoizers` in use
+
+/// @example output_types/custom.cpp custom.cpp
+/// @brief an example of `dpf::output_buffers` in use
+
+/// @}
+
+
+
+// evaluations
+/// @{
+
+/// @example evaluation/eval_point.cpp eval_point.cpp
+/// @brief an example of `dpf::eval_point` in use
+
+/// @example evaluation/eval_interval.cpp eval_interval.cpp
+/// @brief an example of `dpf::eval_interval` in use
+
+/// @example evaluation/eval_full.cpp eval_full.cpp
+/// @brief an example of `dpf::eval_full` in use
+
+/// @example evaluation/eval_sequence.cpp eval_sequence.cpp
+/// @brief an example of `dpf::eval_sequence` in use
+
+/// @example evaluation/memoizers.cpp memoizers.cpp
+/// @brief an example of `dpf::memoizers` in use
+
+/// @example evaluation/output_buffers.cpp output_buffers.cpp
+/// @brief an example of `dpf::output_buffers` in use
+
+/// @}
+
+
+
+/// @{
+
+/// @example iterables/setbit_index_iterable.cpp setbit_index_iterable.cpp
+/// @brief an example of `dpf::setbit_index_iterable` in use
+
+/// @example iterables/advice_bit_iterable.cpp advice_bit_iterable.cpp
+/// @brief an example of `dpf::advice_bit_iterable` in use
+
+/// @example iterables/parallel_bit_iterable.cpp parallel_bit_iterable.cpp
+/// @brief an example of `dpf::parallel_bit_iterable` in use
+
+/// @example iterables/subinterval_iterable.cpp subinterval_iterable.cpp
+/// @brief an example of `dpf::subinterval_iterable` in use
+
+/// @example iterables/subsequence_iterable.cpp subsequence_iterable.cpp
+/// @brief an example of `dpf::subsequence_iterable` in use
+
+/// @example iterables/zip_iterable.cpp zip_iterable.cpp
+/// @brief an example of `dpf::zip_iterable` in use
+
+/// @}

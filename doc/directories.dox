@@ -1,0 +1,11 @@
+/// @dir ./
+/// @brief the root
+
+/// @dir ./doc
+/// @brief documentation
+
+/// @dir ./include
+/// @brief most headers are here
+
+/// @dir ./include/dpf
+/// @brief most dpf-specific headers are in here
