@@ -10,14 +10,13 @@
 #ifndef LIBDPF_INCLUDE_DPF_EVAL_FULL_HPP__
 #define LIBDPF_INCLUDE_DPF_EVAL_FULL_HPP__
 
-#include <functional>
-#include <memory>
-#include <limits>
-#include <tuple>
-#include <algorithm>
-
 #include <portable-snippets/builtin/builtin.h>
 #include <hedley/hedley.h>
+
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+#include <limits>
 
 #include "dpf/dpf_key.hpp"
 #include "dpf/eval_common.hpp"
@@ -47,7 +46,7 @@ auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
             std::numeric_limits<input_type>::max(), outbufs, memoizer);
 }
 
-}  // namespace dpf::internal
+}  // namespace internal
 
 template <std::size_t I = 0,
           std::size_t ...Is,
@@ -70,8 +69,7 @@ template <std::size_t I = 0,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
               std::remove_reference_t<OutputBuffers>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
-auto eval_full(const DpfKey & dpf,
-    OutputBuffers & outbufs)
+auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs)  // NOLINT(runtime/references)
 {
     using input_type = typename DpfKey::input_type;
     return eval_full<I, Is...>(dpf, outbufs,

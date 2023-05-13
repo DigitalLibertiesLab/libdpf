@@ -10,14 +10,14 @@
 #ifndef LIBDPF_INCLUDE_DPF_EVAL_INTERVAL_HPP__
 #define LIBDPF_INCLUDE_DPF_EVAL_INTERVAL_HPP__
 
-#include <functional>
-#include <memory>
-#include <limits>
-#include <tuple>
-#include <algorithm>
-
 #include <portable-snippets/builtin/builtin.h>
 #include <hedley/hedley.h>
+
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <iterator>
+#include <utility>
 
 #include "dpf/dpf_key.hpp"
 #include "dpf/eval_common.hpp"
@@ -36,7 +36,7 @@ template <typename DpfKey,
           typename IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
 inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node,
-    IntegralT to_node, IntervalMemoizer & memoizer,
+    IntegralT to_node, IntervalMemoizer & memoizer,  // NOLINT(runtime/references)
     std::size_t to_level = DpfKey::depth)
 {
     using dpf_type = DpfKey;
@@ -140,7 +140,7 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
         dpf_type::outputs_per_leaf - mod(to, dpf_type::lg_outputs_per_leaf))...);
 }
 
-}  // namespace dpf::internal
+}  // namespace internal
 
 template <std::size_t I = 0,
           std::size_t ...Is,
@@ -150,7 +150,7 @@ template <std::size_t I = 0,
           typename IntervalMemoizer = dpf::basic_interval_memoizer<DpfKey>>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
-    OutputBuffers & outbufs, IntervalMemoizer && memoizer)
+    OutputBuffers & outbufs, IntervalMemoizer && memoizer)  // NOLINT(runtime/references)
 {
     assert_not_wildcard<I, Is...>(dpf);
 
@@ -166,7 +166,7 @@ template <std::size_t I = 0,
               std::remove_reference_t<OutputBuffers>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
-    OutputBuffers & outbufs)
+    OutputBuffers & outbufs)  // NOLINT(runtime/references)
 {
     return eval_interval<I, Is...>(dpf, from, to, outbufs,
         dpf::make_basic_interval_memoizer<DpfKey>(from, to));

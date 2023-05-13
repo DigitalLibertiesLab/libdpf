@@ -9,8 +9,13 @@
 #ifndef LIBDPF_INCLUDE_DPF_LEAF_ARITHMETIC_HPP__
 #define LIBDPF_INCLUDE_DPF_LEAF_ARITHMETIC_HPP__
 
-#include <functional>
+#include <cstddef>
 #include <cstring>
+#include <type_traits>
+#include <functional>
+#include <algorithm>
+#include <iterator>
+#include <array>
 
 #include "simde/simde/x86/avx2.h"
 
@@ -70,7 +75,7 @@ struct multiply_t<void, void>
     }
 };
 
-}
+}  // namespace leaf_arithmetic
 
 template <typename OutputT>
 static constexpr auto add_leaf = leaf_arithmetic::add_t<OutputT, void>{};
@@ -586,8 +591,7 @@ struct mul16x8_t
 
         return simde_mm_or_si128(
             simde_mm_slli_epi16(hi_bytes, 8),
-            simde_mm_and_si128(lo_bytes, simde_mm_set1_epi16(0xff))
-        );
+            simde_mm_and_si128(lo_bytes, simde_mm_set1_epi16(0xff)));
     }
 };
 
@@ -643,8 +647,7 @@ struct mul32x8_t
 
         return simde_mm256_or_si256(
             simde_mm256_slli_epi16(hi_bytes, 8),
-            simde_mm256_and_si256(lo_bytes, simde_mm256_set1_epi16(0xff))
-        );
+            simde_mm256_and_si256(lo_bytes, simde_mm256_set1_epi16(0xff)));
     }
 };
 
@@ -747,7 +750,7 @@ template <> struct multiply_t<dpf::bit, simde__m256i> final
 template <typename T, typename NodeT> struct multiply_t<xor_wrapper<T>, NodeT> final : public std::bit_and<xor_wrapper<T>> {};
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
-}  // namespace dpf::leaf_arithmetic
+}  // namespace leaf_arithmetic
 
 }  // namespace dpf
 

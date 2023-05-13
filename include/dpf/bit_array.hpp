@@ -9,16 +9,19 @@
 #ifndef LIBDPF_INCLUDE_DPF_BIT_ARRAY_HPP__
 #define LIBDPF_INCLUDE_DPF_BIT_ARRAY_HPP__
 
-#include <cassert>
-#include <limits>
-#include <utility>
-#include <string>
-#include <cstring>
-#include <memory>
-#include <numeric>
-#include <algorithm>
-#include <stdexcept>
+#include <cstddef>
+#include <cmath>
 #include <type_traits>
+#include <memory>
+#include <new>
+#include <utility>
+#include <algorithm>
+#include <numeric>
+#include <functional>
+#include <iterator>
+#include <stdexcept>
+#include <string>
+#include <array>
 #include <ostream>
 
 #include "hedley/hedley.h"
@@ -1186,7 +1189,7 @@ class alignas(utils::max_align_v) static_bit_array final
     {
         data_[data_length_] = base::sentinel;
     }
-    
+
     inline constexpr explicit static_bit_array(std::size_t val)
     {
         data_[0] = val;

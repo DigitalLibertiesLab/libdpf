@@ -20,9 +20,14 @@
 #ifndef LIBDPF_INCLUDE_DPF_BIT_HPP__
 #define LIBDPF_INCLUDE_DPF_BIT_HPP__
 
-#include <string>
+#include <cstddef>
+#include <type_traits>
 #include <limits>
+#include <stdexcept>
+#include <string>
 #include <memory>
+#include <ostream>
+#include <istream>
 
 #include "hedley/hedley.h"
 

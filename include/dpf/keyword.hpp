@@ -29,11 +29,18 @@
 #ifndef LIBDPF_INCLUDE_DPF_KEYWORD_HPP__
 #define LIBDPF_INCLUDE_DPF_KEYWORD_HPP__
 
-#include <string>
-#include <sstream>
-#include <algorithm>
+#include <cstddef>
 #include <cmath>
+#include <type_traits>
+#include <limits>
+#include <string>
+#include <string_view>
 #include <memory>
+#include <iterator>
+#include <sstream>
+#include <istream>
+#include <ostream>
+#include <stdexcept>
 
 #include "hedley/hedley.h"
 

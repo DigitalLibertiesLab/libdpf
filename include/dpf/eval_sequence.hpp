@@ -10,15 +10,18 @@
 #ifndef LIBDPF_INCLUDE_DPF_EVAL_SEQUENCE_HPP__
 #define LIBDPF_INCLUDE_DPF_EVAL_SEQUENCE_HPP__
 
-#include <functional>
-#include <memory>
-#include <limits>
-#include <tuple>
-#include <algorithm>
-#include <set>
-
 #include <portable-snippets/builtin/builtin.h>
 #include <hedley/hedley.h>
+
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <utility>
+#include <tuple>
+#include <algorithm>
+#include <iterator>
+#include <stdexcept>
+#include <list>
 
 #include "dpf/dpf_key.hpp"
 #include "dpf/eval_common.hpp"
@@ -53,8 +56,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
 {
     auto path = make_basic_path_memoizer(dpf);
     auto rawbuf = utils::make_tuple(
-        reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(utils::get<IIs>(outbufs)))...
-    );
+        reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(utils::get<IIs>(outbufs)))...);
 
     std::size_t i = 0;
     // DPF_UNROLL_LOOP
@@ -66,8 +68,7 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
         i++;
     }
     return utils::make_tuple(
-        dpf::subsequence_iterable<DpfKey, decltype(std::begin(utils::get<IIs>(outbufs))), Iterator>(std::begin(utils::get<IIs>(outbufs)), begin, end)...
-    );
+        dpf::subsequence_iterable<DpfKey, decltype(std::begin(utils::get<IIs>(outbufs))), Iterator>(std::begin(utils::get<IIs>(outbufs)), begin, end)...);
 }
 
 template <std::size_t ...Is,
@@ -81,8 +82,7 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
 {
     auto path = make_basic_path_memoizer(dpf);
     auto rawbuf = utils::make_tuple(
-        reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(utils::get<IIs>(outbufs)))...
-    );
+        reinterpret_cast<typename DpfKey::concrete_output_type<Is>*>(utils::data(utils::get<IIs>(outbufs)))...);
 
     std::size_t i = 0;
     // DPF_UNROLL_LOOP
@@ -93,11 +93,10 @@ auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end,
         i++;
     }
     return utils::make_tuple(
-        dpf::subinterval_iterable(utils::get<IIs>(rawbuf), i-1, 0, 0)...
-    );
+        dpf::subinterval_iterable(utils::get<IIs>(rawbuf), i-1, 0, 0)...);
 }
 
-}  // dpf::internal
+}  // namespace internal
 
 template <std::size_t I = 0,
           std::size_t ...Is,
@@ -372,8 +371,7 @@ auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
     {
         (internal::eval_sequence_exterior_output_only<Is>(dpf, recipe, utils::get<IIs>(outbufs), memoizer), ...);
         return utils::make_tuple(
-            subinterval_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices().size()-1, 0, 0)...
-        );
+            subinterval_iterable(std::begin(utils::get<IIs>(outbufs)), recipe.output_indices().size()-1, 0, 0)...);
     }
 }
 
@@ -389,7 +387,7 @@ template <std::size_t I = 0,
           std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffers & outbufs, SequenceMemoizer && memoizer,
+    OutputBuffers & outbufs, SequenceMemoizer && memoizer,  // NOLINT(runtime/references)
     ReturnType return_type = ReturnType{})
 {
     assert_not_wildcard<I, Is...>(dpf);
@@ -407,7 +405,7 @@ template <std::size_t I = 0,
           std::enable_if_t<std::is_base_of_v<return_type_tag_, ReturnType>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence(const DpfKey & dpf, const sequence_recipe & recipe,
-    OutputBuffers & outbufs, ReturnType return_type = ReturnType{})
+    OutputBuffers & outbufs, ReturnType return_type = ReturnType{})  // NOLINT(runtime/references)
 {
     return eval_sequence<I, Is...>(dpf, recipe, outbufs,
         dpf::make_double_space_sequence_memoizer<DpfKey>(recipe), return_type);

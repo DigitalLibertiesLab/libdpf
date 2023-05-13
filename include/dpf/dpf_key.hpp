@@ -9,10 +9,13 @@
 #ifndef LIBDPF_INCLUDE_DPF_DPF_KEY_HPP__
 #define LIBDPF_INCLUDE_DPF_DPF_KEY_HPP__
 
+#include <cstddef>
+#include <type_traits>
+#include <utility>
+#include <tuple>
 #include <array>
 #include <bitset>
-#include <tuple>
-#include <functional>
+#include <string>
 
 #include "dpf/prg_aes.hpp"
 #include "dpf/wildcard.hpp"
@@ -111,8 +114,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             typename OutputType,
             typename StreamT,
             typename CompletionToken>
-    auto async_assign_leaf(StreamT & peer, const OutputType & output,
-        CompletionToken && token);
+    auto async_assign_leaf(StreamT & peer, const OutputType & output,  // NOLINT(runtime/references)
+        CompletionToken && token); // no definition!!
 #else
     #include "dpf_key_asio.hpp"
 #endif  // LIBDPF_HAS_ASIO

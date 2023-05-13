@@ -6,10 +6,13 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
-#ifndef LIBDPF_INCLUDE_DPF_EVAL_HPP__
-#define LIBDPF_INCLUDE_DPF_EVAL_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_EVAL_COMMON_HPP__
+#define LIBDPF_INCLUDE_DPF_EVAL_COMMON_HPP__
 
 #include <hedley/hedley.h>
+
+#include <cstddef>
+#include <stdexcept>
 
 #include "dpf/leaf_node.hpp"
 
@@ -73,4 +76,4 @@ void assert_not_wildcard(const DpfKey & dpf)
 
 }  // namespace dpf
 
-#endif  // LIBDPF_INCLUDE_DPF_EVAL_HPP__
+#endif  // LIBDPF_INCLUDE_DPF_EVAL_COMMON_HPP__

@@ -33,7 +33,13 @@
 #ifndef LIBDPF_INCLUDE_DPF_ADVICE_BIT_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_ADVICE_BIT_ITERABLE_HPP__
 
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <iterator>
+#include <memory>
 #include <algorithm>
+#include <array>
 
 #include "simde/simde/x86/avx2.h"
 

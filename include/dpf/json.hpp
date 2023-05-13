@@ -9,12 +9,15 @@
 #ifndef LIBDPF_INCLUDE_DPF_JSON_HPP__
 #define LIBDPF_INCLUDE_DPF_JSON_HPP__
 
+#include <cstddef>
+#include <tuple>
 #include <array>
+#include <string>
 #include <bitset>
 
-#include "dpf/dpf_key.hpp"
-
 #include "json/include/nlohmann/json.hpp"
+
+#include "dpf/dpf_key.hpp"
 
 namespace nlohmann
 {
@@ -24,14 +27,14 @@ template <typename NodeT,
           std::size_t outputs_per_leaf>
 struct adl_serializer<beaver<true, NodeT, OutputT, outputs_per_leaf>>
 {
-    static void from_json(const nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)
+    static void from_json(const nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)  // NOLINT(runtime/references)
     {
         j.get_to(beaver.output_blind);
         j.get_to(beaver.vector_blind);
         j.get_to(beaver.blinded_vector);
     }
 
-    static void to_json(nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)
+    static void to_json(nlohmann::json &, beaver<true, NodeT, OutputT, outputs_per_leaf> & beaver)  // NOLINT(runtime/references)
     {
         j = nlohmann::json{
             {"output_blind", beaver.output_blind},
@@ -44,14 +47,14 @@ struct adl_serializer<beaver<true, NodeT, OutputT, outputs_per_leaf>>
 template <>
 struct adl_serializer<simde__m128i>
 {
-    static void from_json(const nlohmann::json & j, simde__m128i & a)
+    static void from_json(const nlohmann::json & j, simde__m128i & a)  // NOLINT(runtime/references)
     {
         std::array<psnip_uint64_t, 2> A;
         j.get_to(A);
         a = simde_mm_set_epi64x(A[1], A[0]);
     }
 
-    static void to_json(nlohmann::json & j, const simde__m128i & a)
+    static void to_json(nlohmann::json & j, const simde__m128i & a)  // NOLINT(runtime/references)
     {
         j = nlohmann::json{a[0], a[1]};
     }
@@ -60,14 +63,14 @@ struct adl_serializer<simde__m128i>
 template <>
 struct adl_serializer<simde__m256i>
 {
-    static void from_json(const nlohmann::json & j, simde__m256i & a)
+    static void from_json(const nlohmann::json & j, simde__m256i & a)  // NOLINT(runtime/references)
     {
         std::array<psnip_uint64_t, 4> A;
         j.get_to(A);
         a = simde_mm256_set_epi64x(A[3], A[2], A[1], A[0]);
     }
 
-    static void to_json(nlohmann::json & j, const simde__m256i & a)
+    static void to_json(nlohmann::json & j, const simde__m256i & a)  // NOLINT(runtime/references)
     {
         j = nlohmann::json{a[0], a[1], a[2], a[3]};
     }
@@ -110,7 +113,7 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
         };
     }
 
-    static void to_json(nlohmann::json & j, const dpf_type & dpf)
+    static void to_json(nlohmann::json & j, const dpf_type & dpf)  // NOLINT(runtime/references)
     {
         j = nlohmann::json{
             {"root", dpf.root},
@@ -145,7 +148,7 @@ static auto from_json(std::string json_string)
     return static_cast<DpfType>(json);
 }
 
-}  // namespace dpf::json
+}  // namespace json
 
 }  // namespace dpf
 

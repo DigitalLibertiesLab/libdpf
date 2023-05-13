@@ -21,9 +21,12 @@
 #ifndef LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
 #define LIBDPF_INCLUDE_DPF_ALIGNED_ALLOCATOR_HPP__
 
-#include <new>
-#include <limits>
+#include <cstddef>
+#include <cstdlib>
+#include <type_traits>
 #include <memory>
+#include <limits>
+#include <new>
 
 #include "hedley/hedley.h"
 #include "simde/simde/x86/avx2.h"
@@ -49,7 +52,7 @@ class aligned_allocator
 {
   private:
     /// @brief a `deleter` functor for use by `std::unique_ptr<T[]>` to free
-    ///        memory allocated when the `std::unique_ptr<T[]>` was 
+    ///        memory allocated when the `std::unique_ptr<T[]>` was
     ///        constructed
     template <typename Pointer>
     struct deleter

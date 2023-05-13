@@ -36,9 +36,19 @@
 #ifndef LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
 #define LIBDPF_INCLUDE_DPF_BITSTRING_HPP__
 
+#include <cstddef>
+#include <cmath>
+#include <type_traits>
+#include <stdexcept>
+#include <functional>
 #include <algorithm>
+#include <iterator>
+#include <limits>
 #include <string>
+#include <array>
+#include <ostream>
 #include <sstream>
+
 #include <bitset>
 
 #include "dpf/bit.hpp"
@@ -498,8 +508,8 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     }
 
   private:
-    //alignas(utils::max_align_v)  // memory here cannot be aligned if we wish
-                                   // to remain trivially copyable
+    // alignas(utils::max_align_v)  // memory here cannot be aligned if we
+                                    // wish to remain trivially copyable
     std::array<word_type, data_length_> data_;
 
     HEDLEY_ALWAYS_INLINE
@@ -630,7 +640,7 @@ struct mod_pow_2<dpf::bitstring<Nbits>>
     }
 };
 
-}  // namespace dpf::utils
+}  // namespace utils
 
 namespace literals
 {
@@ -654,7 +664,7 @@ namespace literals
         (bs.set(i++, dpf::to_bit(bits)), ...);
         return bs;
     }
-}  // namespace dpf::literals
+}  // namespace literals
 
 }  // namespace dpf
 

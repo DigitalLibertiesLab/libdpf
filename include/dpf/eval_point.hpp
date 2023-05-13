@@ -10,16 +10,11 @@
 #ifndef LIBDPF_INCLUDE_DPF_EVAL_POINT_HPP__
 #define LIBDPF_INCLUDE_DPF_EVAL_POINT_HPP__
 
-#include <iomanip>
-
-#include <functional>
-#include <memory>
-#include <limits>
-#include <tuple>
-#include <algorithm>
-
 #include <portable-snippets/builtin/builtin.h>
 #include <hedley/hedley.h>
+
+#include <cstddef>
+#include <tuple>
 
 #include "dpf/dpf_key.hpp"
 #include "dpf/eval_common.hpp"
@@ -46,7 +41,7 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT && x, PathMemoizer &&
     {
         bool bit = !!(mask & x);
         auto cw = set_lo_bit(dpf.correction_words[level_index-1],
-            dpf.correction_advice[level_index-1]>>bit);
+            dpf.correction_advice[level_index-1] >> bit);
         path[level_index] = dpf_type::traverse_interior(path[level_index-1], cw, bit);
     }
 }

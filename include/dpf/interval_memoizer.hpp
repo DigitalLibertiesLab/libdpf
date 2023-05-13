@@ -10,6 +10,17 @@
 #ifndef LIBDPF_INCLUDE_DPF_INTERVAL_MEMOIZER_HPP__
 #define LIBDPF_INCLUDE_DPF_INTERVAL_MEMOIZER_HPP__
 
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <functional>
+#include <algorithm>
+#include <new>
+#include <limits>
+#include <stdexcept>
+#include <optional>
+#include <array>
+
 #include "dpf/dpf_key.hpp"
 
 namespace dpf
@@ -292,7 +303,7 @@ auto make_interval_memoizer(InputT from, InputT to)
     return MemoizerT(nodes_in_interval);
 }
 
-}  // namespace dpf::detail
+}  // namespace detail
 
 template <typename DpfKey,
           typename InputT>
