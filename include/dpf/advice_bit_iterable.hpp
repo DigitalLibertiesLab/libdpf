@@ -42,6 +42,7 @@
 #include <array>
 
 #include "simde/simde/x86/avx2.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/bit_array.hpp"
 
@@ -338,7 +339,7 @@ auto bit_array_from_advice_bits_simde(Iterator first, Iterator last,
 
     std::size_t curbits = 0, pos = 0;
     std::array<char, 32> in = {0};
-    std::array<uint32_t, 8> out;
+    std::array<psnip_uint32_t, 8> out;
     while (curbits < bits)
     {
         simde_type simde = {0, 0, 0, 0};

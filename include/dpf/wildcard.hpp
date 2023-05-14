@@ -13,8 +13,9 @@
 #ifndef LIBDPF_INCLUDE_DPF_WILDCARD_HPP__
 #define LIBDPF_INCLUDE_DPF_WILDCARD_HPP__
 
-#include <cstdint>
+#include <type_traits>
 #include <limits>
+#include <array>
 #include <optional>
 
 #include "dpf/bit.hpp"
@@ -132,7 +133,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     static constexpr auto ieee_float = wildcard<float>;
     static constexpr auto ieee_double = wildcard<double>;
 
-}  // namespace dpf::wildcards
+}  // namespace wildcards
 
 namespace utils
 {
@@ -143,7 +144,7 @@ struct bitlength_of<wildcard_value<T>>
   : public bitlength_of<T>
 { };
 
-}  // namespace dpf::utils
+}  // namespace utils
 
 }  // namespace dpf
 

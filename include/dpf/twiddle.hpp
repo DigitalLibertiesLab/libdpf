@@ -9,6 +9,11 @@
 #ifndef LIBDPF_INCLUDE_DPF_TWIDDLE_HPP__
 #define LIBDPF_INCLUDE_DPF_TWIDDLE_HPP__
 
+#include <cstddef>
+#include <algorithm>
+#include <iterator>
+#include <array>
+
 #include "hedley/hedley.h"
 #include "simde/simde/x86/avx2.h"
 
@@ -103,7 +108,7 @@ simde__m128i unset_lo_2bits(simde__m128i a)
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
-uint_fast8_t get_lo_bit_and_clear_lo_2bits(simde__m128i & a)
+uint_fast8_t get_lo_bit_and_clear_lo_2bits(simde__m128i & a)  // NOLINT(runtime/references)
 {
     uint_fast8_t lo_bit = get_lo_bit(a);
     a = unset_lo_2bits(a);

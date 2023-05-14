@@ -9,9 +9,12 @@
 #ifndef LIBDPF_INCLUDE_DPF_PARALLEL_BIT_ITERABLE_HELPERS_HPP__
 #define LIBDPF_INCLUDE_DPF_PARALLEL_BIT_ITERABLE_HELPERS_HPP__
 
+#include <cstddef>
 #include <limits>
+#include <array>
 
 #include "simde/simde/x86/avx2.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/bit_array.hpp"
 
@@ -32,7 +35,7 @@ struct parallel_bit_iterable_helper<2, ChildT>
     using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
-    using element_type = uint64_t;
+    using element_type = psnip_uint64_t;
     static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
@@ -61,7 +64,7 @@ struct parallel_bit_iterable_helper<3, ChildT>
     using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
-    using element_type = uint32_t;
+    using element_type = psnip_uint32_t;
     static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
@@ -104,7 +107,7 @@ struct parallel_bit_iterable_helper<4, ChildT>
     using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
-    using element_type = uint16_t;
+    using element_type = psnip_uint16_t;
     static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;
@@ -168,7 +171,7 @@ struct parallel_bit_iterable_helper<5, ChildT>
     using word_pointer = typename dpf::bit_array_base<ChildT>::word_pointer;
     using simde_type = simde__m256i;
     using simde_ptr = simde_type *;
-    using element_type = uint8_t;
+    using element_type = psnip_uint8_t;
     static constexpr auto bits_per_word = dpf::bit_array_base<ChildT>::bits_per_word;
     static constexpr auto bits_per_element = std::numeric_limits<element_type>::digits;
     static constexpr auto elements_per_word = bits_per_word / bits_per_element;

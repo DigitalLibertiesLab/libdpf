@@ -9,9 +9,15 @@
 #ifndef LIBDPF_INCLUDE_DPF_PARALLEL_BIT_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_PARALLEL_BIT_ITERABLE_HPP__
 
-#include <limits>
-#include <algorithm>
+#include <cstddef>
+#include <cmath>
+#include <cstring>
+#include <type_traits>
+#include <iterator>
+#include <array>
 #include <utility>
+#include <algorithm>
+#include <functional>
 
 #include "dpf/bit_array.hpp"
 #include "dpf/parallel_bit_iterable_helpers.hpp"

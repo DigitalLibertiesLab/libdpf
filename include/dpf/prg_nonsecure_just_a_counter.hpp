@@ -10,9 +10,11 @@
 #define LIBDPF_INCLUDE_DPF_PRG_NONSECURE_JUST_A_COUNTER_HPP__
 
 #include <array>
+#include <algorithm>
 #include <atomic>
 
 #include "hedley/hedley.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/utils.hpp"
 
@@ -26,7 +28,7 @@ struct nonsecure_just_a_counter final
 {
     using block_t = simde__m128i;
 
-    static block_t eval(block_t seed, uint32_t)
+    static block_t eval(block_t seed, psnip_uint32_t)
     {
         count.fetch_add(1, std::memory_order::memory_order_relaxed);
         return seed;
@@ -42,7 +44,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     }
 
     static void eval(block_t seed, block_t * HEDLEY_RESTRICT output,
-        uint32_t count_, uint32_t pos = 0)
+        psnip_uint32_t count_, psnip_uint32_t pos = 0)
     {
         count.fetch_add(count_, std::memory_order::memory_order_relaxed);
         std::fill_n(output, count_, seed);

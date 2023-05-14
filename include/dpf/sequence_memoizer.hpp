@@ -10,6 +10,15 @@
 #ifndef LIBDPF_INCLUDE_DPF_SEQUENCE_MEMOIZER_HPP__
 #define LIBDPF_INCLUDE_DPF_SEQUENCE_MEMOIZER_HPP__
 
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <functional>
+#include <utility>
+#include <iterator>
+#include <stdexcept>
+#include <optional>
+
 #include "dpf/sequence_recipe.hpp"
 
 namespace dpf
@@ -252,7 +261,7 @@ struct pointer_facade
     reverse_iter rit_;
 };
 
-}  // namespace dpf::detail
+}  // namespace detail
 
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
@@ -449,7 +458,7 @@ auto make_sequence_memoizer(const sequence_recipe & recipe)
     return MemoizerT(recipe);
 }
 
-}  // namespace dpf::detail
+}  // namespace detail
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

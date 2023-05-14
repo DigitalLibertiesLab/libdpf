@@ -17,6 +17,8 @@
 #include <bitset>
 #include <string>
 
+#include "portable-snippets/exact-int/exact-int.h"
+
 #include "dpf/prg_aes.hpp"
 #include "dpf/wildcard.hpp"
 #include "dpf/twiddle.hpp"
@@ -80,7 +82,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     HEDLEY_ALWAYS_INLINE
     constexpr dpf_key(interior_node root_,
                       const std::array<interior_node, depth> & correction_words_,
-                      const std::array<uint8_t, depth> & correction_advice_,
+                      const std::array<psnip_uint8_t, depth> & correction_advice_,
                       const leaf_tuple & leaves,
                       const std::bitset<sizeof...(OutputTs)+1> & wild_mask_,
                       beaver_tuple && beavers_)
@@ -106,7 +108,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     const std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    const std::array<uint8_t, depth> correction_advice;
+    const std::array<psnip_uint8_t, depth> correction_advice;
     const interior_node common_part_hash;
 
 #ifndef LIBDPF_HAS_ASIO
@@ -240,7 +242,7 @@ HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     std::array<interior_node, depth> correction_words;
 HEDLEY_PRAGMA(GCC diagnostic pop)
-    std::array<uint8_t, depth> correction_advice;
+    std::array<psnip_uint8_t, depth> correction_advice;
 
     interior_node parent[2] = { root[0], root[1] };
     bool advice[2];

@@ -49,7 +49,7 @@
 #include <ostream>
 #include <sstream>
 
-#include <bitset>
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/bit.hpp"
 #include "dpf/bit_array.hpp"
@@ -579,7 +579,7 @@ struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
         for (auto i = lhs.data_length(); i > 0; --i,
             prefix_len += bitlength_of_v<word_type>)
         {
-            uint64_t limb = xor_op(lhs.data(i-1), rhs.data(i-1));
+            psnip_uint64_t limb = xor_op(lhs.data(i-1), rhs.data(i-1));
             if (limb)
             {
                 return prefix_len + psnip_builtin_clz64(limb) - adjust - (64 - bitlength_of_v<word_type>);

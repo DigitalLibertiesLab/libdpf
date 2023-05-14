@@ -10,12 +10,16 @@
 #ifndef LIBDPF_INCLUDE_DPF_LEAF_NODE_HPP__
 #define LIBDPF_INCLUDE_DPF_LEAF_NODE_HPP__
 
-#include <utility>
 #include <cstddef>
+#include <cmath>
 #include <cstring>
+#include <type_traits>
+#include <utility>
+#include <memory>
 #include <functional>
 #include <tuple>
-#include <shared_mutex>
+#include <atomic>
+#include <array>
 
 #include "simde/simde/x86/avx2.h"
 

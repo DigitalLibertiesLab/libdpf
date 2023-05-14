@@ -9,10 +9,12 @@
 #ifndef LIBDPF_INCLUDE_DPF_PRG_AES_HPP__
 #define LIBDPF_INCLUDE_DPF_PRG_AES_HPP__
 
+#include <cstddef>
 #include <array>
 
 #include "hedley/hedley.h"
 #include "simde/simde/x86/avx2.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/utils.hpp"
 
@@ -37,7 +39,7 @@ struct aes final
 
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    static block_type eval(block_type seed, uint32_t pos) noexcept
+    static block_type eval(block_type seed, psnip_uint32_t pos) noexcept
     {
         block_type rd_key0 = simde_mm_xor_si128(key.rd_key[0],
             simde_mm_set_epi64x(0, pos));
@@ -64,7 +66,7 @@ struct aes final
         block_type output0 = simde_mm_xor_si128(seed, rd_key00);
         block_type output1 = simde_mm_xor_si128(seed, rd_key01);
 
-HEDLEY_PRAGMA(GCC unroll (14))
+HEDLEY_PRAGMA(GCC unroll(14))
         for (std::size_t j = 1; j < key.rounds; ++j)
         {
             output0 = simde_mm_aesenc_si128(output0, key.rd_key[j]);
@@ -82,7 +84,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_NO_THROW
     static void eval(block_type seed, block_type * HEDLEY_RESTRICT output,
-        uint32_t count, uint32_t pos = 0) noexcept
+        psnip_uint32_t count, psnip_uint32_t pos = 0) noexcept
     {
         static constexpr block_type one{1, 0};
         auto pos_ = simde_mm_set_epi64x(0, pos);
@@ -90,7 +92,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
             static_cast<block_type *>(__builtin_assume_aligned(output,
             alignof(block_type)));
         DPF_UNROLL_LOOP
-        for (uint32_t i = 0; i < count; ++i)
+        for (psnip_uint32_t i = 0; i < count; ++i)
         {
             out[i] = simde_mm_xor_si128(seed, pos_);
             pos_ = simde_mm_add_epi64(pos_, one);

@@ -16,6 +16,7 @@
 #include <bitset>
 
 #include "json/include/nlohmann/json.hpp"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/dpf_key.hpp"
 
@@ -94,7 +95,7 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
         j.at("root").get_to(root);
         std::array<interior_node, dpf_type::depth> correction_words;
         j.at("correction_words").get_to(correction_words);
-        std::array<uint8_t, dpf_type::depth> correction_advice;
+        std::array<psnip_uint8_t, dpf_type::depth> correction_advice;
         j.at("correction_advice").get_to(correction_advice);
         leaf_tuple leaves;
         j.at("leaves").get_to(leaves);

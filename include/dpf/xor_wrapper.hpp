@@ -3,7 +3,7 @@
 /// @details A `dpf::xor_wrapper` is a struct template that adapts integral
 ///          types to use bitwise arithmetic; that is, it makes an `N`-bit
 ///          integer type behave as it it were an element of `GF(2)^N`.
-///          Specifically, 
+///          Specifically,
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
@@ -12,7 +12,12 @@
 #ifndef LIBDPF_INCLUDE_DPF_XOR_WRAPPER_HPP__
 #define LIBDPF_INCLUDE_DPF_XOR_WRAPPER_HPP__
 
+#include <cstddef>
+#include <type_traits>
 #include <functional>
+#include <limits>
+#include <ostream>
+#include <istream>
 
 #include "simde/simde/x86/avx2.h"
 #include "portable-snippets/exact-int/exact-int.h"
@@ -34,7 +39,7 @@ struct xor_wrapper
     using integral_type = utils::integral_type_from_bitlength_t<bits>;
 
     /// @{
-        
+
     /// @brief Default c'tor
     constexpr xor_wrapper() = default;
 

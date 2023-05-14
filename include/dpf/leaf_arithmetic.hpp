@@ -18,6 +18,7 @@
 #include <array>
 
 #include "simde/simde/x86/avx2.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/bit.hpp"
 #include "dpf/wildcard.hpp"
@@ -240,17 +241,17 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <> struct add_t<bool, simde__m128i> final : public detail::add16x8_t {};
 template <> struct add_t<char, simde__m128i> final : public detail::add16x8_t {};
 // template <> struct add_t<unsigned char, simde__m128i> final : public detail::add16x8_t {};
-template <> struct add_t<int8_t, simde__m128i> final : public detail::add16x8_t {};
-template <> struct add_t<uint8_t, simde__m128i> final : public detail::add16x8_t {};
+template <> struct add_t<psnip_int8_t, simde__m128i> final : public detail::add16x8_t {};
+template <> struct add_t<psnip_uint8_t, simde__m128i> final : public detail::add16x8_t {};
 
-template <> struct add_t<int16_t, simde__m128i> final : public detail::add8x16_t {};
-template <> struct add_t<uint16_t, simde__m128i> final : public detail::add8x16_t {};
+template <> struct add_t<psnip_int16_t, simde__m128i> final : public detail::add8x16_t {};
+template <> struct add_t<psnip_uint16_t, simde__m128i> final : public detail::add8x16_t {};
 
-template <> struct add_t<int32_t, simde__m128i> final : public detail::add4x32_t {};
-template <> struct add_t<uint32_t, simde__m128i> final : public detail::add4x32_t {};
+template <> struct add_t<psnip_int32_t, simde__m128i> final : public detail::add4x32_t {};
+template <> struct add_t<psnip_uint32_t, simde__m128i> final : public detail::add4x32_t {};
 
-template <> struct add_t<int64_t, simde__m128i> final : public detail::add2x64_t {};
-template <> struct add_t<uint64_t, simde__m128i> final : public detail::add2x64_t {};
+template <> struct add_t<psnip_int64_t, simde__m128i> final : public detail::add2x64_t {};
+template <> struct add_t<psnip_uint64_t, simde__m128i> final : public detail::add2x64_t {};
 
 template <> struct add_t<simde_int128, simde__m128i> final
 {
@@ -281,17 +282,17 @@ template <> struct add_t<simde_uint128, simde__m128i> final
 
 template <> struct add_t<bool, simde__m256i> final : public detail::add32x8_t {};
 // template <> struct add_t<unsigned char, simde__m256i> final : public detail::add32x8_t {};
-template <> struct add_t<int8_t, simde__m256i> final : public detail::add32x8_t {};
-template <> struct add_t<uint8_t, simde__m256i> final : public detail::add32x8_t {};
+template <> struct add_t<psnip_int8_t, simde__m256i> final : public detail::add32x8_t {};
+template <> struct add_t<psnip_uint8_t, simde__m256i> final : public detail::add32x8_t {};
 
-template <> struct add_t<int16_t, simde__m256i> final : public detail::add16x16_t {};
-template <> struct add_t<uint16_t, simde__m256i> final : public detail::add16x16_t {};
+template <> struct add_t<psnip_int16_t, simde__m256i> final : public detail::add16x16_t {};
+template <> struct add_t<psnip_uint16_t, simde__m256i> final : public detail::add16x16_t {};
 
-template <> struct add_t<int32_t, simde__m256i> final : public detail::add8x32_t {};
-template <> struct add_t<uint32_t, simde__m256i> final : public detail::add8x32_t {};
+template <> struct add_t<psnip_int32_t, simde__m256i> final : public detail::add8x32_t {};
+template <> struct add_t<psnip_uint32_t, simde__m256i> final : public detail::add8x32_t {};
 
-template <> struct add_t<int64_t, simde__m256i> final : public detail::add4x64_t {};
-template <> struct add_t<uint64_t, simde__m256i> final : public detail::add4x64_t {};
+template <> struct add_t<psnip_int64_t, simde__m256i> final : public detail::add4x64_t {};
+template <> struct add_t<psnip_uint64_t, simde__m256i> final : public detail::add4x64_t {};
 
 template <> struct add_t<simde_int128, simde__m256i> final
 {
@@ -482,17 +483,17 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <> struct subtract_t<bool, simde__m128i> final : public detail::sub16x8_t {};
 template <> struct subtract_t<char, simde__m128i> final : public detail::sub16x8_t {};
 // template <> struct subtract_t<unsigned char, simde__m128i> final : public detail::sub16x8_t {};
-template <> struct subtract_t<int8_t, simde__m128i> final : public detail::sub16x8_t {};
-template <> struct subtract_t<uint8_t, simde__m128i> final : public detail::sub16x8_t {};
+template <> struct subtract_t<psnip_int8_t, simde__m128i> final : public detail::sub16x8_t {};
+template <> struct subtract_t<psnip_uint8_t, simde__m128i> final : public detail::sub16x8_t {};
 
-template <> struct subtract_t<int16_t, simde__m128i> final : public detail::sub8x16_t {};
-template <> struct subtract_t<uint16_t, simde__m128i> final : public detail::sub8x16_t {};
+template <> struct subtract_t<psnip_int16_t, simde__m128i> final : public detail::sub8x16_t {};
+template <> struct subtract_t<psnip_uint16_t, simde__m128i> final : public detail::sub8x16_t {};
 
-template <> struct subtract_t<int32_t, simde__m128i> final : public detail::sub4x32_t {};
-template <> struct subtract_t<uint32_t, simde__m128i> final : public detail::sub4x32_t {};
+template <> struct subtract_t<psnip_int32_t, simde__m128i> final : public detail::sub4x32_t {};
+template <> struct subtract_t<psnip_uint32_t, simde__m128i> final : public detail::sub4x32_t {};
 
-template <> struct subtract_t<int64_t, simde__m128i> final : public detail::sub2x64_t {};
-template <> struct subtract_t<uint64_t, simde__m128i> final : public detail::sub2x64_t {};
+template <> struct subtract_t<psnip_int64_t, simde__m128i> final : public detail::sub2x64_t {};
+template <> struct subtract_t<psnip_uint64_t, simde__m128i> final : public detail::sub2x64_t {};
 
 template <> struct subtract_t<simde_int128, simde__m128i> final
 {
@@ -524,17 +525,17 @@ template <> struct subtract_t<simde_uint128, simde__m128i> final
 template <> struct subtract_t<bool, simde__m256i> final : public detail::sub32x8_t {};
 template <> struct subtract_t<char, simde__m256i> final : public detail::sub32x8_t {};
 // template <> struct subtract_t<unsigned char, simde__m256i> final : public detail::sub32x8_t {};
-template <> struct subtract_t<int8_t, simde__m256i> final : public detail::sub32x8_t {};
-template <> struct subtract_t<uint8_t, simde__m256i> final : public detail::sub32x8_t {};
+template <> struct subtract_t<psnip_int8_t, simde__m256i> final : public detail::sub32x8_t {};
+template <> struct subtract_t<psnip_uint8_t, simde__m256i> final : public detail::sub32x8_t {};
 
-template <> struct subtract_t<int16_t, simde__m256i> final : public detail::sub16x16_t {};
-template <> struct subtract_t<uint16_t, simde__m256i> final : public detail::sub16x16_t {};
+template <> struct subtract_t<psnip_int16_t, simde__m256i> final : public detail::sub16x16_t {};
+template <> struct subtract_t<psnip_uint16_t, simde__m256i> final : public detail::sub16x16_t {};
 
-template <> struct subtract_t<int32_t, simde__m256i> final : public detail::sub8x32_t {};
-template <> struct subtract_t<uint32_t, simde__m256i> final : public detail::sub8x32_t {};
+template <> struct subtract_t<psnip_int32_t, simde__m256i> final : public detail::sub8x32_t {};
+template <> struct subtract_t<psnip_uint32_t, simde__m256i> final : public detail::sub8x32_t {};
 
-template <> struct subtract_t<int64_t, simde__m256i> final : public detail::sub4x64_t {};
-template <> struct subtract_t<uint64_t, simde__m256i> final : public detail::sub4x64_t {};
+template <> struct subtract_t<psnip_int64_t, simde__m256i> final : public detail::sub4x64_t {};
+template <> struct subtract_t<psnip_uint64_t, simde__m256i> final : public detail::sub4x64_t {};
 
 template <> struct subtract_t<simde_int128, simde__m256i> final
 {
@@ -582,7 +583,7 @@ struct mul16x8_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m128i & a, uint8_t b) const
+    auto operator()(const simde__m128i & a, psnip_uint8_t b) const
     {
         auto bb = simde_mm_set1_epi8(b);
         auto lo_bytes = simde_mm_mullo_epi16(a, bb);
@@ -601,7 +602,7 @@ struct mul8x16_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m128i & a, uint16_t b) const
+    auto operator()(const simde__m128i & a, psnip_uint16_t b) const
     {
         return simde_mm_mullo_epi16(a, simde_mm_set1_epi16(b));
     }
@@ -613,7 +614,7 @@ struct mul4x32_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m128i & a, uint32_t b) const
+    auto operator()(const simde__m128i & a, psnip_uint32_t b) const
     {
         return simde_mm_mullo_epi32(a, simde_mm_set1_epi32(b));
     }
@@ -625,7 +626,7 @@ struct mul2x64_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m128i & a, uint64_t b) const
+    auto operator()(const simde__m128i & a, psnip_uint64_t b) const
     {
         return simde__m128i{static_cast<int64_t>(a[0]*b),
                             static_cast<int64_t>(a[1]*b)};
@@ -638,7 +639,7 @@ struct mul32x8_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m256i & a, uint8_t b) const
+    auto operator()(const simde__m256i & a, psnip_uint8_t b) const
     {
         auto bb = simde_mm256_set1_epi8(b);
         auto lo_bytes = simde_mm256_mullo_epi16(a, bb);
@@ -657,7 +658,7 @@ struct mul16x16_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m256i & a, uint16_t b) const
+    auto operator()(const simde__m256i & a, psnip_uint16_t b) const
     {
         return simde_mm256_mullo_epi16(a, simde_mm256_set1_epi16(b));
     }
@@ -669,7 +670,7 @@ struct mul8x32_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m256i & a, uint32_t b) const
+    auto operator()(const simde__m256i & a, psnip_uint32_t b) const
     {
         return simde_mm256_add_epi32(a, simde_mm256_set1_epi32(b));
     }
@@ -681,7 +682,7 @@ struct mul4x64_t
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     HEDLEY_CONST
-    auto operator()(const simde__m256i & a, uint64_t b) const
+    auto operator()(const simde__m256i & a, psnip_uint64_t b) const
     {
         return simde__m256i{static_cast<int64_t>(a[0]*b),
                             static_cast<int64_t>(a[1]*b),
@@ -699,31 +700,31 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
 template <> struct multiply_t<bool, simde__m128i> final : public detail::mul16x8_t {};
 template <> struct multiply_t<char, simde__m128i> final : public detail::mul16x8_t {};
 // template <> struct multiply_t<unsigned char, simde__m128i> final : public detail::mul16x8_t {};
-template <> struct multiply_t<int8_t, simde__m128i> final : public detail::mul16x8_t {};
-template <> struct multiply_t<uint8_t, simde__m128i> final : public detail::mul16x8_t {};
+template <> struct multiply_t<psnip_int8_t, simde__m128i> final : public detail::mul16x8_t {};
+template <> struct multiply_t<psnip_uint8_t, simde__m128i> final : public detail::mul16x8_t {};
 
-template <> struct multiply_t<int16_t, simde__m128i> final : public detail::mul8x16_t {};
-template <> struct multiply_t<uint16_t, simde__m128i> final : public detail::mul8x16_t {};
+template <> struct multiply_t<psnip_int16_t, simde__m128i> final : public detail::mul8x16_t {};
+template <> struct multiply_t<psnip_uint16_t, simde__m128i> final : public detail::mul8x16_t {};
 
-template <> struct multiply_t<int32_t, simde__m128i> final : public detail::mul4x32_t {};
-template <> struct multiply_t<uint32_t, simde__m128i> final : public detail::mul4x32_t {};
+template <> struct multiply_t<psnip_int32_t, simde__m128i> final : public detail::mul4x32_t {};
+template <> struct multiply_t<psnip_uint32_t, simde__m128i> final : public detail::mul4x32_t {};
 
-template <> struct multiply_t<int64_t, simde__m128i> final : public detail::mul2x64_t {};
-template <> struct multiply_t<uint64_t, simde__m128i> final : public detail::mul2x64_t {};
+template <> struct multiply_t<psnip_int64_t, simde__m128i> final : public detail::mul2x64_t {};
+template <> struct multiply_t<psnip_uint64_t, simde__m128i> final : public detail::mul2x64_t {};
 
 template <> struct multiply_t<bool, simde__m256i> final : public detail::mul32x8_t {};
 // template <> struct multiply_t<unsigned char, simde__m256i> final : public detail::mul32x8_t {};
-template <> struct multiply_t<int8_t, simde__m256i> final : public detail::mul32x8_t {};
-template <> struct multiply_t<uint8_t, simde__m256i> final : public detail::mul32x8_t {};
+template <> struct multiply_t<psnip_int8_t, simde__m256i> final : public detail::mul32x8_t {};
+template <> struct multiply_t<psnip_uint8_t, simde__m256i> final : public detail::mul32x8_t {};
 
-template <> struct multiply_t<int16_t, simde__m256i> final : public detail::mul16x16_t {};
-template <> struct multiply_t<uint16_t, simde__m256i> final : public detail::mul16x16_t {};
+template <> struct multiply_t<psnip_int16_t, simde__m256i> final : public detail::mul16x16_t {};
+template <> struct multiply_t<psnip_uint16_t, simde__m256i> final : public detail::mul16x16_t {};
 
-template <> struct multiply_t<int32_t, simde__m256i> final : public detail::mul8x32_t {};
-template <> struct multiply_t<uint32_t, simde__m256i> final : public detail::mul8x32_t {};
+template <> struct multiply_t<psnip_int32_t, simde__m256i> final : public detail::mul8x32_t {};
+template <> struct multiply_t<psnip_uint32_t, simde__m256i> final : public detail::mul8x32_t {};
 
-template <> struct multiply_t<int64_t, simde__m256i> final : public detail::mul4x64_t {};
-template <> struct multiply_t<uint64_t, simde__m256i> final : public detail::mul4x64_t {};
+template <> struct multiply_t<psnip_int64_t, simde__m256i> final : public detail::mul4x64_t {};
+template <> struct multiply_t<psnip_uint64_t, simde__m256i> final : public detail::mul4x64_t {};
 
 // todo(ryan): finish these (and check that the corresponding ones for add and subtract work properly for 128-bit and non-integer types)
 // template <typename NodeT> struct multiply_t<simde_int128, NodeT> final : public std::multiplies<simde_int128> {};
@@ -735,7 +736,7 @@ template <> struct multiply_t<dpf::bit, simde__m128i> final
 {
     auto operator()(const simde__m128i & a, const dpf::bit & b) const
     {
-        simde__m128i bb = simde_mm_set1_epi8(-uint8_t(b));
+        simde__m128i bb = simde_mm_set1_epi8(-b);
         return simde_mm_and_si128(a, bb);
     }
 };
@@ -743,7 +744,7 @@ template <> struct multiply_t<dpf::bit, simde__m256i> final
 {
     auto operator()(const simde__m256i & a, const dpf::bit & b) const
     {
-        simde__m256i bb = simde_mm256_set1_epi8(-uint8_t(b));
+        simde__m256i bb = simde_mm256_set1_epi8(-b);
         return simde_mm256_and_si256(a, bb);
     }
 };

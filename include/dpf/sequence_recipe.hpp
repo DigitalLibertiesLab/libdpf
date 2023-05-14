@@ -7,10 +7,16 @@
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
-#ifndef LIBDPF_INCLUDE_DPF_RECIPE_HPP__
-#define LIBDPF_INCLUDE_DPF_RECIPE_HPP__
+#ifndef LIBDPF_INCLUDE_DPF_SEQUENCE_RECIPE_HPP__
+#define LIBDPF_INCLUDE_DPF_SEQUENCE_RECIPE_HPP__
 
+#include <cstddef>
+#include <type_traits>
+#include <algorithm>
+#include <vector>
+#include <stdexcept>
 #include <list>
+#include <iterator>
 
 namespace dpf
 {
@@ -86,7 +92,7 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 
     std::vector<std::size_t> output_indices;
     // output_indices.push_back(*begin % outputs_per_leaf);
-    std::size_t leaf_index = 0;//*begin/outputs_per_leaf < *(begin+1)/outs_per_leaf;
+    std::size_t leaf_index = 0;  // *begin/outputs_per_leaf < *(begin+1)/outs_per_leaf;
     constexpr auto mod = utils::mod_pow_2<input_type>{};
     constexpr auto clz = utils::countl_zero_symmetric_difference<input_type>{};
     for (auto curr = begin, prev = curr; curr != end; prev = curr++)
@@ -116,4 +122,4 @@ auto make_sequence_recipe(const DpfKey &, RandomAccessIterator begin, RandomAcce
 
 }  // namespace dpf
 
-#endif  // LIBDPF_INCLUDE_DPF_RECIPE_HPP__
+#endif  // LIBDPF_INCLUDE_DPF_SEQUENCE_RECIPE_HPP__

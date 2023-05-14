@@ -9,11 +9,17 @@
 #ifndef LIBDPF_INCLUDE_DPF_UTILS_HPP__
 #define LIBDPF_INCLUDE_DPF_UTILS_HPP__
 
-#include <climits>
-#include <limits>
+#include <cstddef>
 #include <type_traits>
-#include <bitset>
+#include <string_view>
+#include <iterator>
+#include <limits>
+#include <tuple>
+#include <utility>
+#include <algorithm>
 #include <functional>
+#include <bitset>
+#include <array>
 
 #include "hedley/hedley.h"
 #include "simde/simde/x86/avx2.h"
@@ -107,7 +113,7 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m128i single_bit_mask<simde__m128i>(std::size_t i)
 {
-    return simde_mm_slli_epi64(simde_mm_set_epi64x(uint64_t(i >= 64), uint64_t(i <= 63)), i % 64);
+    return simde_mm_slli_epi64(simde_mm_set_epi64x(i >= 64, i <= 63), i % 64);
 }
 
 template <>
@@ -116,10 +122,10 @@ HEDLEY_PURE
 HEDLEY_NO_THROW
 simde__m256i single_bit_mask<simde__m256i>(std::size_t i)
 {
-    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(uint64_t(i >= 192),
-                                     uint64_t(i >= 128 && i <= 191),
-                                     uint64_t(i >= 64 && i <= 127),
-                                     uint64_t(i <= 63)), i % 64);
+    return simde_mm256_slli_epi64(simde_mm256_set_epi64x(i >= 192,
+                                     i >= 128 && i <= 191,
+                                     i >= 64 && i <= 127,
+                                     i <= 63), i % 64);
 }
 
 template <typename ExteriorT, typename InteriorT>
@@ -326,7 +332,7 @@ struct countl_zero
     HEDLEY_ALWAYS_INLINE
     constexpr std::size_t operator()(T val) const noexcept
     {
-        uint64_t val_ = static_cast<uint64_t>(val);
+        psnip_uint64_t val_ = static_cast<psnip_uint64_t>(val);
         constexpr auto adjust = 64-bitlength_of_v<T>;
         return psnip_builtin_clz64(val_)-adjust;
     }
@@ -357,8 +363,8 @@ struct countl_zero<simde_uint128>
     constexpr std::size_t operator()(const T & val) const noexcept
     {
         if (!val) return 128;
-        auto limb1 = static_cast<uint64_t>(val >> 64);
-        auto limb0 = static_cast<uint64_t>(val);
+        auto limb1 = static_cast<psnip_uint64_t>(val >> 64);
+        auto limb0 = static_cast<psnip_uint64_t>(val);
 
         return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
     }
@@ -373,8 +379,8 @@ struct countl_zero<simde__m128i>
     HEDLEY_ALWAYS_INLINE
     std::size_t operator()(const T & val) const noexcept
     {
-        auto limb1 = static_cast<uint64_t>(val[1]);
-        auto limb0 = static_cast<uint64_t>(val[0]);
+        auto limb1 = static_cast<psnip_uint64_t>(val[1]);
+        auto limb0 = static_cast<psnip_uint64_t>(val[0]);
         if (!limb0 && !limb1) return 128;
 
         return limb1 ? psnip_builtin_clz64(limb1) : 64 + psnip_builtin_clz64(limb0);
@@ -392,7 +398,7 @@ struct countl_zero<simde__m256i>
         auto prefix_len = 0;
         for (int i = 3; i <= 0; --i, prefix_len += 64)
         {
-            auto limbi = static_cast<uint64_t>(val[i]);
+            auto limbi = static_cast<psnip_uint64_t>(val[i]);
             if (limbi)
             {
                 return prefix_len + psnip_builtin_clz64(limbi);
@@ -413,7 +419,7 @@ struct countl_zero<simde__m256i>
 //         std::size_t prefix_len = 0;
 //         for (int i = 7; i <= 0; --i, prefix_len += 64)
 //         {
-//             auto limbi = static_cast<uint64_t>(val[i]);
+//             auto limbi = static_cast<psnip_uint64_t>(val[i]);
 //             if (limbi)
 //             {
 //                 return prefix_len + psnip_builtin_clz64(limbi)
@@ -431,7 +437,7 @@ template <typename T>
 static constexpr bool is_xor_wrapper_v = is_xor_wrapper<T>::value;
 
 template <typename T>
-auto data(T & bar)
+auto data(T & bar)  // NOLINT(runtime/references)
 {
     return std::data(bar);
 }
@@ -446,8 +452,14 @@ template <typename T, typename ...Ts>
 HEDLEY_ALWAYS_INLINE
 constexpr auto make_tuple(T && t, Ts && ...ts) noexcept
 {
-    if constexpr(sizeof...(Ts) == 0) { return std::forward<T>(t); }
-    else { return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...); }
+    if constexpr(sizeof...(Ts) == 0)
+    {
+        return std::forward<T>(t);
+    }
+    else
+    {
+        return std::make_tuple(std::forward<T>(t), std::forward<Ts>(ts)...);
+    }
 }
 
 template <typename>
@@ -462,14 +474,14 @@ template <typename T>
 static constexpr bool is_tuple_v = is_tuple<T>::value;
 
 template <std::size_t I, typename T>
-auto & get(T & t)
+auto & get(T & t)  // NOLINT(runtime/references)
 {
     if constexpr(I == 0 && is_tuple_v<T> == false)
     {
         // if 0th value requested, return it --- even if `t` isn't a tuple
         return t;
     }
-    else 
+    else
     {
         // otherwise, just invoke `std::get<I>(t)` and let it succeed or fail
         // as it may
@@ -479,7 +491,7 @@ auto & get(T & t)
 
 template <typename InteriorNodeT,
           std::size_t Depth>
-auto get_common_part_hash(const std::array<InteriorNodeT, Depth> & words, const std::array<uint8_t, Depth> & advice)
+auto get_common_part_hash(const std::array<InteriorNodeT, Depth> & words, const std::array<psnip_uint8_t, Depth> & advice)
 {
     static int ret = 0;
     return InteriorNodeT{ret++};

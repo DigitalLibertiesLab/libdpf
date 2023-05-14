@@ -12,11 +12,18 @@
 #ifndef LIBDPF_INCLUDE_DPF_MODINT_HPP__
 #define LIBDPF_INCLUDE_DPF_MODINT_HPP__
 
-#include <limits>
+#include <cstddef>
+#include <cmath>
+#include <type_traits>
+#include <functional>
 #include <string>
 #include <memory>
+#include <limits>
+#include <ostream>
+#include <istream>
 
 #include "hedley/hedley.h"
+#include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/utils.hpp"
 
@@ -642,14 +649,14 @@ struct countl_zero_symmetric_difference<dpf::modint<Nbits>>
 
         if constexpr (std::is_same_v<T, simde_uint128>)
         {
-            uint64_t diff_hi = static_cast<uint64_t>(diff >> 64);
-            uint64_t diff_lo = static_cast<uint64_t>(diff);
+            psnip_uint64_t diff_hi = static_cast<psnip_uint64_t>(diff >> 64);
+            psnip_uint64_t diff_lo = static_cast<psnip_uint64_t>(diff);
 
             return diff_hi ? psnip_builtin_clz64(diff_hi)-adjust : 64+psnip_builtin_clz64(diff_lo)-adjust;
         }
         else
         {
-            return psnip_builtin_clz64(static_cast<uint64_t>(diff))-adjust;
+            return psnip_builtin_clz64(static_cast<psnip_uint64_t>(diff))-adjust;
         }
     }
 };

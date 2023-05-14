@@ -48,7 +48,7 @@ class const_bit_iterator;  // forward reference
 /// @details A `bit_array` represents a (dynamically-allocated) fixed-size
 ///          sequence of bits. The underlying storage is an array of integers
 ///          of type `dpf::bit_array::word_type`.
-template <typename ConcreteBitArrayT, typename WordT = uint64_t>
+template <typename ConcreteBitArrayT, typename WordT = psnip_uint64_t>
 class bit_array_base
 {
   private:

@@ -10,6 +10,7 @@
 #define LIBDPF_INCLUDE_DPF_ZIP_ITERABLE_HPP__
 
 #include <tuple>
+#include <iterator>
 
 namespace dpf
 {
@@ -102,8 +103,7 @@ zip_iterable<Iterables...> tuple_as_zip(const std::tuple<Iterables...> & tup) no
 {
     return zip_iterable<Iterables...>(
         std::apply([](auto && ...elements){ return std::make_tuple(std::begin(elements)...); }, tup),
-        std::apply([](auto && ...elements){ return std::make_tuple(std::end(elements)...); }, tup)
-    );
+        std::apply([](auto && ...elements){ return std::make_tuple(std::end(elements)...); }, tup));
 }
 
 template <typename TupleT,

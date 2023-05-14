@@ -9,6 +9,9 @@
 #ifndef LIBDPF_INCLUDE_DPF_SETBIT_INDEX_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SETBIT_INDEX_ITERABLE_HPP__
 
+#include <cstddef>
+#include <type_traits>
+#include <iterator>
 #include <utility>
 
 #include "hedley/hedley.h"

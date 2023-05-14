@@ -10,6 +10,14 @@
 #ifndef LIBDPF_INCLUDE_DPF_PATH_MEMOIZER_HPP__
 #define LIBDPF_INCLUDE_DPF_PATH_MEMOIZER_HPP__
 
+#include <cstddef>
+#include <cstring>
+#include <type_traits>
+#include <functional>
+#include <memory>
+#include <array>
+#include <optional>
+
 namespace dpf
 {
 
@@ -171,7 +179,7 @@ auto make_path_memoizer()
     return MemoizerT();
 }
 
-}  // namespace dpf::detail
+}  // namespace detail
 
 template <typename DpfKey>
 auto make_basic_path_memoizer()

@@ -9,7 +9,11 @@
 #ifndef LIBDPF_INCLUDE_DPF_OUTPUT_BUFFER_HPP__
 #define LIBDPF_INCLUDE_DPF_OUTPUT_BUFFER_HPP__
 
+#include <cstddef>
 #include <algorithm>
+#include <tuple>
+#include <limits>
+#include <iterator>
 #include <vector>
 
 #include "dpf/aligned_allocator.hpp"
@@ -87,8 +91,7 @@ auto make_output_buffer_for_interval(InputT from, InputT to)
     return std::make_tuple(
         make_output_buffer_for_interval<DpfKey, I0>(from, to),
         make_output_buffer_for_interval<DpfKey, I1>(from, to),
-        make_output_buffer_for_interval<DpfKey, Is>(from, to)...
-    );
+        make_output_buffer_for_interval<DpfKey, Is>(from, to)...);
 }
 
 template <std::size_t I = 0,
@@ -130,8 +133,7 @@ auto make_output_buffer_for_full()
     return std::make_tuple(
         make_output_buffer_for_full<DpfKey, I0>(),
         make_output_buffer_for_full<DpfKey, I1>(),
-        make_output_buffer_for_full<DpfKey, Is>()...
-    );
+        make_output_buffer_for_full<DpfKey, Is>()...);
 }
 
 template <std::size_t I = 0,

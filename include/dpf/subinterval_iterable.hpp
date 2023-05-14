@@ -8,6 +8,8 @@
 #ifndef LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 #define LIBDPF_INCLUDE_DPF_SUBINTERVAL_ITERABLE_HPP__
 
+#include <cstddef>
+
 namespace dpf
 {
 
