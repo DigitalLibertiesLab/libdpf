@@ -29,8 +29,8 @@
 #include "portable-snippets/builtin/builtin.h"
 #include "portable-snippets/endian/endian.h"
 
-#include "dpf/bit.hpp"
 #include "dpf/utils.hpp"
+#include "dpf/bit.hpp"
 #include "dpf/aligned_allocator.hpp"
 
 namespace dpf

@@ -23,7 +23,6 @@
 #include "dpf/wildcard.hpp"
 #include "dpf/twiddle.hpp"
 #include "dpf/leaf_node.hpp"
-#include "dpf/aligned_allocator.hpp"
 
 namespace dpf
 {

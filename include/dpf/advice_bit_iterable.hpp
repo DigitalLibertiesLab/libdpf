@@ -44,6 +44,7 @@
 #include "simde/simde/x86/avx2.h"
 #include "portable-snippets/exact-int/exact-int.h"
 
+#include "dpf/utils.hpp"
 #include "dpf/bit_array.hpp"
 
 namespace dpf
