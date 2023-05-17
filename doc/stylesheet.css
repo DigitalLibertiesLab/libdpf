@@ -125,7 +125,7 @@ html.dark-mode .bordered_image object[type="image/svg+xml"] /* doxygen 1.9.3 */ 
     content: "\f0e3";
 }
 
-.index\.html\:motivation::before {
+.index\.html\:synopsis::before {
     content: "\f52b";
 }
 .index\.html\:features::before {
@@ -151,7 +151,7 @@ dpf trees: \e4bd
 
 .basics\.html\:point_functions::before,
 .basics\.html\:dpf_trees::before,
-.index\.html\:motivation::before,
+.index\.html\:synopsis::before,
 .index\.html\:features::before,
 .index\.html\:credits::before,
 .index\.html\:disclaimer::before,

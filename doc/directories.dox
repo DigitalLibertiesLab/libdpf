@@ -1,11 +1,32 @@
-/// @dir ./
-/// @brief the root
-
 /// @dir ./doc
-/// @brief documentation
+/// @brief input files used by `Doxygen` to produce this documentation
+
+/// @dir ./doc/assets
+/// @brief image files
+
+/// @dir ./examples
+/// @brief sample code listings to demonstrate use of various `libdpf++` features
+
+/// @dir ./examples/evaluation
+/// @brief evaluation
+
+/// @dir ./examples/input_types
+/// @brief inputs
+
+/// @dir ./examples/output_types
+/// @brief outputs
+
+/// @dir ./examples/iterables
+/// @brief iterable
 
 /// @dir ./include
-/// @brief most headers are here
+/// @brief location of `dph.hpp` and many other `libdpf++` headers in `include/dpf`
 
 /// @dir ./include/dpf
-/// @brief most dpf-specific headers are in here
+/// @brief location of most `libdpf++` headers
+
+/// @dir ./test
+/// @brief collection of `GTest` test cases
+
+/// @dir ./thirdparty
+/// @brief submodules and other third-party content

@@ -923,9 +923,10 @@ INPUT                  = include/dpf.hpp \
                          doc/libdpf_full.md \
                          doc/examples.dox \
                          doc/namespaces.dox \
-                         doc/directories.dox
-
-                        
+                         doc/directories.dox \
+                         examples \
+                         doc \
+                         test
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -967,10 +968,10 @@ INPUT_FILE_ENCODING    =
 
 FILE_PATTERNS          = *.cpp \
                          *.hpp \
-                         *.md \
-                         *.dox \
                          *.svg \
                          *.png
+                        #  *.md \
+                        #  *.dox \
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -985,7 +986,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = 
+EXCLUDE                = *.md *.dox
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -1205,7 +1206,7 @@ VERBATIM_HEADERS       = YES
 # generated with the -Duse_libclang=ON option for CMake.
 # The default value is: NO.
 
-CLANG_ASSISTED_PARSING = NO
+CLANG_ASSISTED_PARSING = YES
 
 # If the CLANG_ASSISTED_PARSING tag is set to YES and the CLANG_ADD_INC_PATHS
 # tag is set to YES then doxygen will add the directory of each input to the
@@ -1221,7 +1222,7 @@ CLANG_ADD_INC_PATHS    = YES
 # specified with INPUT and INCLUDE_PATH.
 # This tag requires that the tag CLANG_ASSISTED_PARSING is set to YES.
 
-CLANG_OPTIONS          =
+CLANG_OPTIONS          = -std=c++17 -march=native -lbsd -pthread -Ithirdparty -Iinclude -Ithirdparty/asio/asio/include
 
 # If clang assisted parsing is enabled you can provide the clang parser with the
 # path to the directory containing a file called compile_commands.json. This
@@ -2348,7 +2349,19 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = "HEDLEY_ALWAYS_INLINE=[[gnu::always_inline]]" \
                          "HEDLEY_PURE=[[gnu::pure]]"                   \
                          "HEDLEY_CONST=[[gnu::const]]"                 \
-                         "HEDLEY_NO_THROW=[[gnu::nothrow]]"
+                         "HEDLEY_NO_THROW=[[gnu::nothrow]]"            \
+                         "psnip_int8_t=int8_t"                         \
+                         "psnip_uint8_t=uint8_t"                       \
+                         "psnip_int16_t=int16_t"                       \
+                         "psnip_uint16_t=uint16_t"                     \
+                         "psnip_int32_t=int32_t"                       \
+                         "psnip_uint32_t=uint32_t"                     \
+                         "psnip_int64_t=int64_t"                       \
+                         "psnip_uint64_t=uint64_t"                     \
+                         "simde_int128=int128_t"                       \
+                         "simde_uint128=uint128_t"                     \
+                         "simde__m128i=__m128i"                        \
+                         "simde__m256i=__m256i"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The
