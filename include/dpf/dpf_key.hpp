@@ -15,6 +15,7 @@
 #include <tuple>
 #include <array>
 #include <bitset>
+#include <atomic>
 #include <string>
 
 #include "portable-snippets/exact-int/exact-int.h"
@@ -192,6 +193,33 @@ static T basic_uniform_root_sampler()
     T ret = dpf::uniform_fill(ret);
     return ret;
 }
+
+template <typename PRG = dpf::prg::aes128>
+struct pseudorandom_root_sampler
+{
+    using root_type = typename PRG::block_type;
+
+    pseudorandom_root_sampler(
+        root_type && seed = basic_uniform_root_sampler<root_type>())
+      : seed_{seed}, counter_{0} { }
+
+    root_type operator()(uint32_t i) const
+    {
+        return PRG::eval(seed_, i);
+    }
+
+    root_type operator()()
+    {
+        return this->operator()(counter_.fetch_add(1));
+    }
+
+    root_type seed() const { return seed_; }
+    uint32_t count() const { return counter_; }
+
+  private:
+    root_type seed_;
+    std::atomic_uint32_t counter_;
+};
 
 namespace utils
 {
