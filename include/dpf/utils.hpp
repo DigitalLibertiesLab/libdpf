@@ -186,6 +186,24 @@ struct bitlength_of<std::array<T, N>>
   : public std::integral_constant<std::size_t, bitlength_of_v<T> * N> { };
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
+template <typename OutputT,
+          typename NodeT>
+struct bitlength_of_output
+  : public std::integral_constant<std::size_t,
+        sizeof(OutputT) <= sizeof(NodeT) ?
+            // if sizeof OutputT is less than or equal to sizeof NodeT then
+            // return power of 2 greater than or equal to sizeof OutputT
+            // with a minimum value of CHAR_BIT
+            //
+            // else return multiple of sizeof NodeT greater than or equal to
+            // sizeof OutputT
+            std::size_t(1) << static_cast<std::size_t>(std::ceil(std::log2(sizeof(OutputT) * CHAR_BIT)))
+          : quotient_ceiling(sizeof(OutputT), sizeof(NodeT))*sizeof(NodeT)*CHAR_BIT> { };
+
+template <typename OutputT,
+          typename NodeT>
+static constexpr std::size_t bitlength_of_output_v = bitlength_of_output<OutputT, NodeT>::value;
+
 /// @brief the primitive integral type used to represent non integral types
 template <std::size_t Nbits,
           std::size_t MinBits = Nbits,
@@ -314,7 +332,7 @@ struct mod_pow_2
 {
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
-        return static_cast<std::size_t>(val % (1ul << n));
+        return static_cast<std::size_t>(val % (1ul << n));  // TODO: check proper behavior on overflow
     }
 };
 

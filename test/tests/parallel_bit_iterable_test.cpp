@@ -2,7 +2,6 @@
 
 #include <array>
 
-#include "asio.hpp"
 #include "dpf.hpp"
 
 TEST(ParallelBitIterableTest, BasicUsageBatchSize02)

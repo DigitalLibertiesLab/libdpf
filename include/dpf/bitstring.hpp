@@ -65,13 +65,12 @@ namespace dpf
 ///          `dpf::bit_array_base` and is parametrized on `Nbits`, which is
 ///          the length of the bitstring.
 /// @tparam Nbits the bitlength of the string
-template <std::size_t Nbits>
-class bitstring : public bit_array_base<bitstring<Nbits>,
-    utils::integral_type_from_bitlength_t<Nbits, 8, 64>>
+template <std::size_t Nbits,
+          typename WordT = utils::integral_type_from_bitlength_t<Nbits, 8, 64>>
+class bitstring : public bit_array_base<bitstring<Nbits, WordT>, WordT>
 {
   private:
-    using base = bit_array_base<bitstring<Nbits>,
-        utils::integral_type_from_bitlength_t<Nbits, 8, 64>>;
+    using base = bit_array_base<bitstring<Nbits, WordT>, WordT>;
     using word_pointer = typename base::word_pointer;
     using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
@@ -83,8 +82,9 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     static constexpr size_type data_length_
         = utils::quotient_ceiling(Nbits, bits_per_word);
   public:
-    /// @brief the primitive integral type used to represent the string
-    using integral_type = utils::integral_type_from_bitlength_t<Nbits, 8, 64>;
+    /// @brief the primitive integral type used to represent the string,
+    ///        note this should be based on Nbits and not WordT
+    using integral_type = utils::integral_type_from_bitlength_t<Nbits>;
 
     /// @name C'tors
     /// @brief Constructs the default allocator. Since the default allocator
@@ -194,7 +194,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
     ///          family of functions. Specifically, it can be used in loops
     ///          such as
     ///          \code{c++}
-    ///          auto x = dpf::bitstring<Nbits> = ...;
+    ///          auto x = dpf::bitstring<Nbits, WordT> = ...;
     ///          auto mask = dpf::msb_of(x);
     ///          for (auto i = 0; i < Nbits; ++i, mask>>=1)
     ///          {
@@ -246,7 +246,7 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
         }
 
         /// @brief returns `true` if and only if the bit mask corresponds to a
-        ///        valid bit position in a `dpf::bitstring<Nbits>`
+        ///        valid bit position in a `dpf::bitstring<Nbits, WordT>`
         /// @return `(0 <= which_bit()) && (which_bit() < Nbits)`
         HEDLEY_ALWAYS_INLINE
         HEDLEY_CONST
@@ -533,11 +533,13 @@ class bitstring : public bit_array_base<bitstring<Nbits>,
 
     friend struct utils::countl_zero_symmetric_difference<bitstring>;
     friend struct utils::to_integral_type<bitstring>;
+    friend struct utils::make_from_integral_value<bitstring>;
     friend struct utils::mod_pow_2<bitstring>;
 };  // class dpf::bitstring
 
-template <std::size_t Nbits>
-inline std::ostream & operator<<(std::ostream & os, bitstring<Nbits> b)
+template <std::size_t Nbits,
+          typename WordT>
+inline std::ostream & operator<<(std::ostream & os, bitstring<Nbits, WordT> b)
 {
     return os << b.to_string();
 }
@@ -546,26 +548,29 @@ namespace utils
 {
 
 /// @brief specializes `dpf::utils::bitlength_of` for `dpf::bitstring`
-template <std::size_t Nbits>
-struct bitlength_of<dpf::bitstring<Nbits>>
+template <std::size_t Nbits,
+          typename WordT>
+struct bitlength_of<dpf::bitstring<Nbits, WordT>>
   : public std::integral_constant<std::size_t, Nbits>
 { };
 
 /// @brief specializes `dpf::utils::msb_of` for `dpf::bitstring`
-template <std::size_t Nbits>
-struct msb_of<dpf::bitstring<Nbits>>
+template <std::size_t Nbits,
+          typename WordT>
+struct msb_of<dpf::bitstring<Nbits, WordT>>
 {
     constexpr static auto value
-        = typename dpf::bitstring<Nbits>::bit_mask(
-            bitlength_of_v<dpf::bitstring<Nbits>>-1ul);
+        = typename dpf::bitstring<Nbits, WordT>::bit_mask(
+            bitlength_of_v<dpf::bitstring<Nbits, WordT>>-1ul);
 };
 
 /// @brief specializes `dpf::utils::countl_zero_symmetric_difference` for
 ///        `dpf::bitstring`
-template <std::size_t Nbits>
-struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
+template <std::size_t Nbits,
+          typename WordT>
+struct countl_zero_symmetric_difference<dpf::bitstring<Nbits, WordT>>
 {
-    using T = dpf::bitstring<Nbits>;
+    using T = dpf::bitstring<Nbits, WordT>;
 
     HEDLEY_CONST
     HEDLEY_ALWAYS_INLINE
@@ -589,20 +594,21 @@ struct countl_zero_symmetric_difference<dpf::bitstring<Nbits>>
     }
 };
 
-template <std::size_t Nbits>
-struct to_integral_type<dpf::bitstring<Nbits>>
-    : public to_integral_type_base<dpf::bitstring<Nbits>>
+template <std::size_t Nbits,
+          typename WordT>
+struct to_integral_type<dpf::bitstring<Nbits, WordT>>
+    : public to_integral_type_base<dpf::bitstring<Nbits, WordT>>
 {
-    using parent = to_integral_type_base<dpf::bitstring<Nbits>>;
+    using parent = to_integral_type_base<dpf::bitstring<Nbits, WordT>>;
     using typename parent::integral_type;
 
-    static constexpr auto bits_per_word = dpf::bitstring<Nbits>::bits_per_word;
+    static constexpr auto bits_per_word = dpf::bitstring<Nbits, WordT>::bits_per_word;
     static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - (Nbits % bits_per_word);
 
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(const dpf::bitstring<Nbits> & input) const noexcept
+    constexpr integral_type operator()(const dpf::bitstring<Nbits, WordT> & input) const noexcept
     {
         if constexpr(Nbits <= bits_per_word)
         {
@@ -624,16 +630,39 @@ struct to_integral_type<dpf::bitstring<Nbits>>
     HEDLEY_CONST
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    constexpr integral_type operator()(const typename dpf::bitstring<Nbits>::bit_mask & input) const noexcept
+    constexpr integral_type operator()(const typename dpf::bitstring<Nbits, WordT>::bit_mask & input) const noexcept
     {
         return integral_type(1) << input.which_bit();
     }
 };
 
-template <std::size_t Nbits>
-struct mod_pow_2<dpf::bitstring<Nbits>>
+template <std::size_t Nbits,
+          typename WordT>
+struct make_from_integral_value<dpf::bitstring<Nbits, WordT>>
 {
-    using T = dpf::bitstring<Nbits>;
+    using T = dpf::bitstring<Nbits, WordT>;
+    using T_integral_type = typename T::integral_type;
+    using integral_type = std::conditional_t<std::is_void_v<T_integral_type>, simde_uint128, T_integral_type>;
+    static constexpr auto mod = utils::mod_pow_2<integral_type>{};
+    static constexpr auto bits_per_last_word = Nbits % T::bits_per_word;
+    constexpr dpf::bitstring<Nbits, WordT> operator()(integral_type val) const noexcept
+    {
+        dpf::bitstring<Nbits, WordT> ret;
+        std::size_t i = 0;
+        for (; i < T::data_length_-1; ++i, val >>= T::bits_per_word)
+        {
+            ret.data_[i] = static_cast<typename T::word_type>(val);
+        }
+        ret.data_[i] = mod(val, bits_per_last_word);
+        return ret;
+    }
+};
+
+template <std::size_t Nbits,
+          typename WordT>
+struct mod_pow_2<dpf::bitstring<Nbits, WordT>>
+{
+    using T = dpf::bitstring<Nbits, WordT>;
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
         return static_cast<std::size_t>(val.data_[0] % (1ul << n));
@@ -659,7 +688,16 @@ namespace literals
     template <char ...bits>
     constexpr static auto operator "" _bitstring()
     {
-        dpf::bitstring<sizeof...(bits)> bs;
+        dpf::bitstring<sizeof...(bits)> bs{0};
+        std::size_t i = 0;
+        (bs.set(i++, dpf::to_bit(bits)), ...);
+        return bs;
+    }
+
+    template <char ...bits>
+    constexpr static auto operator "" _bitstring_8()
+    {
+        dpf::bitstring<sizeof...(bits), uint8_t> bs{0};
         std::size_t i = 0;
         (bs.set(i++, dpf::to_bit(bits)), ...);
         return bs;
@@ -674,9 +712,10 @@ namespace std
 /// @brief specializes `std::numeric_limits` for CV-qualified `dpf::bitstring`s
 /// @{
 
-/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits>`
-template<std::size_t Nbits>
-class numeric_limits<dpf::bitstring<Nbits>>
+/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits, WordT>`
+template<std::size_t Nbits,
+          typename WordT>
+class numeric_limits<dpf::bitstring<Nbits, WordT>>
 {
   public:
     static constexpr bool is_specialized = true;
@@ -701,36 +740,39 @@ class numeric_limits<dpf::bitstring<Nbits>>
     static constexpr int min_exponent10 = 0;
     static constexpr int max_exponent10 = 0;
     static constexpr bool traps
-        = std::numeric_limits<typename dpf::bitstring<Nbits>::integral_type>::traps;
+        = std::numeric_limits<typename dpf::bitstring<Nbits, WordT>::integral_type>::traps;
     static constexpr bool tinyness_before = false;
 
-    static constexpr dpf::bitstring<Nbits> min() noexcept { return dpf::bitstring<Nbits>{}; }
-    static constexpr dpf::bitstring<Nbits> lowest() noexcept { return dpf::bitstring<Nbits>{}; }
-    static constexpr dpf::bitstring<Nbits> max() noexcept { return ~dpf::bitstring<Nbits>{}; }
-    static constexpr dpf::bitstring<Nbits> epsilon() noexcept { return 0; }
-    static constexpr dpf::bitstring<Nbits> round_error() noexcept { return 0; }
-    static constexpr dpf::bitstring<Nbits> infinity() noexcept { return 0; }
-    static constexpr dpf::bitstring<Nbits> quiet_NaN() noexcept { return 0; }
-    static constexpr dpf::bitstring<Nbits> signaling_NaN() noexcept { return 0; }
-    static constexpr dpf::bitstring<Nbits> denorm_min() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> min() noexcept { return dpf::bitstring<Nbits, WordT>{}; }
+    static constexpr dpf::bitstring<Nbits, WordT> lowest() noexcept { return dpf::bitstring<Nbits, WordT>{}; }
+    static constexpr dpf::bitstring<Nbits, WordT> max() noexcept { return ~dpf::bitstring<Nbits, WordT>{}; }
+    static constexpr dpf::bitstring<Nbits, WordT> epsilon() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> round_error() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> infinity() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> quiet_NaN() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> signaling_NaN() noexcept { return 0; }
+    static constexpr dpf::bitstring<Nbits, WordT> denorm_min() noexcept { return 0; }
 };
 
-/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits> const`
-template<std::size_t Nbits>
-class numeric_limits<dpf::bitstring<Nbits> const>
-  : public numeric_limits<dpf::bitstring<Nbits>> {};
+/// @details specializes `std::numeric_limits` for `dpf::bitstring<Nbits, WordT> const`
+template<std::size_t Nbits,
+          typename WordT>
+class numeric_limits<dpf::bitstring<Nbits, WordT> const>
+  : public numeric_limits<dpf::bitstring<Nbits, WordT>> {};
 
 /// @details specializes `std::numeric_limits` for
-///          `dpf::bitstring<Nbits> volatile`
-template<std::size_t Nbits>
-class numeric_limits<dpf::bitstring<Nbits> volatile>
-  : public numeric_limits<dpf::bitstring<Nbits>> {};
+///          `dpf::bitstring<Nbits, WordT> volatile`
+template<std::size_t Nbits,
+          typename WordT>
+class numeric_limits<dpf::bitstring<Nbits, WordT> volatile>
+  : public numeric_limits<dpf::bitstring<Nbits, WordT>> {};
 
 /// @details specializes `std::numeric_limits` for
-///          `dpf::bitstring<Nbits> const volatile`
-template<std::size_t Nbits>
-class numeric_limits<dpf::bitstring<Nbits> const volatile>
-  : public numeric_limits<dpf::bitstring<Nbits>> {};
+///          `dpf::bitstring<Nbits, WordT> const volatile`
+template<std::size_t Nbits,
+          typename WordT>
+class numeric_limits<dpf::bitstring<Nbits, WordT> const volatile>
+  : public numeric_limits<dpf::bitstring<Nbits, WordT>> {};
 
 /// @}
 
