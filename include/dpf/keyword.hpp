@@ -45,6 +45,7 @@
 #include "hedley/hedley.h"
 
 #include "dpf/utils.hpp"
+#include "dpf/modint.hpp"
 
 namespace dpf
 {
@@ -90,7 +91,7 @@ template <std::size_t N,
           const CharT * Alphabet = alphabets::printable_ascii,
           typename Traits = std::char_traits<CharT>,
           typename Allocator = std::allocator<CharT>>
-class basic_fixed_length_string
+class basic_fixed_length_string : public dpf::modint<static_cast<std::size_t>(std::ceil(N*std::log2(std::basic_string_view<CharT, Traits>(&Alphabet[1]).size() + 1)))>
 {
   public:
     using string_view = std::basic_string_view<CharT, Traits>;
@@ -112,6 +113,10 @@ class basic_fixed_length_string
     static_assert(!alphabet.empty(), "alphabet must be non-empty");
     static_assert(N != 0, "maximum string length must be positive");
 
+  private:
+    using parent = dpf::modint<bits>;
+
+  public:
     /// @brief the primitive integral type used to represent the string
     using integral_type = dpf::utils::nonvoid_integral_type_from_bitlength_t<bits>;
 
@@ -145,7 +150,7 @@ class basic_fixed_length_string
     // cppcheck-suppress noExplicitConstructor
     basic_fixed_length_string(string_view str)  // NOLINT(runtime/explicit)
     noexcept
-      : val{encode_(str)} { }
+      : parent::modint(encode_(str)) { }
 
     /// @brief value constructor
     /// @details Constructs a `basic_fixed_length_string` whose value is
@@ -155,7 +160,7 @@ class basic_fixed_length_string
     // cppcheck-suppress noExplicitConstructor
     basic_fixed_length_string(const CharT * str)  // NOLINT(runtime/explicit)
     noexcept
-      : val{encode_(str)} { }
+      : parent::modint(encode_(str)) { }
 
     /// @}
 
@@ -168,102 +173,8 @@ class basic_fixed_length_string
     /// @param str the string to assign with
     constexpr basic_fixed_length_string & operator=(string_view str) noexcept
     {
-        val = encode_(str);
+        parent::operator=(encode_(str));
         return *this;
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator<<(std::size_t shift_amount) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val << shift_amount)};
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string & operator<<=(std::size_t shift_amount) noexcept
-    {
-        this->val <<= shift_amount;
-        return *this;
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator>>(std::size_t shift_amount) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->reduced_value() >> shift_amount)};
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string & operator>>=(std::size_t shift_amount) noexcept
-    {
-        this->val = this->reduced_value() >> shift_amount;
-        return *this;
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string & operator++() noexcept
-    {
-        val += 1;
-        return *this;
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator++(int) noexcept
-    {
-        auto ret = *this;
-        this->operator++();
-        return ret;
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string & operator--() noexcept
-    {
-        val -= 1;
-        return *this;
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator--(int) noexcept
-    {
-        auto ret = *this;
-        this->operator--();
-        return ret;
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator&(basic_fixed_length_string rhs) const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(this->val & rhs.val)};
-    }
-
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr bool operator==(const basic_fixed_length_string & rhs) const noexcept
-    {
-        return this->reduced_value() == rhs.reduced_value();
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr basic_fixed_length_string operator~() const noexcept
-    {
-        return basic_fixed_length_string{static_cast<integral_type>(~this->val)};
-    }
-
-    constexpr operator bool() const noexcept
-    {
-        return static_cast<bool>(this->reduced_value());
     }
 
     /// @brief copy assignment
@@ -282,6 +193,14 @@ class basic_fixed_length_string
 
     ~basic_fixed_length_string() = default;
 
+    HEDLEY_CONST
+    HEDLEY_NO_THROW
+    HEDLEY_ALWAYS_INLINE
+    constexpr basic_fixed_length_string operator~() const noexcept
+    {
+        return basic_fixed_length_string{parent::operator~()};
+    }
+
     /// @brief recreates the string representation of this
     ///        `basic_fixed_length_string`
     /// @complexity `O(N)` where `N` is the maximum string length
@@ -289,7 +208,7 @@ class basic_fixed_length_string
     operator std::basic_string<CharT, Traits, Allocator>() const noexcept
     {
         std::basic_stringstream<CharT, Traits, Allocator> ss{};
-        auto tmp = val;
+        auto tmp = parent::reduced_value();
         while (tmp != 0)                           // O(N)
         {
             ss << alphabet[(tmp % radix)-1];
@@ -300,36 +219,15 @@ class basic_fixed_length_string
         return s;
     }
 
-    /// @brief retrieve the integer representation of this
-    ///        `basic_fixed_length_string`
-    /// @return the integer representation of this string
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr explicit operator integral_type() const noexcept
-    {
-        return this->reduced_value();
-    }
-
-    HEDLEY_CONST
-    HEDLEY_NO_THROW
-    HEDLEY_ALWAYS_INLINE
-    constexpr integral_type data() const noexcept
-    {
-        return val;
-    }
-
-    constexpr integral_type reduced_value() const
-    {
-        return val & modulo_mask;
-    }
-
   private:
     constexpr
     // cppcheck-suppress noExplicitConstructor
     basic_fixed_length_string(integral_type val)  // NOLINT(runtime/explicit)
     noexcept
-      : val{val} { }
+      : parent::modint(val) { }
+
+    constexpr basic_fixed_length_string(parent val) noexcept
+      : parent::modint(val) { }
 
     /// @brief converts a string of length at-most `max_length` over
     ///        `alphabet` into an integer
@@ -357,13 +255,6 @@ class basic_fixed_length_string
         }
         return val;
     }
-
-    /// @brief bitmask used for performing reductions modulo `2^bits`
-    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - bits;
-
-    /// @brief the `integral_type` used to store the integer representation of
-    ///        this string
-    integral_type val;
 
     /// @brief performs stream input and output on
     ///        `dpf::basic_fixed_length_string`s
@@ -396,39 +287,15 @@ class basic_fixed_length_string
     operator>>(std::basic_istream<CharT, Traits> & is,
         basic_fixed_length_string & k)
     {
-        return is >> k.val;
+        integral_type tmp;
+        is >> tmp;
+        k = basic_fixed_length_string(tmp);
+        return is;
     }
 
     /// @}
 
-    HEDLEY_CONST
-    HEDLEY_ALWAYS_INLINE
-    friend constexpr bool operator<(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
-    {
-        return lhs.reduced_value() < rhs.reduced_value();
-    }
-
-    HEDLEY_CONST
-    HEDLEY_ALWAYS_INLINE
-    friend constexpr bool operator<=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
-    {
-        return lhs.reduced_value() <= rhs.reduced_value();
-    }
-
-    HEDLEY_CONST
-    HEDLEY_ALWAYS_INLINE
-    friend constexpr bool operator>(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
-    {
-        return lhs.reduced_value() > rhs.reduced_value();
-    }
-
-    HEDLEY_CONST
-    HEDLEY_ALWAYS_INLINE
-    friend constexpr bool operator>=(basic_fixed_length_string lhs, basic_fixed_length_string rhs) noexcept
-    {
-        return lhs.reduced_value() >= rhs.reduced_value();
-    }
-
+    friend struct utils::countl_zero_symmetric_difference<basic_fixed_length_string>;
     friend struct utils::msb_of<basic_fixed_length_string>;
     friend struct utils::mod_pow_2<basic_fixed_length_string>;
     friend struct utils::make_from_integral_value<basic_fixed_length_string>;
@@ -493,19 +360,8 @@ template <std::size_t N,
           typename Traits,
           typename Alloc>
 struct countl_zero_symmetric_difference<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
-{
-    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
-    static constexpr auto clz = dpf::utils::countl_zero_symmetric_difference<typename T::integral_type>{};
-
-    HEDLEY_CONST
-    HEDLEY_ALWAYS_INLINE
-    constexpr std::size_t operator()(const T & lhs, const T & rhs) const noexcept
-    {
-        constexpr auto adjust = utils::bitlength_of_v<typename T::integral_type>-T::bits;
-        return clz(static_cast<typename T::integral_type>(lhs),
-                   static_cast<typename T::integral_type>(rhs)) - adjust;
-    }
-};
+  : countl_zero_symmetric_difference<typename dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>::parent>
+{ };
 
 template <std::size_t N,
           typename CharT,
@@ -513,13 +369,8 @@ template <std::size_t N,
           typename Traits,
           typename Alloc>
 struct mod_pow_2<dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>>
-{
-    using T = dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>;
-    std::size_t operator()(T val, std::size_t n) const noexcept
-    {
-        return static_cast<std::size_t>(val.val % (1ul << n));
-    }
-};
+  : mod_pow_2<typename dpf::basic_fixed_length_string<N, CharT, Alpha, Traits, Alloc>::parent>
+{ };
 
 template <std::size_t N,
           typename CharT,
