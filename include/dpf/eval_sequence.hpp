@@ -46,14 +46,16 @@ namespace internal
 {
 
 template <std::size_t ...Is,
-        typename DpfKey,
-        typename Iterator,
-        typename OutputBuffers,
-        std::size_t ...IIs>
+          typename DpfKey,
+          typename Iterator,
+          typename OutputBuffers,
+          std::size_t ...IIs>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     OutputBuffers && outbufs, std::index_sequence<IIs...>)
 {
+    using dpf_type = DpfKey;
+
     auto path = make_basic_path_memoizer(dpf);
     auto rawbuf = utils::make_tuple(
         reinterpret_cast<std::tuple_element_t<Is, typename DpfKey::leaf_tuple>*>(utils::data(utils::get<IIs>(outbufs)))...);
@@ -61,21 +63,28 @@ auto eval_sequence_entire_node(const DpfKey & dpf, Iterator begin, Iterator end,
     std::size_t i = 0;
     // DPF_UNROLL_LOOP
     auto to_integral_type = dpf::utils::to_integral_type<typename DpfKey::input_type>{};
-    for (auto it = begin; it != end; ++it)
+    for (auto it = begin; it != end; ++it, ++i)
     {
-        std::tie(utils::get<IIs>(rawbuf)[i]...) = std::make_tuple(
-            dpf::eval_point<Is>(dpf, *it, path).node...);
-        i++;
+        if constexpr(std::is_same_v<typename DpfKey::concrete_output_type<0>, dpf::bit>)
+        {
+            std::tie(utils::get<IIs>(rawbuf)[i]...) = std::make_tuple(
+                dpf::eval_point<Is>(dpf, *it, path).node...);
+        }
+        else
+        {
+            auto temp = std::make_tuple(dpf::eval_point<Is>(dpf, *it, path).node...);
+            (std::memcpy(&utils::get<IIs>(outbufs)[i*dpf_type::outputs_per_leaf], &utils::get<IIs>(temp), sizeof(typename DpfKey::concrete_output_type<Is>)*dpf_type::outputs_per_leaf), ...);
+        }
     }
     return utils::make_tuple(
         dpf::subsequence_iterable<DpfKey, decltype(std::begin(utils::get<IIs>(outbufs))), Iterator>(std::begin(utils::get<IIs>(outbufs)), begin, end)...);
 }
 
 template <std::size_t ...Is,
-        typename DpfKey,
-        typename Iterator,
-        typename OutputBuffers,
-        std::size_t ...IIs>
+          typename DpfKey,
+          typename Iterator,
+          typename OutputBuffers,
+          std::size_t ...IIs>
 HEDLEY_ALWAYS_INLINE
 auto eval_sequence_output_only(const DpfKey & dpf, Iterator begin, Iterator end, OutputBuffers && outbufs,
     std::index_sequence<IIs...>)
@@ -217,7 +226,14 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
         j += (clz(*prev, *curr)) < dpf_type::depth;
         auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
             get_if_lo_bit(cw, buf[j]));
-        std::memcpy(&rawbuf[i], &leaf, sizeof(leaf));
+        if constexpr (std::is_same_v<output_type, dpf::bit>)
+        {
+            std::memcpy(&rawbuf[i], &leaf, sizeof(leaf));
+        }
+        else
+        {
+            std::memcpy(&outbuf[i*dpf_type::outputs_per_leaf], &leaf, sizeof(output_type)*dpf_type::outputs_per_leaf);
+        }
         prev = curr++;
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
@@ -294,6 +310,7 @@ inline auto eval_sequence_exterior_entire_node(const DpfKey & dpf, const sequenc
     assert_not_wildcard<I>(dpf);
 
     using dpf_type = DpfKey;
+    using output_type = typename DpfKey::concrete_output_type<I>;
 
     auto nodes_in_interval = recipe.num_leaf_nodes();
 
@@ -308,7 +325,14 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     {
         auto leaf = dpf_type::template traverse_exterior<I>(buf[j],
             get_if_lo_bit(cw, buf[j]));
-        std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
+        if constexpr (std::is_same_v<output_type, dpf::bit>)
+        {
+            std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
+        }
+        else
+        {
+            std::memcpy(&outbuf[j*dpf_type::outputs_per_leaf], &leaf, sizeof(output_type)*dpf_type::outputs_per_leaf);
+        }
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }

@@ -37,8 +37,8 @@ namespace dpf
 template <typename OutputT,
           typename NodeT>
 using is_packable = std::bool_constant<
-    std::less<>{}(utils::bitlength_of_v<OutputT>, utils::bitlength_of_v<NodeT>) &&
-    std::equal_to<>{}(utils::bitlength_of_v<NodeT> % utils::bitlength_of_v<OutputT>, 0)>;
+    std::less<>{}(utils::bitlength_of_output_v<OutputT, NodeT>, utils::bitlength_of_output_v<NodeT, NodeT>) &&
+    std::equal_to<>{}(utils::bitlength_of_output_v<NodeT, NodeT> % utils::bitlength_of_output_v<OutputT, NodeT>, 0)>;
 
 template <typename OutputT,
           typename NodeT>
@@ -49,7 +49,7 @@ template <typename OutputT,
 struct outputs_per_leaf
     : public std::integral_constant<std::size_t,
         !is_packable_v<OutputT, NodeT> ? 1 :
-            utils::bitlength_of_v<NodeT> / utils::bitlength_of_v<OutputT>> { };
+            utils::bitlength_of_output_v<NodeT, NodeT> / utils::bitlength_of_output_v<OutputT, NodeT>> { };
 
 template <typename OutputT,
           typename NodeT>
@@ -66,8 +66,8 @@ template <typename OutputT,
 struct block_length_of_leaf
     : std::integral_constant<std::size_t, is_packable_v<OutputT, NodeT> ? 1 :
                                     utils::quotient_ceiling(
-                                        utils::bitlength_of_v<OutputT>,
-                                        utils::bitlength_of_v<NodeT>)
+                                        utils::bitlength_of_output_v<OutputT, NodeT>,
+                                        utils::bitlength_of_output_v<NodeT, NodeT>)
                                     >{ };
 
 template <typename OutputT,

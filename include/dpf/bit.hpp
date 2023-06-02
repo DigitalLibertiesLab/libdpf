@@ -180,6 +180,10 @@ template <>
 struct bitlength_of<dpf::bit>
   : public std::integral_constant<std::size_t, 1> { };
 
+template <typename NodeT>
+struct bitlength_of_output<dpf::bit, NodeT>
+  : public std::integral_constant<std::size_t, 1> { };
+
 template <>
 struct make_from_integral_value<dpf::bit>
 {
