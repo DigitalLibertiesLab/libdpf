@@ -102,12 +102,18 @@ HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     auto cw = dpf.template leaf<I>();
     auto rawbuf = reinterpret_cast<exterior_node_type *>(utils::data(outbuf));
     DPF_UNROLL_LOOP
-    for (std::size_t j = 0, k = 0; j < nodes_in_interval; ++j,
-        k += block_length_of_leaf_v<output_type, exterior_node_type>)
+    for (std::size_t j = 0; j < nodes_in_interval; ++j)
     {
         auto leaf = dpf_type::template traverse_exterior<I>(memoizer[dpf_type::depth][j],
             get_if_lo_bit(cw, memoizer[dpf_type::depth][j]));
-        std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
+        if constexpr (std::is_same_v<output_type, dpf::bit>)
+        {
+            std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
+        }
+        else
+        {
+            std::memcpy(&outbuf[j*dpf_type::outputs_per_leaf], &leaf, sizeof(output_type)*dpf_type::outputs_per_leaf);
+        }
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
 }

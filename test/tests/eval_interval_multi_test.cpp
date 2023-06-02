@@ -2,7 +2,6 @@
 
 #include <utility>
 
-#include "asio.hpp"
 #include "dpf.hpp"
 
 #include "helpers/eval_common_multi_data.hpp"
@@ -248,7 +247,8 @@ using Types = testing::Types
     test_type<uint16_t, uint8_t>,
     test_type<uint16_t, simde_uint128>,
     test_type<uint16_t, dpf::bit>,
-    // test_type<uint16_t, dpf::bitstring<10>>,
+    test_type<uint16_t, dpf::bitstring<20, uint8_t>>,
+    test_type<uint16_t, dpf::bitstring<150>>,
     test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types

@@ -69,7 +69,8 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
         = utils::bitlength_of_v<input_type> - lg_outputs_per_leaf;
     static constexpr auto msb_mask = utils::msb_of_v<input_type>;
 
-    static_assert(((dpf::utils::bitlength_of_v<OutputT> == dpf::utils::bitlength_of_v<OutputTs>) && ...),
+    static_assert(((dpf::utils::bitlength_of_output_v<OutputT, exterior_node>
+                    == dpf::utils::bitlength_of_output_v<OutputTs, exterior_node>) && ...),
         "all output types must be the same length");
     static_assert(std::conjunction_v<std::is_trivially_copyable<OutputT>,
                                      std::is_trivially_copyable<OutputTs>...>,

@@ -92,6 +92,36 @@ namespace leaf_arithmetic
 namespace detail
 {
 
+template <std::size_t Nbits,
+          typename WordT>
+struct bitstring_xor_t
+{
+    template <typename NodeT>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const NodeT & a, const NodeT & b) const
+    {
+        return a ^ b;
+    }
+
+    template <typename NodeT,
+              std::size_t N>
+    HEDLEY_ALWAYS_INLINE
+    HEDLEY_NO_THROW
+    HEDLEY_CONST
+    auto operator()(const std::array<NodeT, N> & a, const std::array<NodeT, N> & b) const
+    {
+        bitstring<Nbits, WordT> a_, b_, ret_;
+        std::array<NodeT, N> ret;
+        std::memcpy(&a_, &a, sizeof(a_));
+        std::memcpy(&b_, &b, sizeof(b_));
+        ret_ = a_ ^ b_;
+        std::memcpy(&ret, &ret_, sizeof(ret_));
+        return ret;
+    }
+};
+
 // /// @brief adds vectors of 8-bit integral types
 // template <typename NodeT> struct add8_t;
 // /// @brief adds vectors of 16-bit integral types
@@ -322,7 +352,7 @@ template <> struct add_t<simde_uint128, simde__m256i> final
 };
 
 template <typename OutputT, typename NodeT, std::size_t N> struct add_t<OutputT, std::array<NodeT, N>> final : public detail::add_array_t<OutputT> {};
-template <std::size_t N> struct add_t<dpf::bitstring<N>, void> final : public std::bit_xor<> {};
+template <std::size_t Nbits, typename WordT> struct add_t<dpf::bitstring<Nbits, WordT>, void> final : public detail::bitstring_xor_t<Nbits, WordT> {};
 template <typename NodeT> struct add_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct add_t<double, NodeT> final : public std::bit_xor<> {};
 template <> struct add_t<dpf::bit, void> final : public std::bit_xor<> {};
@@ -565,7 +595,7 @@ template <> struct subtract_t<simde_uint128, simde__m256i> final
 };
 
 template <typename OutputT, typename NodeT, std::size_t N> struct subtract_t<OutputT, std::array<NodeT, N>> final : public detail::sub_array_t<OutputT> {};
-template <std::size_t N> struct subtract_t<dpf::bitstring<N>, void> final : public std::bit_xor<> {};
+template <std::size_t Nbits, typename WordT> struct subtract_t<dpf::bitstring<Nbits, WordT>, void> final : public detail::bitstring_xor_t<Nbits, WordT> {};
 template <typename NodeT> struct subtract_t<float, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<double, NodeT> final : public std::bit_xor<> {};
 template <typename NodeT> struct subtract_t<dpf::bit, NodeT> final : public std::bit_xor<> {};

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "asio.hpp"
+#define LIBDPF_HAS_ASIO
 #include "dpf.hpp"
 
 template <std::size_t I = 0,
