@@ -9,15 +9,21 @@ struct EvalPointMultiTest : public testing::Test
 {
   public:
     using input_type = typename std::tuple_element_t<0, T>;
-    using output_type = typename std::tuple_element_t<1, T>;
+    using output_type0 = typename std::tuple_element_t<1, T>;
+    using output_type1 = typename std::tuple_element_t<2, T>;
+    using output_type2 = typename std::tuple_element_t<3, T>;
+    using output_type3 = typename std::tuple_element_t<4, T>;
     using integral_type = dpf::utils::integral_type_from_bitlength_t<dpf::utils::bitlength_of_v<input_type>>;
-    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type, output_type, output_type, output_type>;
+    using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type0, output_type1, output_type2, output_type3>;
 
   protected:
     EvalPointMultiTest()
       : params{std::get<std::vector<T>>(allParams)},
         range{(std::size_t(1) << std::min(dpf::utils::bitlength_of_v<input_type>, std::size_t(10))-1)-1},
-        zero_output{from_integral_type_output(0)}
+        zero_output0{from_integral_type_output0(0)},
+        zero_output1{from_integral_type_output1(0)},
+        zero_output2{from_integral_type_output2(0)},
+        zero_output3{from_integral_type_output3(0)}
     { }
 
     void SetUp() override
@@ -52,8 +58,8 @@ struct EvalPointMultiTest : public testing::Test
     }
 
     template <typename UnaryFunction0, typename UnaryFunction1>
-    void assert_wrapper(const input_type & x, const output_type & y0,
-        const output_type & y1, const output_type & y2, const output_type & y3,
+    void assert_wrapper(const input_type & x, const output_type0 & y0,
+        const output_type1 & y1, const output_type2 & y2, const output_type3 & y3,
         UnaryFunction0 f0, UnaryFunction1 f1)
     {
         input_type cur = get_start(x);
@@ -63,28 +69,34 @@ struct EvalPointMultiTest : public testing::Test
                  out1 = f1(cur);
             if (cur == x)
             {
-                ASSERT_EQ(static_cast<output_type>(std::get<0>(out1) - std::get<0>(out0)), y0);
-                ASSERT_EQ(static_cast<output_type>(std::get<1>(out1) - std::get<1>(out0)), y1);
-                ASSERT_EQ(static_cast<output_type>(std::get<2>(out1) - std::get<2>(out0)), y2);
-                ASSERT_EQ(static_cast<output_type>(std::get<3>(out1) - std::get<3>(out0)), y3);
+                ASSERT_EQ(static_cast<output_type0>(std::get<0>(out1) - std::get<0>(out0)), y0);
+                ASSERT_EQ(static_cast<output_type1>(std::get<1>(out1) - std::get<1>(out0)), y1);
+                ASSERT_EQ(static_cast<output_type2>(std::get<2>(out1) - std::get<2>(out0)), y2);
+                ASSERT_EQ(static_cast<output_type3>(std::get<3>(out1) - std::get<3>(out0)), y3);
             }
             else
             {
-                ASSERT_EQ(static_cast<output_type>(std::get<0>(out1) - std::get<0>(out0)), zero_output);
-                ASSERT_EQ(static_cast<output_type>(std::get<1>(out1) - std::get<1>(out0)), zero_output);
-                ASSERT_EQ(static_cast<output_type>(std::get<2>(out1) - std::get<2>(out0)), zero_output);
-                ASSERT_EQ(static_cast<output_type>(std::get<3>(out1) - std::get<3>(out0)), zero_output);
+                ASSERT_EQ(static_cast<output_type0>(std::get<0>(out1) - std::get<0>(out0)), zero_output0);
+                ASSERT_EQ(static_cast<output_type1>(std::get<1>(out1) - std::get<1>(out0)), zero_output1);
+                ASSERT_EQ(static_cast<output_type2>(std::get<2>(out1) - std::get<2>(out0)), zero_output2);
+                ASSERT_EQ(static_cast<output_type3>(std::get<3>(out1) - std::get<3>(out0)), zero_output3);
             }
         }
     }
 
     static constexpr auto to_integral_type = dpf::utils::to_integral_type<input_type>{};
     static constexpr auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
-    static constexpr auto from_integral_type_output = dpf::utils::make_from_integral_value<output_type>{};
+    static constexpr auto from_integral_type_output0 = dpf::utils::make_from_integral_value<output_type0>{};
+    static constexpr auto from_integral_type_output1 = dpf::utils::make_from_integral_value<output_type1>{};
+    static constexpr auto from_integral_type_output2 = dpf::utils::make_from_integral_value<output_type2>{};
+    static constexpr auto from_integral_type_output3 = dpf::utils::make_from_integral_value<output_type3>{};
 
     std::vector<T> params;
     std::size_t range;
-    output_type zero_output;
+    output_type0 zero_output0;
+    output_type1 zero_output1;
+    output_type2 zero_output2;
+    output_type3 zero_output3;
 };
 
 TYPED_TEST_SUITE_P(EvalPointMultiTest);
@@ -188,6 +200,9 @@ using Types = testing::Types
     test_type<custom_input_type, uint64_t>,
     test_type<uint16_t, custom_output_type_small>,
     test_type<uint16_t, custom_output_type_large_plus_minus>,
-    test_type<uint16_t, custom_output_type_large_xor>
+    test_type<uint16_t, custom_output_type_large_xor>,
+
+    // distinct output types
+    multi_test_type<uint16_t, uint32_t, dpf::xor_wrapper<uint32_t>, dpf::bitstring<20, uint8_t>, dpf::bitstring<32>>
 >;
 INSTANTIATE_TYPED_TEST_SUITE_P(EvalPointMultiTestInstantiation, EvalPointMultiTest, Types);

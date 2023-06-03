@@ -14,6 +14,20 @@ template <typename InputT,
           typename OutputT>
 using param_type = std::vector<test_type<InputT, OutputT>>;
 
+template <typename InputT,
+          typename OutputT0,
+          typename OutputT1,
+          typename OutputT2,
+          typename OutputT3>
+using multi_test_type = std::tuple<InputT, OutputT0, OutputT1, OutputT2, OutputT3>;
+
+template <typename InputT,
+          typename OutputT0,
+          typename OutputT1,
+          typename OutputT2,
+          typename OutputT3>
+using multi_param_type = std::vector<multi_test_type<InputT, OutputT0, OutputT1, OutputT2, OutputT3>>;
+
 using dpf::literals::operator""_bitstring;
 using dpf::literals::operator""_bitstring_8;
 
@@ -43,7 +57,10 @@ static std::tuple
     param_type<custom_input_type, uint64_t>,
     param_type<uint16_t, custom_output_type_small>,
     param_type<uint16_t, custom_output_type_large_plus_minus>,
-    param_type<uint16_t, custom_output_type_large_xor>
+    param_type<uint16_t, custom_output_type_large_xor>,
+
+    // distinct output types
+    multi_param_type<uint16_t, uint32_t, dpf::xor_wrapper<uint32_t>, dpf::bitstring<20, uint8_t>, dpf::bitstring<32>>
 > allParams
 {
     {
@@ -514,7 +531,105 @@ static std::tuple
                                           custom_output_type_large_xor(uint64_t(0x5555555555555555)),
                                           custom_output_type_large_xor(uint64_t(0xAAAAAAAAAAAAAAAA)),
                                           custom_output_type_large_xor(uint64_t(0xFFFFFFFFFFFFFFFF)))
-    }
+    },
+    {
+        std::make_tuple(uint16_t(0x0000), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0x0000), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0x0000), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0x0000), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring),
+        std::make_tuple(uint16_t(0x5555), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0x5555), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0x5555), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0x5555), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring),
+        std::make_tuple(uint16_t(0x7FFF), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0x7FFF), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0x7FFF), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0x7FFF), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring),
+        std::make_tuple(uint16_t(0x8000), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0x8000), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0x8000), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0x8000), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring),
+        std::make_tuple(uint16_t(0xAAAA), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0xAAAA), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0xAAAA), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0xAAAA), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring),
+        std::make_tuple(uint16_t(0xFFFF), uint32_t(0x00000001),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x00000001)),
+                                          00000000000000000001_bitstring_8,
+                                          00000000000000000000000000000001_bitstring),
+        std::make_tuple(uint16_t(0xFFFF), uint32_t(0x55555555),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0x55555555)),
+                                          01010101010101010101_bitstring_8,
+                                          01010101010101010101010101010101_bitstring),
+        std::make_tuple(uint16_t(0xFFFF), uint32_t(0xAAAAAAAA),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xAAAAAAAA)),
+                                          10101010101010101010_bitstring_8,
+                                          10101010101010101010101010101010_bitstring),
+        std::make_tuple(uint16_t(0xFFFF), uint32_t(0xFFFFFFFF),
+                                          dpf::xor_wrapper<uint32_t>(uint32_t(0xFFFFFFFF)),
+                                          11111111111111111111_bitstring_8,
+                                          11111111111111111111111111111111_bitstring)
+    },
 };
 
 #endif  // LIBDPF_TEST_TESTS_HELPERS_EVAL_COMMON_MULTI_DATA_HPP__
