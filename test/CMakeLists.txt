@@ -4,6 +4,8 @@ project(libdpf_test)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+option(BUILD_GMOCK "Builds the googlemock subproject" OFF)
+option(INSTALL_GTEST "Enable installation of googletest" OFF)
 add_subdirectory(googletest)
 enable_testing()
 

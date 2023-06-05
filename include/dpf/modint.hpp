@@ -665,9 +665,10 @@ template <std::size_t Nbits>
 struct mod_pow_2<dpf::modint<Nbits>>
 {
     using T = dpf::modint<Nbits>;
+    static constexpr auto mod = mod_pow_2<typename T::integral_type>{};
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
-        return static_cast<std::size_t>(val.val % (1ul << n));
+        return mod(val.val, n);
     }
 };
 

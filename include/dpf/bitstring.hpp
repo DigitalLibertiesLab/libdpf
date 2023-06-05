@@ -123,7 +123,7 @@ class bitstring : public bit_array_base<bitstring<Nbits, WordT>, WordT>
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
     constexpr explicit bitstring(word_type val) noexcept
-      : data_{Nbits < bits_per_word ? static_cast<word_type>(val % (1 << Nbits)) : val} { }
+      : data_{Nbits < bits_per_word ? static_cast<word_type>(val & (static_cast<word_type>(~word_type{0}) >> utils::bitlength_of_v<word_type> - Nbits)) : val} { }
 
     /// @brief Constructs a `dpf::bitstring` using the characters in the
     ///        `std::basic_string` `str`. An optional starting position `pos`
@@ -603,7 +603,7 @@ struct to_integral_type<dpf::bitstring<Nbits, WordT>>
     using typename parent::integral_type;
 
     static constexpr auto bits_per_word = dpf::bitstring<Nbits, WordT>::bits_per_word;
-    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - (Nbits % bits_per_word);
+    static constexpr integral_type modulo_mask = static_cast<integral_type>(~integral_type{0}) >> utils::bitlength_of_v<integral_type> - ((Nbits-1) % bits_per_word + 1);
 
     HEDLEY_CONST
     HEDLEY_NO_THROW
@@ -663,9 +663,11 @@ template <std::size_t Nbits,
 struct mod_pow_2<dpf::bitstring<Nbits, WordT>>
 {
     using T = dpf::bitstring<Nbits, WordT>;
+    static constexpr auto to_int = to_integral_type<T>{};
+    static constexpr auto mod = mod_pow_2<typename T::integral_type>{};
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
-        return static_cast<std::size_t>(val.data_[0] % (1ul << n));
+        return mod(to_int(val), n);
     }
 };
 

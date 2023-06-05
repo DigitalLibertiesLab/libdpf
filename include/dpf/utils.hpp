@@ -249,8 +249,7 @@ struct to_integral_type_base
 {
     static constexpr std::size_t bits = bitlength_of_v<T>;
     // Select integer type larger than or equal to size of std::size_t
-    using integral_type = integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
-    static_assert(!std::is_void_v<integral_type>, "cannot convert to void type");
+    using integral_type = nonvoid_integral_type_from_bitlength_t<bits, bitlength_of_v<std::size_t>>;
 };
 
 template <typename T>
@@ -332,7 +331,13 @@ struct mod_pow_2
 {
     std::size_t operator()(T val, std::size_t n) const noexcept
     {
-        return static_cast<std::size_t>(val % (1ul << n));  // TODO: check proper behavior on overflow
+        if (n == 0)
+        {
+            return 0;
+        }
+
+        const uint64_t modulo_mask = static_cast<uint64_t>(~uint64_t{0}) >> bitlength_of_v<uint64_t> - n;
+        return static_cast<std::size_t>(val & modulo_mask);
     }
 };
 
