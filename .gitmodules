@@ -1,0 +1,15 @@
+[submodule "thirdparty/hedley"]
+	path = thirdparty/hedley
+	url = https://github.com/DigitalLibertiesLab/hedley.git
+[submodule "thirdparty/portable-snippets"]
+	path = thirdparty/portable-snippets
+	url = https://github.com/DigitalLibertiesLab/portable-snippets.git
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = https://github.com/DigitalLibertiesLab/json.git
+[submodule "thirdparty/simde"]
+	path = thirdparty/simde
+	url = https://github.com/DigitalLibertiesLab/simde.git
+[submodule "test/googletest"]
+	path = test/googletest
+	url = https://github.com/google/googletest.git

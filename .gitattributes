@@ -1,0 +1,6 @@
+*                             text=auto
+
+include/thirdparty/nlohmann   symlink=dir
+include/thirdparty/psnips     symlink=dir
+include/thirdparty/simde      symlink=dir
+include/thirdparty/hedley.h   symlink=file
