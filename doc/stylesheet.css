@@ -1,0 +1,224 @@
+.github-corner svg {
+    fill: var(--primary-light-color);
+    color: var(--page-background-color);
+    width: 96px;
+    height: 96px;
+}
+
+@media screen and (max-width: 767px) {
+    .github-corner svg {
+        width: 72px;
+        height: 72px;
+    }
+    #projectnumber {
+        margin-right: 22px;
+    }
+}
+
+.alter-theme-button {
+    display: inline-block;
+    cursor: pointer;
+    background: var(--primary-color);
+    color: var(--page-background-color) !important;
+    border-radius: var(--border-radius-medium);
+    padding: var(--spacing-small) var(--spacing-medium);
+    text-decoration: none;
+}
+
+.next_section_button {
+    display: block;
+    padding: var(--spacing-large) 0 var(--spacing-small) 0;
+    color: var(--page-background-color);
+    user-select: none;
+}
+
+.next_section_button::after {
+    /* clearfix */
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.next_section_button a {
+    overflow: hidden;
+    float: right;
+    border: 1px solid var(--separator-color);
+    padding: var(--spacing-medium) calc(var(--spacing-large) / 2) var(--spacing-medium) var(--spacing-large);
+    border-radius: var(--border-radius-medium);
+    color: var(--page-secondary-foreground-color) !important;
+    text-decoration: none;
+    background-color: var(--page-background-color);
+    transition: color .08s ease-in-out, background-color .1s ease-in-out;
+}
+
+.next_section_button a:hover {
+    color: var(--page-foreground-color) !important;
+    background-color: var(--odd-color);
+}
+
+.next_section_button a::after {
+    content: '〉';
+    color: var(--page-secondary-foreground-color) !important;
+    padding-left: var(--spacing-large);
+    display: inline-block;
+    transition: color .08s ease-in-out, transform .09s ease-in-out;
+}
+
+.next_section_button a:hover::after {
+    color: var(--page-foreground-color) !important;
+    transform: translateX(3px);
+}
+
+.alter-theme-button:hover {
+    background: var(--primary-dark-color);
+}
+
+html.dark-mode .darkmode_inverted_image img, /* < doxygen 1.9.3 */
+html.dark-mode .darkmode_inverted_image object[type="image/svg+xml"] /* doxygen 1.9.3 */ {
+    filter: brightness(89%) hue-rotate(180deg) invert();
+}
+
+.bordered_image {
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--separator-color);
+    display: inline-block;
+    overflow: hidden;
+}
+
+html.dark-mode .bordered_image img, /* < doxygen 1.9.3 */
+html.dark-mode .bordered_image object[type="image/svg+xml"] /* doxygen 1.9.3 */ {
+    border-radius: var(--border-radius-small);
+}
+
+.title_screenshot {
+    filter: drop-shadow(0px 3px 10px rgba(0,0,0,0.22));
+    max-width: 500px;
+    margin: var(--spacing-large) 0;
+}
+
+.title_screenshot .caption {
+    display: none;
+}
+
+.bugs\.html::before {
+
+    content: "\f188";
+}
+
+.changes\.html::before {
+    content: "\f1da";
+}
+
+.submodules\.html::before {
+    content: "\f1b3";
+}
+
+.todo\.html::before {
+    content: "\f46c";;
+}
+
+.authors\.html::before {
+    content: "\f0c0";
+}
+
+.license\.html::before {
+    content: "\f0e3";
+}
+
+.index\.html\:synopsis::before {
+    content: "\f52b";
+}
+.index\.html\:features::before {
+    content: "\f5a2";
+}
+.index\.html\:credits::before {
+    content: "\e1a8";
+}
+.index\.html\:disclaimer::before {
+    content: "\f3ed";
+}
+.basics\.html\:point_functions::before {
+    content: "\e4bd";
+}
+.basics\.html\:dpf_trees::before {
+    content: "\f1bb";
+}
+
+/*
+point function: \e4bd
+dpf trees: \e4bd
+*/
+
+.basics\.html\:point_functions::before,
+.basics\.html\:dpf_trees::before,
+.index\.html\:synopsis::before,
+.index\.html\:features::before,
+.index\.html\:credits::before,
+.index\.html\:disclaimer::before,
+.bugs\.html::before,
+.changes\.html::before, .submodules\.html::before, .todo\.html::before,
+.authors\.html::before, .license\.html::before,
+.input_types_2integral_types_8cpp\.html::before, 
+.input_types_2extended_types_8cpp\.html::before, 
+.input_types_2modint_8cpp\.html::before, 
+.input_types_2bitstring_8cpp\.html::before, 
+.input_types_2keyword_8cpp\.html::before, 
+.input_types_2xor_wrapper_8cpp\.html::before, 
+.input_types_2custom_8cpp\.html::before, 
+.output_types_2integral_types_8cpp\.html::before, 
+.output_types_2extended_types_8cpp\.html::before, 
+.output_types_2bit_8cpp\.html::before, 
+.output_types_2bitstring_8cpp\.html::before, 
+.output_types_2wildcard_8cpp\.html::before, 
+.output_types_2xor_wrapper_8cpp\.html::before, 
+.output_types_2custom_8cpp\.html::before, 
+.evaluation_2eval_point_8cpp\.html::before, 
+.evaluation_2eval_interval_8cpp\.html::before, 
+.evaluation_2eval_full_8cpp\.html::before, 
+.evaluation_2eval_sequence_8cpp\.html::before, 
+.evaluation_2memoizers_8cpp\.html::before, 
+.evaluation_2output_buffers_8cpp\.html::before, 
+.iterables_2setbit_index_iterable_8cpp\.html::before, 
+.iterables_2advice_bit_iterable_8cpp\.html::before, 
+.iterables_2parallel_bit_iterable_8cpp\.html::before, 
+.iterables_2subinterval_iterable_8cpp\.html::before, 
+.iterables_2subsequence_iterable_8cpp\.html::before, 
+.iterables_2zip_iterable_8cpp\.html::before {
+    display: inline-block;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    scale: 0.9;
+    font: var(--fa-font-solid);
+    margin-left:-1em;
+    width: 1.5em;
+    text-align: center;
+}
+
+.input_types_2integral_types_8cpp\.html::before, 
+.input_types_2extended_types_8cpp\.html::before, 
+.input_types_2modint_8cpp\.html::before, 
+.input_types_2bitstring_8cpp\.html::before, 
+.input_types_2keyword_8cpp\.html::before, 
+.input_types_2xor_wrapper_8cpp\.html::before, 
+.input_types_2custom_8cpp\.html::before, 
+.output_types_2integral_types_8cpp\.html::before, 
+.output_types_2extended_types_8cpp\.html::before, 
+.output_types_2bit_8cpp\.html::before, 
+.output_types_2bitstring_8cpp\.html::before, 
+.output_types_2wildcard_8cpp\.html::before, 
+.output_types_2xor_wrapper_8cpp\.html::before, 
+.output_types_2custom_8cpp\.html::before, 
+.evaluation_2eval_point_8cpp\.html::before, 
+.evaluation_2eval_interval_8cpp\.html::before, 
+.evaluation_2eval_full_8cpp\.html::before, 
+.evaluation_2eval_sequence_8cpp\.html::before, 
+.evaluation_2memoizers_8cpp\.html::before, 
+.evaluation_2output_buffers_8cpp\.html::before, 
+.iterables_2setbit_index_iterable_8cpp\.html::before, 
+.iterables_2advice_bit_iterable_8cpp\.html::before, 
+.iterables_2parallel_bit_iterable_8cpp\.html::before, 
+.iterables_2subinterval_iterable_8cpp\.html::before, 
+.iterables_2subsequence_iterable_8cpp\.html::before, 
+.iterables_2zip_iterable_8cpp\.html::before {
+    content: "\f1c9";
+}
