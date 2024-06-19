@@ -110,13 +110,34 @@ The getting started guide consists of the following subsections.
 
 - - -
 <div style="float:left;">[&larr;&nbsp;Prev](@ref evaluation)</div>
-<div style="float:right;">[Next&nbsp;&rarr;](@ref miscellany)</div>
+<div style="float:right;">[Next&nbsp;&rarr;](@ref pir)</div>
 
 
 
 <!-- PAGE SEPARATOR -->
 
+\page pir PIR
 
+[TOC]
+
+The getting started guide consists of the following subsections.
+
+  - \subpage pir1
+  - \subpage pir2
+
+- - -
+<div style="float:left;">[&larr;&nbsp;Prev](@ref iterable)</div>
+<div style="float:right;">[Next&nbsp;&rarr;](@ref pir1)</div>
+
+\page pir1 PIR1
+
+[TOC]
+
+%LIBDPF_INCLUDE_PIR_PIR1%
+
+- - -
+<div style="float:left;">[&larr;&nbsp;Prev](@ref evaluation)</div>
+<div style="float:right;">[Next&nbsp;&rarr;](@ref miscellany)</div>
 
 \page miscellany Miscellany
 
@@ -132,7 +153,7 @@ The miscellany page consists of the following subpages.
   - \subpage license
 
 - - -
-<div style="float:left;">[&larr;&nbsp;Prev](@ref evaluation)</div>
+<div style="float:left;">[&larr;&nbsp;Prev](@ref pir)</div>
 <div style="float:right;">[Next&nbsp;&rarr;](@ref bugs)</div>
 
 

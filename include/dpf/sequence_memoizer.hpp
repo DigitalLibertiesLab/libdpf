@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -28,14 +28,14 @@ struct sequence_memoizer_tag_ {};
 
 template <typename DpfKey,
           typename ReturnT = typename DpfKey::interior_node *>
-struct sequence_memoizer_base : public sequence_memoizer_tag_
+struct sequence_recipe_memoizer_base : public sequence_memoizer_tag_
 {
   public:
     using dpf_type = DpfKey;
     using return_type = ReturnT;
     using iterator_type = return_type;
     using node_type = typename DpfKey::interior_node;
-    const sequence_recipe & recipe;  // skipcq: CXX-W2012
+    const sequence_recipe & recipe;
 
     // level 0 should access the root
     // level goes up to (and including) depth
@@ -53,10 +53,16 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
         }
 
         if (dpf_.has_value() == false || std::memcmp(&dpf_root_, &dpf.root(), sizeof(node_type)) != 0
-            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(node_type)) != 0)
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(digest_type)) != 0)
         {
+            if (dpf_.depth != recipe.depth())
+            {
+                throw std::logic_error("incorrect dpf depth");
+            }
             this->operator[](0)[0] = dpf.root();
             dpf_ = std::cref(dpf);
+            dpf_root_ = dpf.root();
+            dpf_common_part_hash_ = dpf.common_part_hash();
             dpf_root_ = dpf.root();
             dpf_common_part_hash_ = dpf.common_part_hash();
             level_index = 1;
@@ -119,7 +125,7 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
     std::size_t depth;
     std::size_t level_index;  // indicates current level being built
 
-    explicit sequence_memoizer_base(const sequence_recipe & r)
+    explicit sequence_recipe_memoizer_base(const sequence_recipe & r)
       : recipe{r},
         depth{recipe.level_endpoints().size()-1},
         level_index{0},
@@ -129,7 +135,7 @@ struct sequence_memoizer_base : public sequence_memoizer_tag_
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     node_type dpf_root_;
-    node_type dpf_common_part_hash_;
+    digest_type dpf_common_part_hash_;
 };
 
 namespace detail
@@ -266,27 +272,33 @@ struct pointer_facade
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct inplace_reversing_sequence_memoizer final
-  : public sequence_memoizer_base<DpfKey,
+  : public sequence_recipe_memoizer_base<DpfKey,
         detail::pointer_facade<typename DpfKey::interior_node *, std::reverse_iterator<typename DpfKey::interior_node *>>>
 {
   public:
     using unique_ptr = typename Allocator::unique_ptr;
     using forward_iter = typename DpfKey::interior_node *;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using reverse_iter = std::reverse_iterator<forward_iter>;
     using return_type = detail::pointer_facade<forward_iter, reverse_iter>;
   private:
-    using parent = sequence_memoizer_base<DpfKey, return_type>;
+    using parent = sequence_recipe_memoizer_base<DpfKey, return_type>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
   public:
     using parent::recipe;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     explicit inplace_reversing_sequence_memoizer(const sequence_recipe & r,
         Allocator alloc = Allocator{})
-      : parent::sequence_memoizer_base(r),
+      : parent::sequence_recipe_memoizer_base(r),
         buf{alloc.allocate_unique_ptr(r.num_leaf_nodes())}
     { }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -361,10 +373,13 @@ struct inplace_reversing_sequence_memoizer final
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct double_space_sequence_memoizer final
-  : public sequence_memoizer_base<DpfKey>
+  : public sequence_recipe_memoizer_base<DpfKey>
 {
   private:
-    using parent = sequence_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    using parent = sequence_recipe_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
   public:
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = typename DpfKey::interior_node *;
@@ -373,10 +388,13 @@ struct double_space_sequence_memoizer final
     using parent::level_index;
     using parent::get_nodes_at_level;
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     explicit double_space_sequence_memoizer(const sequence_recipe & r, Allocator alloc = Allocator{})
-      : parent::sequence_memoizer_base(r),
+      : parent::sequence_recipe_memoizer_base(r),
         buf{alloc.allocate_unique_ptr(2*recipe.num_leaf_nodes())}
     { }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -407,10 +425,13 @@ struct double_space_sequence_memoizer final
 template <typename DpfKey,
           typename Allocator = aligned_allocator<typename DpfKey::interior_node>>
 struct full_tree_sequence_memoizer final
-  : public sequence_memoizer_base<DpfKey>
+  : public sequence_recipe_memoizer_base<DpfKey>
 {
   private:
-    using parent = sequence_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
+    using parent = sequence_recipe_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
   public:
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = typename DpfKey::interior_node *;
@@ -418,10 +439,13 @@ struct full_tree_sequence_memoizer final
     using parent::level_index;
     using parent::get_nodes_at_level;
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     explicit full_tree_sequence_memoizer(const sequence_recipe & r, Allocator alloc = Allocator{})
-      : parent::sequence_memoizer_base(r),
+      : parent::sequence_recipe_memoizer_base(r),
         buf{alloc.allocate_unique_ptr(recipe.level_endpoints()[recipe.level_endpoints().size()-1] + recipe.num_leaf_nodes())}
     { }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -504,7 +528,6 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
 namespace std
 {
 
-// skipcq: CXX-W2017
 template <typename Iterator>
 struct iterator_traits<dpf::detail::pointer_facade<Iterator, std::reverse_iterator<Iterator>>>
 {

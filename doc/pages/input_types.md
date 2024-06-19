@@ -79,6 +79,7 @@ and with the fastest evaluations -- possible.
 @ref dpf/modint.hpp
 
 **Code samples**\n
+Here are some examples of arithmetic operations with `dpf::modint`:
 <div class="tabbed">
 
   - <b class="tab-title">modint.cpp</b>  \include{cpp} input_types/modint.cpp

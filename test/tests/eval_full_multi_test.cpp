@@ -40,7 +40,7 @@ struct EvalFullMultiTest : public testing::Test
              zip1 = dpf::tuple_as_zip(iter1);
         auto it0 = std::cbegin(zip0),
              it1 = std::cbegin(zip1);
-        input_type cur = from_integral_type(0);
+        input_type cur = std::numeric_limits<input_type>::min();
         for (std::size_t i = 0; i < range; ++i, ++cur, ++it0, ++it1)
         {
             if (cur == x)
@@ -187,18 +187,23 @@ using Types = testing::Types
     test_type<uint16_t, uint64_t>,
 
     // test input types
+    test_type<int16_t, uint64_t>,
     test_type<uint8_t, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
+    test_type<dpf::xor_wrapper<int16_t>, uint64_t>,
     test_type<dpf::xor_wrapper<uint16_t>, uint64_t>,
 
     // test output types
+    test_type<uint16_t, int64_t>,
     test_type<uint16_t, uint8_t>,
+    test_type<uint16_t, simde_int128>,
     test_type<uint16_t, simde_uint128>,
     test_type<uint16_t, dpf::bit>,
     test_type<uint16_t, dpf::bitstring<20, uint8_t>>,
     test_type<uint16_t, dpf::bitstring<150>>,
+    test_type<uint16_t, dpf::xor_wrapper<int64_t>>,
     test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types

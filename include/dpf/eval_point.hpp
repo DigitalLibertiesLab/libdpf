@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -40,8 +40,7 @@ inline auto eval_point_interior(const DpfKey & dpf, InputT && x, PathMemoizer &&
         level_index <= dpf.depth; ++level_index, mask>>=1)
     {
         bool bit = !!(mask & x);
-        auto cw = set_lo_bit(dpf.correction_words[level_index-1],
-            dpf.correction_advice[level_index-1] >> bit);
+        auto cw = dpf.correction_word(level_index-1, bit);
         path[level_index] = dpf_type::traverse_interior(path[level_index-1], cw, bit);
     }
 }
@@ -51,11 +50,10 @@ template <std::size_t I,
           typename PathMemoizer>
 inline auto eval_point_exterior(const DpfKey & dpf, PathMemoizer && path)
 {
-    assert_not_wildcard<I>(dpf);
+    assert_not_wildcard_output<I>(dpf);
 
     auto interior = path[dpf.depth];
-    auto ext = dpf.template leaf<I>();
-    return DpfKey::template traverse_exterior<I>(interior, ext);
+    return dpf.template traverse_exterior<I>(interior);
 }
 
 template <std::size_t I,
@@ -65,6 +63,7 @@ template <std::size_t I,
 HEDLEY_ALWAYS_INLINE
 auto eval_point(const DpfKey & dpf, InputT && x, PathMemoizer && path)
 {
+    utils::flip_msb_if_signed_integral(x);
     internal::eval_point_interior(dpf, x, path);
     return internal::eval_point_exterior<I>(dpf, path);
 }
@@ -78,10 +77,11 @@ template <std::size_t I = 0,
 HEDLEY_ALWAYS_INLINE
 auto eval_point(const DpfKey & dpf, InputT && x, PathMemoizer && path = PathMemoizer{})
 {
-    assert_not_wildcard<I>(dpf);
-
+    assert_not_wildcard_output<I>(dpf);
     using output_type = typename DpfKey::concrete_output_type<I>;
-    return make_dpf_output<output_type>(internal::eval_point<I>(dpf, x, path), x);
+
+    auto tx = dpf.offset_x(x);
+    return make_dpf_output<output_type>(internal::eval_point<I>(dpf, tx, path), tx);
 }
 
 template <std::size_t I0,

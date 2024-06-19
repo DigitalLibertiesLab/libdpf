@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -67,7 +67,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
     {
         static constexpr auto clz_xor = utils::countl_zero_symmetric_difference<input_type>{};
         if (dpf_.has_value() == true && std::memcmp(&dpf_root_, &dpf.root(), sizeof(node_type)) == 0
-            && std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(node_type)) == 0)
+            && std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(digest_type)) == 0)
         {
             static constexpr auto complement_of = std::bit_not{};
             input_type old_x = x_.value_or(complement_of(new_x));
@@ -108,7 +108,7 @@ HEDLEY_PRAGMA(GCC diagnostic pop)
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     node_type dpf_root_;
-    node_type dpf_common_part_hash_;
+    digest_type dpf_common_part_hash_;
     std::optional<input_type> x_;
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")

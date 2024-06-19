@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -23,6 +23,7 @@ namespace dpf
 static constexpr simde__m128i lo_bit128{int64_t{1}, int64_t{0}};
 static constexpr simde__m128i lo_2bits128{int64_t{3}, int64_t{0}};
 
+// if low bit of a is set, return all 1's, else return all 0's
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
@@ -57,6 +58,7 @@ simde__m128i unset_lo_bit(simde__m128i a)
     return simde_mm_andnot_si128(lo_bit128, a);
 }
 
+// if low bit of b is set, return a, else 0
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST
@@ -80,6 +82,7 @@ auto get_if_lo_bit(std::array<simde__m128i, N> a, simde__m128i b)
 
 HEDLEY_PRAGMA(GCC diagnostic pop)
 
+// if low bit of c is set, then return xor of a and b, else return a
 HEDLEY_NO_THROW
 HEDLEY_ALWAYS_INLINE
 HEDLEY_CONST

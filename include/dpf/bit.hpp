@@ -13,7 +13,7 @@
 ///          a `dpf::bit` into an `std::string`. Finally, it overloads stream
 ///          input and output operators (`<<` and `>>`) for `dpf::bit`.
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -155,13 +155,19 @@ operator<<(std::basic_ostream<CharT, Traits> & os, const dpf::bit & value)
 /// @param is a character input stream
 /// @param value the `dpf::bit` to extract from the input stream
 /// @return `is`
-/// @throws std::domain_error if `value != zero && value != one`
 template <typename CharT,
           typename Traits>
 std::basic_istream<CharT, Traits> &
 operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 {
-    value = to_bit<CharT>(is.get(), is.widen('0'), is.widen('1'));
+    try
+    {
+        value = to_bit<CharT>(is.get(), is.widen('0'), is.widen('1'));
+    }
+    catch(const std::exception & e)
+    {
+        is.setstate(std::ios::failbit);
+    }
     return is;
 }
 
@@ -169,7 +175,7 @@ operator>>(std::basic_istream<CharT, Traits> & is, dpf::bit & value)
 
 dpf::bit operator+(dpf::bit lhs, dpf::bit rhs) noexcept
 {
-    return static_cast<dpf::bit>(lhs + rhs);
+    return static_cast<dpf::bit>(lhs ^ rhs);
 }
 
 namespace utils
@@ -194,6 +200,18 @@ struct make_from_integral_value<dpf::bit>
 };
 
 }  // namespace utils
+
+namespace literals
+{
+
+namespace bit
+{
+
+constexpr static auto operator "" _bit(unsigned long long int x) { return dpf::to_bit(x); }
+
+}  // namespace bit
+
+}  // namespace literals
 
 }  // namespace dpf
 

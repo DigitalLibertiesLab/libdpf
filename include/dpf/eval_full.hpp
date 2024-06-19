@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -22,7 +22,7 @@
 #include "dpf/eval_common.hpp"
 #include "dpf/output_buffer.hpp"
 #include "dpf/interval_memoizer.hpp"
-#include "dpf/subinterval_iterable.hpp"
+#include "dpf/rotation_iterable.hpp"
 
 namespace dpf
 {
@@ -34,16 +34,41 @@ template <std::size_t ...Is,
           typename DpfKey,
           typename OutputBuffers,
           typename IntervalMemoizer,
-          std::size_t ...IIs>
+          std::size_t ...IIs,
+          std::enable_if_t<dpf::is_wildcard_v<typename DpfKey::raw_input_type>, bool> = false>
+auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
+    IntervalMemoizer && memoizer, std::index_sequence<IIs...>)
+{
+    using dpf_type = DpfKey;
+    using input_type = typename dpf_type::input_type;
+    auto offset = dpf.offset_x(0);  // N.B.: throws if dpf is not ready
+
+    dpf::internal::eval_interval_impl<Is...>(dpf,
+            std::numeric_limits<input_type>::min(),
+            std::numeric_limits<input_type>::max(),
+            outbufs, memoizer, std::make_index_sequence<sizeof...(Is)>());
+
+    return utils::make_tuple(dpf::rotation_iterable(std::begin(utils::get<IIs>(outbufs)), std::end(utils::get<IIs>(outbufs)), offset)...);
+}
+
+template <std::size_t ...Is,
+          typename DpfKey,
+          typename OutputBuffers,
+          typename IntervalMemoizer,
+          std::size_t ...IIs,
+          std::enable_if_t<!dpf::is_wildcard_v<typename DpfKey::raw_input_type>, bool> = false>
 auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
     IntervalMemoizer && memoizer, std::index_sequence<IIs...>)
 {
     using dpf_type = DpfKey;
     using input_type = typename dpf_type::input_type;
 
-    return eval_interval<Is...>(dpf,
+    dpf::internal::eval_interval_impl<Is...>(dpf,
             std::numeric_limits<input_type>::min(),
-            std::numeric_limits<input_type>::max(), outbufs, memoizer);
+            std::numeric_limits<input_type>::max(),
+            outbufs, memoizer, std::make_index_sequence<sizeof...(Is)>());
+
+    return utils::make_tuple(std::ref(utils::get<Is>(outbufs))...);
 }
 
 }  // namespace internal
@@ -57,7 +82,7 @@ HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf, OutputBuffers && outbufs,
     IntervalMemoizer && memoizer)
 {
-    assert_not_wildcard<I, Is...>(dpf);
+    assert_not_wildcard_output<I, Is...>(dpf);
 
     return internal::eval_full<I, Is...>(dpf, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>());
 }
@@ -67,15 +92,13 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename OutputBuffers,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
-              std::remove_reference_t<OutputBuffers>>, bool> = true>
+              std::decay_t<OutputBuffers>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf, OutputBuffers & outbufs)  // NOLINT(runtime/references)
 {
     using input_type = typename DpfKey::input_type;
     return eval_full<I, Is...>(dpf, outbufs,
-        dpf::make_basic_interval_memoizer(dpf,
-            std::numeric_limits<input_type>::min(),
-            std::numeric_limits<input_type>::max()));
+        dpf::make_basic_full_memoizer(dpf));
 }
 
 template <std::size_t I = 0,
@@ -83,7 +106,7 @@ template <std::size_t I = 0,
           typename DpfKey,
           typename IntervalMemoizer,
           std::enable_if_t<std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
-              std::remove_reference_t<IntervalMemoizer>>, bool> = true>
+              std::decay_t<IntervalMemoizer>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_full(const DpfKey & dpf,
     IntervalMemoizer && memoizer)
@@ -107,9 +130,7 @@ auto eval_full(const DpfKey & dpf)
 {
     using input_type = typename DpfKey::input_type;
     return eval_full<I, Is...>(dpf,
-        dpf::make_basic_interval_memoizer(dpf,
-            std::numeric_limits<input_type>::min(),
-            std::numeric_limits<input_type>::max()));
+        dpf::make_basic_full_memoizer(dpf));
 }
 
 }  // namespace dpf

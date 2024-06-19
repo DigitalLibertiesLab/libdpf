@@ -35,18 +35,22 @@ struct EvalPointMultiTest : public testing::Test
     input_type get_start(const input_type & x)
     {
         integral_type x_int = to_integral_type(x),
+                      min_int = to_integral_type(std::numeric_limits<input_type>::min()),
                       max_int = to_integral_type(std::numeric_limits<input_type>::max()),
                       start_int;
         // set start_int so that the tested range is centered around x_int if possible
-        //   use start_int = 0 if x_int smaller than 2*range
-        //   or start_int = max_int-2*range if x_int larger than max_int-2*range
+        //   use start_int = min_int if x_int smaller than min_int+range
+        //   or start_int = max_int-2*range if x_int larger than max_int-range
         // range is selected to be at most 1 less than half the maximum range for input_type
         //   this ensures there are no overflow issues
-        if (x_int < range)
+        // for signed integral types, since the MSB is internally flipped,
+        //   needed additional check that x_int was in the correct range for the given
+        //   conditionals (note that these added checks are always try for unsigned types)
+        if (x_int < min_int + range && x_int >= min_int)
         {
-            start_int = 0;
+            start_int = min_int;
         }
-        else if (x_int > max_int - range)
+        else if (x_int > max_int - range && x_int <= max_int)
         {
             start_int = max_int - (range << 1);
         }
@@ -180,20 +184,26 @@ using Types = testing::Types
     test_type<uint16_t, uint64_t>,
 
     // test input types
+    test_type<int16_t, uint64_t>,
     test_type<uint8_t, uint64_t>,
     test_type<uint64_t, uint64_t>,
+    test_type<simde_int128, uint64_t>,
     test_type<simde_uint128, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
+    test_type<dpf::xor_wrapper<int16_t>, uint64_t>,
     test_type<dpf::xor_wrapper<uint16_t>, uint64_t>,
 
     // test output types
+    test_type<uint16_t, int64_t>,
     test_type<uint16_t, uint8_t>,
+    test_type<uint16_t, simde_int128>,
     test_type<uint16_t, simde_uint128>,
     test_type<uint16_t, dpf::bit>,
     test_type<uint16_t, dpf::bitstring<20, uint8_t>>,
     test_type<uint16_t, dpf::bitstring<150>>,
+    test_type<uint16_t, dpf::xor_wrapper<int64_t>>,
     test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types

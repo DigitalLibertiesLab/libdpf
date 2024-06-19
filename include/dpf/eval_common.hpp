@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -62,16 +62,6 @@ auto make_dpf_output(const Node & node, Input x)
 {
     return dpf_output<concrete_type_t<Output>, Node>{node,
         offset_within_block<concrete_type_t<Output>, Node>(x)};
-}
-
-template <std::size_t ...Is,
-          typename DpfKey>
-void assert_not_wildcard(const DpfKey & dpf)
-{
-    if ((dpf.is_wildcard(Is) || ...))
-    {
-        throw std::runtime_error("cannot evaluate to wildcards");
-    }
 }
 
 }  // namespace dpf

@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -21,6 +21,7 @@
 #include "portable-snippets/exact-int/exact-int.h"
 
 #include "dpf/bit.hpp"
+#include "dpf/bitstring.hpp"
 #include "dpf/wildcard.hpp"
 #include "dpf/xor_wrapper.hpp"
 
@@ -51,6 +52,7 @@ struct add_t<OutputT, void>
 template <typename OutputT>
 struct subtract_t<OutputT, void>
 {
+    
     template <typename NodeT>
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -112,12 +114,11 @@ struct bitstring_xor_t
     HEDLEY_CONST
     auto operator()(const std::array<NodeT, N> & a, const std::array<NodeT, N> & b) const
     {
-        bitstring<Nbits, WordT> a_, b_, ret_;
         std::array<NodeT, N> ret;
-        std::memcpy(&a_, &a, sizeof(a_));
-        std::memcpy(&b_, &b, sizeof(b_));
-        ret_ = a_ ^ b_;
-        std::memcpy(&ret, &ret_, sizeof(ret_));
+        std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret), [](const NodeT & a_, const NodeT & b_)
+        {
+            return a_ ^ b_;
+        });
         return ret;
     }
 };
@@ -333,7 +334,7 @@ template <> struct add_t<simde_int128, simde__m256i> final
         std::memcpy(&lhs_, &lhs, sizeof(simde_int128) * 2);
         std::memcpy(&rhs_, &rhs, sizeof(simde_int128) * 2);
         simde_int128 sum[2] = { lhs_[0] + rhs_[0], lhs_[1] + rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy(&ret, &sum, sizeof(simde__m256i));
         return ret;
     }
 };
@@ -346,7 +347,7 @@ template <> struct add_t<simde_uint128, simde__m256i> final
         std::memcpy(&lhs_, &lhs, sizeof(simde_uint128) * 2);
         std::memcpy(&rhs_, &rhs, sizeof(simde_uint128) * 2);
         simde_uint128 sum[2] = { lhs_[0] + rhs_[0], lhs_[1] + rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy(&ret, &sum, sizeof(simde__m256i));
         return ret;
     }
 };
@@ -576,7 +577,7 @@ template <> struct subtract_t<simde_int128, simde__m256i> final
         std::memcpy(&lhs_, &lhs, sizeof(simde_int128) * 2);
         std::memcpy(&rhs_, &rhs, sizeof(simde_int128) * 2);
         simde_int128 sum[2] = { lhs_[0] - rhs_[0], lhs_[1] - rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy(&ret, &sum, sizeof(simde__m256i));
         return ret;
     }
 };
@@ -589,7 +590,7 @@ template <> struct subtract_t<simde_uint128, simde__m256i> final
         std::memcpy(&lhs_, &lhs, sizeof(simde_uint128) * 2);
         std::memcpy(&rhs_, &rhs, sizeof(simde_uint128) * 2);
         simde_uint128 sum[2] = { lhs_[0] - rhs_[0], lhs_[1] - rhs_[1] };
-        std::memcpy(&ret, &sum, sizeof(simde__m128i) * 2);
+        std::memcpy(&ret, &sum, sizeof(simde__m256i));
         return ret;
     }
 };
@@ -756,8 +757,32 @@ template <> struct multiply_t<psnip_uint32_t, simde__m256i> final : public detai
 template <> struct multiply_t<psnip_int64_t, simde__m256i> final : public detail::mul4x64_t {};
 template <> struct multiply_t<psnip_uint64_t, simde__m256i> final : public detail::mul4x64_t {};
 
-// todo(ryan): finish these (and check that the corresponding ones for add and subtract work properly for 128-bit and non-integer types)
-// template <typename NodeT> struct multiply_t<simde_int128, NodeT> final : public std::multiplies<simde_int128> {};
+template <> struct multiply_t<simde_int128, simde__m128i> final
+{
+    auto operator()(const simde__m128i & a, simde_int128 b) const
+    {
+        simde_int128 a_;
+        simde__m128i c;
+        std::memcpy(&a_, &a, sizeof(simde_int128));
+        simde_int128 c_ = a_ * b;
+        std::memcpy(&c, &c_, sizeof(simde__m128i));
+        return c;
+    }
+};
+
+template <> struct multiply_t<simde_uint128, simde__m128i> final
+{
+    auto operator()(const simde__m128i & a, simde_uint128 b) const
+    {
+        simde_uint128 a_;
+        simde__m128i c;
+        std::memcpy(&a_, &a, sizeof(simde_uint128));
+        simde_uint128 c_ = a_ * b;
+        std::memcpy(&c, &c_, sizeof(simde__m128i));
+        return c;
+    }
+};
+
 // template <typename NodeT> struct multiply_t<simde_uint128, NodeT> final : public std::multiplies<simde_uint128> {};
 
 // template <typename NodeT> struct multiply_t<float, NodeT> final : public std::bit_and<> {};

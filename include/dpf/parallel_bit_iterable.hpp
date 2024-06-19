@@ -2,7 +2,7 @@
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @brief
 /// @details
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others]{@ref authors}
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others]{@ref authors}
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -336,7 +336,6 @@ void for_each_bit_parallel(const dpf::bit_array_base<ChildT> & t, const Ts & ...
 namespace std
 {
 
-// skipcq: CXX-W2017
 template <std::size_t N, typename ChildT>
 struct iterator_traits<typename dpf::parallel_const_bit_iterator<N, ChildT>>
 {

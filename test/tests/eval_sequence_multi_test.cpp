@@ -664,20 +664,26 @@ using Types = testing::Types
     test_type<uint16_t, uint64_t>,
 
     // test input types
+    test_type<int16_t, uint64_t>,
     test_type<uint8_t, uint64_t>,
     test_type<uint64_t, uint64_t>,
+    test_type<simde_int128, uint64_t>,
     test_type<simde_uint128, uint64_t>,
     test_type<dpf::bitstring<10>, uint64_t>,
     test_type<dpf::keyword<3, dpf::alphabets::hex>, uint64_t>,
     test_type<dpf::modint<10>, uint64_t>,
+    test_type<dpf::xor_wrapper<int16_t>, uint64_t>,
     test_type<dpf::xor_wrapper<uint16_t>, uint64_t>,
 
     // test output types
+    test_type<uint16_t, int64_t>,
     test_type<uint16_t, uint8_t>,
+    test_type<uint16_t, simde_int128>,
     test_type<uint16_t, simde_uint128>,
     test_type<uint16_t, dpf::bit>,
     test_type<uint16_t, dpf::bitstring<20, uint8_t>>,
     test_type<uint16_t, dpf::bitstring<150>>,
+    test_type<uint16_t, dpf::xor_wrapper<int64_t>>,
     test_type<uint16_t, dpf::xor_wrapper<uint64_t>>,
 
     // custom types

@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -50,7 +50,7 @@ struct interval_memoizer_base
         static constexpr auto complement_of = std::bit_not{};
         if (dpf_.has_value() == false
             || std::memcmp(&dpf_root_, &dpf.root(), sizeof(node_type)) != 0
-            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(node_type)) != 0
+            || std::memcmp(&dpf_common_part_hash_, &dpf.common_part_hash(), sizeof(digest_type)) != 0
             || from_.value_or(complement_of(new_from)) != new_from
             || to_.value_or(complement_of(new_to)) != new_to)
         {
@@ -129,7 +129,7 @@ struct interval_memoizer_base
   private:
     std::optional<std::reference_wrapper<const dpf_type>> dpf_;
     node_type dpf_root_;
-    node_type dpf_common_part_hash_;
+    digest_type dpf_common_part_hash_;
     std::optional<integral_type> from_;
     std::optional<integral_type> to_;
 };
@@ -139,7 +139,10 @@ template <typename DpfKey,
 struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using parent = interval_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
   public:
     using unique_ptr = typename Allocator::unique_ptr;
     using return_type = typename DpfKey::interior_node *;
@@ -166,6 +169,8 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     //   and the number of nodes two levels up from the final level.
     // For n nodes in the final level:
     //     at most ((n+2)/2+2)/2 = n+6>>2 nodes two levels up
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     explicit basic_interval_memoizer(std::size_t output_len, Allocator alloc = Allocator{})
       : parent::interval_memoizer_base(output_len),
         pivot{std::max((output_len>>1)+(output_len&1)-1, output_len+6>>2)},
@@ -173,6 +178,7 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
     {
         if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
     }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -196,7 +202,7 @@ struct basic_interval_memoizer final : public interval_memoizer_base<DpfKey>
         return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
     }
 
-   private:
+  private:
     static constexpr auto clz = utils::countl_zero<std::size_t>{};
     std::size_t pivot;
     unique_ptr buf;
@@ -207,16 +213,24 @@ template <typename DpfKey,
 struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
 {
   private:
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using parent = interval_memoizer_base<DpfKey>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
   public:
     using node_type = typename DpfKey::interior_node;
     using unique_ptr = typename Allocator::unique_ptr;
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     using return_type = std::add_pointer_t<node_type>;
+HEDLEY_PRAGMA(GCC diagnostic pop)
     using integral_type = typename DpfKey::integral_type;
     using parent::depth;
     using parent::level_index;
     using parent::get_nodes_at_level;
 
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     explicit full_tree_interval_memoizer(std::size_t output_len,
         Allocator alloc = Allocator{})
       : parent::interval_memoizer_base(output_len),
@@ -225,6 +239,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
     {
         if (HEDLEY_UNLIKELY(buf == nullptr)) throw std::bad_alloc{};
     }
+HEDLEY_PRAGMA(GCC diagnostic pop)
 
     HEDLEY_ALWAYS_INLINE
     HEDLEY_NO_THROW
@@ -247,7 +262,7 @@ struct full_tree_interval_memoizer final : public interval_memoizer_base<DpfKey>
         return this->operator[](level_index - 1) + get_nodes_at_level(level_index - 1);
     }
 
-   private:
+  private:
     const std::array<std::size_t, depth+1> level_endpoints;
     unique_ptr buf;
 
@@ -298,7 +313,10 @@ auto make_interval_memoizer(InputT from, InputT to)
         throw std::domain_error("from cannot be greater than to");
     }
 
-    std::size_t nodes_in_interval = utils::get_nodes_in_interval<dpf_type>(from, to);
+    utils::flip_msb_if_signed_integral(from);
+    utils::flip_msb_if_signed_integral(to);
+
+    std::size_t nodes_in_interval = utils::get_leafnodes_in_output_interval<dpf_type>(from, to);
 
     return MemoizerT(nodes_in_interval);
 }
@@ -309,7 +327,10 @@ template <typename DpfKey,
           typename InputT>
 inline auto make_basic_interval_memoizer(InputT from, InputT to)
 {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     return detail::make_interval_memoizer<DpfKey, basic_interval_memoizer<DpfKey>, InputT>(from, to);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename DpfKey,
@@ -339,7 +360,10 @@ template <typename DpfKey,
           typename InputT>
 inline auto make_full_tree_interval_memoizer(InputT from, InputT to)
 {
+HEDLEY_PRAGMA(GCC diagnostic push)
+HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
     return detail::make_interval_memoizer<DpfKey, full_tree_interval_memoizer<DpfKey>, InputT>(from, to);
+HEDLEY_PRAGMA(GCC diagnostic pop)
 }
 
 template <typename DpfKey,

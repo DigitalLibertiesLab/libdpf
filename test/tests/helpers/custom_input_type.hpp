@@ -142,19 +142,19 @@ namespace std
 {
 
 template<>
-class numeric_limits<custom_input_type>                 // skipcq: CXX-W2017
+class numeric_limits<custom_input_type>
   : public numeric_limits<uint16_t> {};
 
 template<>
-class numeric_limits<custom_input_type const>           // skipcq: CXX-W2017
+class numeric_limits<custom_input_type const>
   : public numeric_limits<custom_input_type> {};
 
 template<>
-class numeric_limits<custom_input_type volatile>        // skipcq: CXX-W2017
+class numeric_limits<custom_input_type volatile>
   : public numeric_limits<custom_input_type> {};
 
 template<>
-class numeric_limits<custom_input_type const volatile>  // skipcq: CXX-W2017
+class numeric_limits<custom_input_type const volatile>
   : public numeric_limits<custom_input_type> {};
 
 }

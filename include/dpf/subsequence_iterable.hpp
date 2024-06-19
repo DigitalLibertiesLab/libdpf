@@ -2,7 +2,7 @@
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief defines `dpf::subsequence_iterable` and associated helpers
 /// @details
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -218,10 +218,10 @@ class subsequence_iterable
     };  // class dpf::subsequence_iterable::const_iterator
 
   private:
-    output_iterator out_it_;
-    points_iterator begin_;
-    points_iterator end_;
-    typename std::iterator_traits<points_iterator>::difference_type count_;
+    const output_iterator out_it_;
+    const points_iterator begin_;
+    const points_iterator end_;
+    const typename std::iterator_traits<points_iterator>::difference_type count_;
 };  // class dpf::subsequence_iterable
 
 template <typename IteratorT>
@@ -413,8 +413,8 @@ class recipe_subsequence_iterable
     };  // class dpf::recipe_subsequence_iterable::const_iterator
 
   private:
-    output_iterator out_it_;
-    const std::vector<std::size_t> & indices_;  // skipcq: CXX-W2012
+    const output_iterator out_it_;
+    const std::vector<std::size_t> & indices_;
 };  // class dpf::recipe_subsequence_iterable
 
 }  // namespace dpf

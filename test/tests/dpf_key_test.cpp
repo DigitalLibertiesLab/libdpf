@@ -27,72 +27,72 @@ TEST(DpfKeyTest, HardCodedGenCheck)
     ASSERT_EQ(dpf1.root()[1], 0);
     ASSERT_EQ(dpf1.root()[0], 0x9);
 
-    ASSERT_EQ(dpf0.correction_words[0][1], 0x7ff85a65ce2111c9);
-    ASSERT_EQ(dpf0.correction_words[0][0], 0x36863b84ab3944d2);
-    ASSERT_EQ(dpf0.correction_words[0][1], dpf1.correction_words[0][1]);
-    ASSERT_EQ(dpf0.correction_words[0][0], dpf1.correction_words[0][0]);
-    ASSERT_EQ(dpf0.correction_advice[0], 0b00);
-    ASSERT_EQ(dpf0.correction_advice[0], dpf1.correction_advice[0]);
+    ASSERT_EQ(dpf0.correction_words()[0][1], 0x7ff85a65ce2111c9);
+    ASSERT_EQ(dpf0.correction_words()[0][0], 0x36863b84ab3944d2);
+    ASSERT_EQ(dpf0.correction_words()[0][1], dpf1.correction_words()[0][1]);
+    ASSERT_EQ(dpf0.correction_words()[0][0], dpf1.correction_words()[0][0]);
+    ASSERT_EQ(dpf0.correction_advice()[0], 0b00);
+    ASSERT_EQ(dpf0.correction_advice()[0], dpf1.correction_advice()[0]);
 
     // dpf0 after level 0:
     // 0xc4c4bd72d02958c541201f063e3c1173
     // dpf1 after level 0:
     // 0xdd09c23385ba379378631a3a9c46f52e
 
-    ASSERT_EQ(dpf0.correction_words[1][1], 0x9ca0f55370cf6bfe);
-    ASSERT_EQ(dpf0.correction_words[1][0], 0xc3b9e951c500d272);
-    ASSERT_EQ(dpf0.correction_words[1][1], dpf1.correction_words[1][1]);
-    ASSERT_EQ(dpf0.correction_words[1][0], dpf1.correction_words[1][0]);
-    ASSERT_EQ(dpf0.correction_advice[1], 0b01);
-    ASSERT_EQ(dpf0.correction_advice[1], dpf1.correction_advice[1]);
+    ASSERT_EQ(dpf0.correction_words()[1][1], 0x9ca0f55370cf6bfe);
+    ASSERT_EQ(dpf0.correction_words()[1][0], 0xc3b9e951c500d272);
+    ASSERT_EQ(dpf0.correction_words()[1][1], dpf1.correction_words()[1][1]);
+    ASSERT_EQ(dpf0.correction_words()[1][0], dpf1.correction_words()[1][0]);
+    ASSERT_EQ(dpf0.correction_advice()[1], 0b01);
+    ASSERT_EQ(dpf0.correction_advice()[1], dpf1.correction_advice()[1]);
 
     // dpf0 after level 1:
     // 0x2bef771157872382accfcf2a5e2f7e57
     // dpf1 after level 1:
     // 0x7604b860b26e8586b0c6ad05ec6886ce
 
-    ASSERT_EQ(dpf0.correction_words[2][1], 0x886f1eb652b72eda);
-    ASSERT_EQ(dpf0.correction_words[2][0], 0x0ff98303eca43ab6);
-    ASSERT_EQ(dpf0.correction_words[2][1], dpf1.correction_words[2][1]);
-    ASSERT_EQ(dpf0.correction_words[2][0], dpf1.correction_words[2][0]);
-    ASSERT_EQ(dpf0.correction_advice[2], 0b10);
-    ASSERT_EQ(dpf0.correction_advice[2], dpf1.correction_advice[2]);
+    ASSERT_EQ(dpf0.correction_words()[2][1], 0x886f1eb652b72eda);
+    ASSERT_EQ(dpf0.correction_words()[2][0], 0x0ff98303eca43ab6);
+    ASSERT_EQ(dpf0.correction_words()[2][1], dpf1.correction_words()[2][1]);
+    ASSERT_EQ(dpf0.correction_words()[2][0], dpf1.correction_words()[2][0]);
+    ASSERT_EQ(dpf0.correction_advice()[2], 0b10);
+    ASSERT_EQ(dpf0.correction_advice()[2], dpf1.correction_advice()[2]);
 
     // dpf0 after level 2:
     // 0x39adfa95d94a10fdff65a956019f0a6c
     // dpf1 after level 2:
     // 0x59be9dba7aa04f9a12d23cd995d90135
 
-    ASSERT_EQ(dpf0.correction_words[3][1], 0x4e69100f5b844cb9);
-    ASSERT_EQ(dpf0.correction_words[3][0], 0x9ac5b5baba9a193b);
-    ASSERT_EQ(dpf0.correction_words[3][1], dpf1.correction_words[3][1]);
-    ASSERT_EQ(dpf0.correction_words[3][0], dpf1.correction_words[3][0]);
-    ASSERT_EQ(dpf0.correction_advice[3], 0b10);
-    ASSERT_EQ(dpf0.correction_advice[3], dpf1.correction_advice[3]);
+    ASSERT_EQ(dpf0.correction_words()[3][1], 0x4e69100f5b844cb9);
+    ASSERT_EQ(dpf0.correction_words()[3][0], 0x9ac5b5baba9a193b);
+    ASSERT_EQ(dpf0.correction_words()[3][1], dpf1.correction_words()[3][1]);
+    ASSERT_EQ(dpf0.correction_words()[3][0], dpf1.correction_words()[3][0]);
+    ASSERT_EQ(dpf0.correction_advice()[3], 0b10);
+    ASSERT_EQ(dpf0.correction_advice()[3], dpf1.correction_advice()[3]);
 
     // dpf0 after level 3:
     // 0x028922e3e5fca1a824a12136fc2ed7e3
     // dpf1 after level 3:
     // 0xd7699bb72bb9e8d42363e899692ecf36
 
-    ASSERT_EQ(dpf0.correction_words[4][1], 0xe701887629e08652);
-    ASSERT_EQ(dpf0.correction_words[4][0], 0xbd92c2853e1e2457);
-    ASSERT_EQ(dpf0.correction_words[4][1], dpf1.correction_words[4][1]);
-    ASSERT_EQ(dpf0.correction_words[4][0], dpf1.correction_words[4][0]);
-    ASSERT_EQ(dpf0.correction_advice[4], 0b01);
-    ASSERT_EQ(dpf0.correction_advice[4], dpf1.correction_advice[4]);
+    ASSERT_EQ(dpf0.correction_words()[4][1], 0xe701887629e08652);
+    ASSERT_EQ(dpf0.correction_words()[4][0], 0xbd92c2853e1e2457);
+    ASSERT_EQ(dpf0.correction_words()[4][1], dpf1.correction_words()[4][1]);
+    ASSERT_EQ(dpf0.correction_words()[4][0], dpf1.correction_words()[4][0]);
+    ASSERT_EQ(dpf0.correction_advice()[4], 0b01);
+    ASSERT_EQ(dpf0.correction_advice()[4], dpf1.correction_advice()[4]);
 
     // dpf0 after level 4:
     // 0xe0deacc7c5f61d83aebacde0bd97f61f
     // dpf1 after level 4:
     // 0x96be3cfb09b9bc84e0a6de756d9589f2
 
-    ASSERT_EQ(dpf0.correction_words[5][1], 0xc8edc84047a7b3df);
-    ASSERT_EQ(dpf0.correction_words[5][0], 0xbc0d1f614b01d608);
-    ASSERT_EQ(dpf0.correction_words[5][1], dpf1.correction_words[5][1]);
-    ASSERT_EQ(dpf0.correction_words[5][0], dpf1.correction_words[5][0]);
-    ASSERT_EQ(dpf0.correction_advice[5], 0b01);
-    ASSERT_EQ(dpf0.correction_advice[5], dpf1.correction_advice[5]);
+    ASSERT_EQ(dpf0.correction_words()[5][1], 0xc8edc84047a7b3df);
+    ASSERT_EQ(dpf0.correction_words()[5][0], 0xbc0d1f614b01d608);
+    ASSERT_EQ(dpf0.correction_words()[5][1], dpf1.correction_words()[5][1]);
+    ASSERT_EQ(dpf0.correction_words()[5][0], dpf1.correction_words()[5][0]);
+    ASSERT_EQ(dpf0.correction_advice()[5], 0b01);
+    ASSERT_EQ(dpf0.correction_advice()[5], dpf1.correction_advice()[5]);
 
     // dpf0 after level 5:
     // 0x3cb3c5060d58e866c703b4b7939725b8
@@ -153,4 +153,56 @@ TEST(DpfKeyTest, HardCodedGenCheck)
     ASSERT_EQ(dpf1.is_wildcard(0), false);
     ASSERT_EQ(dpf1.is_wildcard(1), false);
     ASSERT_EQ(dpf1.is_wildcard(2), true);
+}
+
+TEST(DpfKeyTest, MakeDpfRandomPoint)
+{
+    using prg_type = dpf::prg::aes128;
+    using input_type = uint8_t;
+    using output_type = uint32_t;
+    using output_type0 = std::make_signed_t<output_type>;
+    using output_type1 = std::make_unsigned_t<output_type>;
+    using output_type2 = dpf::xor_wrapper<output_type>;
+    using dpf_type = dpf::utils::dpf_type_t<prg_type, prg_type, input_type, output_type0, output_type1, output_type2>;
+
+    static constexpr auto from_integral_type = dpf::utils::make_from_integral_value<input_type>{};
+    static constexpr auto from_integral_type_output0 = dpf::utils::make_from_integral_value<output_type0>{};
+    static constexpr auto from_integral_type_output1 = dpf::utils::make_from_integral_value<output_type1>{};
+    static constexpr auto from_integral_type_output2 = dpf::utils::make_from_integral_value<output_type2>{};
+    output_type0 zero_output0 = from_integral_type_output0(0),
+                 one_output0 = from_integral_type_output0(1);
+    output_type1 zero_output1 = from_integral_type_output1(0),
+                 one_output1 = from_integral_type_output1(1);
+    output_type2 zero_output2 = from_integral_type_output2(0),
+                 one_output2 = from_integral_type_output2(1);
+
+    auto [dpf0, dpf1, x0, x1] = dpf::make_dpf_random_point<dpf_type>();
+    auto x = x0 + x1;
+
+    auto [buf0, iter0] = dpf::eval_full<0, 1, 2>(dpf0);
+    auto [buf1, iter1] = dpf::eval_full<0, 1, 2>(dpf1);
+
+    auto zip0 = dpf::tuple_as_zip(iter0),
+         zip1 = dpf::tuple_as_zip(iter1);
+    auto it0 = std::cbegin(zip0),
+         it1 = std::cbegin(zip1);
+
+    input_type cur = from_integral_type(0);
+    for (std::size_t i = 0; i < 1ul << dpf::utils::bitlength_of_v<input_type>; ++i, ++cur, ++it0, ++it1)
+    {
+        if (cur == x)
+        {
+            ASSERT_EQ(static_cast<output_type0>(std::get<0>(*it1) - std::get<0>(*it0)), one_output0);
+            ASSERT_EQ(static_cast<output_type1>(std::get<1>(*it1) - std::get<1>(*it0)), one_output1);
+            ASSERT_EQ(static_cast<output_type2>(std::get<2>(*it1) - std::get<2>(*it0)), one_output2);
+        }
+        else
+        {
+            ASSERT_EQ(static_cast<output_type0>(std::get<0>(*it1) - std::get<0>(*it0)), zero_output0);
+            ASSERT_EQ(static_cast<output_type1>(std::get<1>(*it1) - std::get<1>(*it0)), zero_output1);
+            ASSERT_EQ(static_cast<output_type2>(std::get<2>(*it1) - std::get<2>(*it0)), zero_output2);
+        }
+    }
+    ASSERT_EQ(it0, std::end(zip0));
+    ASSERT_EQ(it1, std::end(zip1));
 }

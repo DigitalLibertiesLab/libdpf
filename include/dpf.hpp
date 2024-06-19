@@ -1,20 +1,20 @@
 /// @file dpf.hpp
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @brief includes all headers needed for basic libdpf++ functionality
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
 #ifndef LIBDPF_INCLUDE_DPF_HPP__
 #define LIBDPF_INCLUDE_DPF_HPP__
 
-#ifdef LIBDPF_HAS_ASIO
-  #include <asio.hpp>
-#endif  // LIBDPF_HAS_ASIO
-
 #include "dpf/advice_bit_iterable.hpp"
 
 #include "dpf/aligned_allocator.hpp"
+
+#ifdef LIBDPF_HAS_ASIO
+#include "dpf/asio.hpp"
+#endif  // LIBDPF_HAS_ASIO
 
 #include "dpf/bit_array.hpp"
 
@@ -50,6 +50,8 @@
 
 #include "dpf/leaf_node.hpp"
 
+#include "dpf/literals.hpp"
+
 #include "dpf/modint.hpp"
 
 #include "dpf/output_buffer.hpp"
@@ -60,15 +62,19 @@
 
 #include "dpf/path_memoizer.hpp"
 
-#include "dpf/prg_aes.hpp"
+#include "dpf/prg.hpp"
 
-#include "dpf/prg_nonsecure_just_a_counter.hpp"
+#include "dpf/rotation_iterable.hpp"
 
 #include "dpf/random.hpp"
+
+#include "dpf/rotation_iterable.hpp"
 
 #include "dpf/sequence_memoizer.hpp"
 
 #include "dpf/sequence_recipe.hpp"
+
+#include "dpf/sequence_utils.hpp"
 
 #include "dpf/setbit_index_iterable.hpp"
 

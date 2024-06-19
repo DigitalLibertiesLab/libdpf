@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -56,8 +56,8 @@ inline auto eval_interval_interior(const DpfKey & dpf, IntegralT from_node,
         bool from_offset = mask & from_node,
              to_offset = from_offset ^ (nodes_at_level & 1);
         const node_type cw[2] = {
-            set_lo_bit(dpf.correction_words[level_index-1], dpf.correction_advice[level_index-1]&1),
-            set_lo_bit(dpf.correction_words[level_index-1], (dpf.correction_advice[level_index-1]>>1)&1)
+            dpf.correction_word(level_index-1, 0),
+            dpf.correction_word(level_index-1, 1)
         };
 
         // process node which only requires a right traversal
@@ -87,9 +87,11 @@ template <std::size_t I,
           typename IntervalMemoizer,
           typename IntegralT = typename DpfKey::integral_type>
 inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node,
-    IntegralT to_node, OutputBuffer && outbuf, IntervalMemoizer && memoizer)
+    IntegralT to_node, OutputBuffer && outbuf, IntervalMemoizer && memoizer,
+    std::size_t start = 0)
 {
-    assert_not_wildcard<I>(dpf);
+    assert_not_wildcard_output<I>(dpf);
+    if (HEDLEY_UNLIKELY(to_node < from_node)) throw std::runtime_error("to_node<from_node");
 
     using dpf_type = DpfKey;
     using output_type = typename DpfKey::concrete_output_type<I>;
@@ -99,23 +101,58 @@ inline auto eval_interval_exterior(const DpfKey & dpf, IntegralT from_node,
 
 HEDLEY_PRAGMA(GCC diagnostic push)
 HEDLEY_PRAGMA(GCC diagnostic ignored "-Wignored-attributes")
-    auto cw = dpf.template leaf<I>();
+    auto cw = std::get<I>(dpf.leaf_nodes).get();
     auto rawbuf = reinterpret_cast<exterior_node_type *>(utils::data(outbuf));
     DPF_UNROLL_LOOP
-    for (std::size_t j = 0; j < nodes_in_interval; ++j)
+    for (std::size_t j = 0, k = start; j < nodes_in_interval; ++j, ++k)
     {
-        auto leaf = dpf_type::template traverse_exterior<I>(memoizer[dpf_type::depth][j],
+        auto leaf = dpf.template traverse_exterior<I>(memoizer[dpf_type::depth][j],
             get_if_lo_bit(cw, memoizer[dpf_type::depth][j]));
         if constexpr (std::is_same_v<output_type, dpf::bit>)
         {
-            std::memcpy(&rawbuf[j], &leaf, sizeof(leaf));
+            std::memcpy(&rawbuf[k], &leaf, sizeof(leaf));
         }
         else
         {
-            std::memcpy(&outbuf[j*dpf_type::outputs_per_leaf], &leaf, sizeof(output_type)*dpf_type::outputs_per_leaf);
+            std::memcpy(&outbuf[k*dpf_type::outputs_per_leaf], &leaf, sizeof(leaf));
         }
     }
 HEDLEY_PRAGMA(GCC diagnostic pop)
+}
+
+template <std::size_t ...Is,
+          typename DpfKey,
+          typename InputT,
+          typename OutputBuffers,
+          typename IntervalMemoizer,
+          std::size_t ...IIs>
+auto eval_interval_impl(const DpfKey & dpf, InputT from, InputT to,
+    OutputBuffers && outbufs, IntervalMemoizer && memoizer,
+    std::index_sequence<IIs...>)
+{
+    using dpf_type = DpfKey;
+    using integral_type = typename DpfKey::integral_type;
+    constexpr auto last_node = integral_type{(integral_type{1} << dpf.depth)-1};
+
+    utils::flip_msb_if_signed_integral(from);
+    utils::flip_msb_if_signed_integral(to);
+
+    integral_type from_node = utils::get_from_node<dpf_type>(from),
+        to_node = utils::get_to_node<dpf_type>(to);
+
+    if (from_node < to_node)
+    {
+        internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
+        (internal::eval_interval_exterior<Is>(dpf, from_node, to_node, utils::get<IIs>(outbufs), memoizer), ...);
+    }
+    else  // if (to <= from)
+    {
+        internal::eval_interval_interior(dpf, from_node, last_node, memoizer);
+        (internal::eval_interval_exterior<Is>(dpf, from_node, last_node, utils::get<IIs>(outbufs), memoizer), ...);
+
+        internal::eval_interval_interior(dpf, integral_type{0}, to_node, memoizer);
+        (internal::eval_interval_exterior<Is>(dpf, integral_type{0}, to_node, utils::get<IIs>(outbufs), memoizer, last_node-from_node), ...);
+    }
 }
 
 template <std::size_t ...Is,
@@ -130,20 +167,12 @@ auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
 {
     using dpf_type = DpfKey;
     using integral_type = typename DpfKey::integral_type;
-    constexpr auto mod = utils::mod_pow_2<InputT>{};
+    constexpr auto mod_pow_2 = utils::mod_pow_2<InputT>{};
+    constexpr auto to_integral_t = utils::to_integral_type<InputT>{};
 
-    integral_type from_node = utils::get_from_node<dpf_type>(from),
-        to_node = utils::get_to_node<dpf_type>(to);
-    std::size_t nodes_in_interval = utils::get_nodes_in_interval_impl(from_node, to_node);
+    eval_interval_impl<Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<sizeof...(Is)>());
 
-    internal::eval_interval_interior(dpf, from_node, to_node, memoizer);
-    (internal::eval_interval_exterior<Is>(dpf, from_node, to_node, utils::get<IIs>(outbufs), memoizer), ...);
-
-    return utils::make_tuple(
-        subinterval_iterable(std::begin(utils::get<IIs>(outbufs)),
-        nodes_in_interval*dpf_type::outputs_per_leaf,
-        mod(from, dpf_type::lg_outputs_per_leaf),
-        dpf_type::outputs_per_leaf - mod(to, dpf_type::lg_outputs_per_leaf))...);
+    return utils::make_tuple(subinterval_iterable(std::begin(utils::get<IIs>(outbufs)), utils::size(utils::get<IIs>(outbufs)), to_integral_t(from), to_integral_t(to), mod_pow_2(from, dpf_type::lg_outputs_per_leaf), dpf_type::outputs_per_leaf)...);
 }
 
 }  // namespace internal
@@ -158,9 +187,9 @@ HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     OutputBuffers & outbufs, IntervalMemoizer && memoizer)  // NOLINT(runtime/references)
 {
-    assert_not_wildcard<I, Is...>(dpf);
+    assert_not_wildcard_output<I, Is...>(dpf);
 
-    return internal::eval_interval<I, Is...>(dpf, from, to, outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>());
+    return internal::eval_interval<I, Is...>(dpf, dpf.offset_x(from), dpf.offset_x(to), outbufs, memoizer, std::make_index_sequence<1+sizeof...(Is)>());
 }
 
 template <std::size_t I = 0,
@@ -169,7 +198,7 @@ template <std::size_t I = 0,
           typename InputT,
           typename OutputBuffers,
           std::enable_if_t<!std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
-              std::remove_reference_t<OutputBuffers>>, bool> = true>
+              std::decay_t<OutputBuffers>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     OutputBuffers & outbufs)  // NOLINT(runtime/references)
@@ -184,7 +213,7 @@ template <std::size_t I = 0,
           typename InputT,
           typename IntervalMemoizer,
           std::enable_if_t<std::is_base_of_v<dpf::interval_memoizer_base<DpfKey>,
-              std::remove_reference_t<IntervalMemoizer>>, bool> = true>
+              std::decay_t<IntervalMemoizer>>, bool> = true>
 HEDLEY_ALWAYS_INLINE
 auto eval_interval(const DpfKey & dpf, InputT from, InputT to,
     IntervalMemoizer && memoizer)

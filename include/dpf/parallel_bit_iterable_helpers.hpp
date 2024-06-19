@@ -2,7 +2,7 @@
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
 /// @brief
 /// @details
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 

@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -11,7 +11,6 @@
 
 #include <cstddef>
 #include <cmath>
-#include <cassert>
 #include <type_traits>
 #include <memory>
 #include <new>
@@ -24,6 +23,7 @@
 #include <string>
 #include <array>
 #include <ostream>
+#include <cassert>
 
 #include "hedley/hedley.h"
 #include "portable-snippets/exact-int/exact-int.h"
@@ -36,6 +36,10 @@
 
 namespace dpf
 {
+
+template <typename ConcreteBitArrayT, typename WordT>
+class setbit_index_iterable;  // forward declaration
+
 template <typename ConcreteBitArrayT, typename WordT>
 class bit_iterator_base;   // forward reference
 
@@ -45,10 +49,9 @@ class bit_iterator;        // forward reference
 template <typename ConcreteBitArrayT, typename WordT>
 class const_bit_iterator;  // forward reference
 
-/// @brief a class representing a fixed-size sequence of bits
-/// @details A `bit_array` represents a (dynamically-allocated) fixed-size
-///          sequence of bits. The underlying storage is an array of integers
-///          of type `dpf::bit_array::word_type`.
+/// @brief a base class for classes representing a sequence of bits
+/// @details A `bit_array` represents a sequence of bits. The underlying
+///          storage is an array of integers of type `dpf::bit_array::word_type`.
 template <typename ConcreteBitArrayT, typename WordT = psnip_uint64_t>
 class bit_array_base
 {
@@ -108,6 +111,7 @@ class bit_array_base
     using const_word_pointer = std::add_pointer_t<std::add_const_t<word_type>>;
     /// @brief the number of `dpf::bit`s represented by each `word_type`.
     /// @note guaranteed (via `static_assert`) to at most `64` bits
+    using child_type = ConcreteBitArrayT;
     static constexpr size_type bits_per_word = utils::bitlength_of<word_type>();
     static constexpr size_type lg_bits_per_word = std::log2(bits_per_word);
     static_assert(bits_per_word <= 64, "bits_per_word greater than 64");
@@ -266,7 +270,7 @@ class bit_array_base
     /// @complexity `O(1)`
     constexpr iterator end() noexcept
     {
-        return bit_iterator{data() + (size() >> lg_bits_per_word),
+        return iterator{data() + (size() >> lg_bits_per_word),
             static_cast<word_type>(word_type(1) << size() % bits_per_word)};
     }
     /// @returns iterator to the element following the last element
@@ -376,7 +380,7 @@ class bit_array_base
         return std::accumulate(data(), data()+data_length(), size_type(0),
             [](word_type lhs, word_type rhs)
             {
-                return lhs + psnip_builtin_popcount64(rhs);
+                return lhs + utils::popcount(rhs);
             });
     }
     /// @details counts the number of bits in a range that are set to `true`
@@ -385,14 +389,14 @@ class bit_array_base
     /// @return the number of bits in the given range that are set to `true`
     /// @complexity `O(last-first)`
     template <typename Iterator>
-    size_type count(Iterator begin, Iterator end) const noexcept
+    size_type count(Iterator first, Iterator last) const noexcept
     {
-        return std::accumulate(begin.word_ptr_, end.word_ptr_,
-            size_type(psnip_builtin_popcount64(*end.word_ptr_ & (end.mask_-1))
-              - psnip_builtin_popcount64(*begin.word_ptr_ & (begin.mask_-1))),
+        return std::accumulate(first.word_ptr_, last.word_ptr_,
+            size_type(utils::popcount(*last.word_ptr_ & (last.mask_-1))
+              - utils::popcount(*first.word_ptr_ & (first.mask_-1))),
             [](word_type lhs, word_type rhs)
             {
-                return lhs + psnip_builtin_popcount64(rhs);
+                return lhs + utils::popcount(rhs);
             });
     }
     /// @}
@@ -406,7 +410,7 @@ class bit_array_base
     {
         auto x = std::accumulate(data(), data()+data_length(), word_type(0),
             std::bit_xor<word_type>{});
-        return psnip_builtin_parity64(x);
+        return utils::parity(x);
     }
 
     /// @details counts the parity of bits in a range
@@ -415,13 +419,13 @@ class bit_array_base
     /// @return the parity of all bits in the given range
     /// @complexity `O(last-first)`
     template <typename Iterator>
-    size_type parity(Iterator begin, Iterator end) const noexcept
+    size_type parity(Iterator first, Iterator last) const noexcept
     {
-        auto x = std::accumulate(begin.word_ptr_, end.word_ptr_,
-            word_type((*begin.word_ptr_ & (begin.mask_-1))
-                ^ (*end.word_ptr_ & (end.mask_-1))),
+        auto x = std::accumulate(first.word_ptr_, last.word_ptr_,
+            word_type((*first.word_ptr_ & (first.mask_-1))
+                ^ (*last.word_ptr_ & (last.mask_-1))),
             std::bit_xor<word_type>{});
-        return psnip_builtin_parity64(x);
+        return utils::parity(x);
     }
     /// @}
 
@@ -548,7 +552,7 @@ class bit_array_base
     ///       `bit_array_base::operator[]`.
     class bit_reference
     {
-    public:
+      public:
         using word_type = bit_array_base::word_type;
         using word_pointer = bit_array_base::word_pointer;
 
@@ -594,8 +598,8 @@ class bit_array_base
         constexpr operator bool() const noexcept
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
-            return !(!(*word_ptr_ & psnip_endian_le64(mask_)));
+            assert(utils::popcount(mask_) == 1);
+            return !(!(*word_ptr_ & utils::le(mask_)));
         }
 
         HEDLEY_NO_THROW
@@ -669,8 +673,8 @@ class bit_array_base
         constexpr bit_reference& set() noexcept
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
-            *word_ptr_ |= psnip_endian_le64(mask_);
+            assert(utils::popcount(mask_) == 1);
+            *word_ptr_ |= utils::le(mask_);
             return *this;
         }
 
@@ -682,8 +686,8 @@ class bit_array_base
         constexpr bit_reference& unset() noexcept
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
-            *word_ptr_ &= psnip_endian_le64(~mask_);
+            assert(utils::popcount(mask_) == 1);
+            *word_ptr_ &= utils::le(static_cast<word_type>(~mask_));
             return *this;
         }
 
@@ -695,9 +699,9 @@ class bit_array_base
         constexpr bit_reference& assign(bool b) noexcept
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
-            *word_ptr_ = b ? (*word_ptr_ | psnip_endian_le64(mask_))
-                           : (*word_ptr_ & psnip_endian_le64(~mask_));
+            assert(utils::popcount(mask_) == 1);
+            *word_ptr_ = b ? (*word_ptr_ | utils::le(mask_))
+                           : (*word_ptr_ & utils::le(static_cast<word_type>(~mask_)));
             return *this;
         }
 
@@ -709,11 +713,11 @@ class bit_array_base
         constexpr bit_reference& flip() noexcept
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
-            *word_ptr_ ^= psnip_endian_le64(mask_);
+            assert(utils::popcount(mask_) == 1);
+            *word_ptr_ ^= utils::le(mask_);
             return *this;
         }
-    private:
+      private:
         word_pointer word_ptr_;  //< pointer to word holding the bit.
         word_type mask_;  //< bitmask for referenced bit within `*word_ptr`.
 
@@ -731,7 +735,15 @@ class bit_array_base
           mask_{mask}
         {
             assert(word_ptr_ != nullptr);
-            assert(psnip_builtin_popcount64(mask_) == 1);
+            assert(utils::popcount(mask_) == 1);
+        }
+
+        template <typename CharT,
+                typename Traits>
+        friend std::basic_ostream<CharT, Traits> &
+        operator<<(std::basic_ostream<CharT, Traits> & os, bit_reference bit)
+        {
+            return os << dpf::to_string<CharT, Traits>(bit);
         }
 
         friend class bit_array_base;                                //< access to c'tor
@@ -755,7 +767,7 @@ template <typename ConcreteBitArrayT,
           typename WordT>
 class bit_iterator_base
 {
-    public:
+  public:
     using difference_type = std::ptrdiff_t;
     using iterator_category = std::random_access_iterator_tag;
     using word_type = typename bit_array_base<ConcreteBitArrayT, WordT>::word_type;
@@ -793,7 +805,7 @@ class bit_iterator_base
         return !(*this < rhs);
     }
 
-    protected:
+  protected:
     /// @brief bitmask for the least-significant bit of a word
     static constexpr word_type lsb = word_type(1);
 
@@ -834,7 +846,7 @@ class bit_iterator_base
         mask_{mask}
     {
         assert(word_ptr_ != nullptr);
-        assert(psnip_builtin_popcount64(mask_) == 1);
+        assert(utils::popcount(mask_) == 1);
     }
     /// @}
 
@@ -869,7 +881,7 @@ class bit_iterator_base
     {
         if (HEDLEY_UNLIKELY(amt == 0)) return;
 
-        difference_type offset = amt + psnip_builtin_ctz64(mask_);
+        difference_type offset = amt + utils::ctz(mask_);
         word_ptr_ += offset / bits_per_word;
         offset %= bits_per_word;
         if (offset < 0)
@@ -894,8 +906,10 @@ class bit_iterator_base
     {
         constexpr auto bits_per_word = bit_iterator_base<ConcreteBitArrayT, WordT>::bits_per_word;
         return bits_per_word*(lhs.word_ptr_ - rhs.word_ptr_)
-            + (psnip_builtin_ctz64(lhs.mask_) - psnip_builtin_ctz64(rhs.mask_));
+            + (utils::ctz(lhs.mask_) - utils::ctz(rhs.mask_));
     }
+
+    friend class setbit_index_iterable<ConcreteBitArrayT, WordT>;
 };  // class bit_iterator_base
 
 template <typename ConcreteBitArrayT,
@@ -903,9 +917,9 @@ template <typename ConcreteBitArrayT,
 class bit_iterator final
   : public bit_iterator_base<ConcreteBitArrayT, WordT>
 {
-    private:
+  private:
     using base = bit_iterator_base<ConcreteBitArrayT, WordT>;
-    public:
+  public:
     using difference_type = std::ptrdiff_t;
     using value_type = typename bit_array_base<ConcreteBitArrayT, WordT>::value_type;
     using reference = typename bit_array_base<ConcreteBitArrayT, WordT>::reference;
@@ -1028,9 +1042,9 @@ template <typename ConcreteBitArrayT,
 class const_bit_iterator final
   : public bit_iterator_base<ConcreteBitArrayT, WordT>
 {
-    private:
+  private:
     using base = bit_iterator_base<ConcreteBitArrayT, WordT>;
-    public:
+  public:
     using difference_type = std::ptrdiff_t;
     using value_type = typename bit_array_base<ConcreteBitArrayT, WordT>::value_type;
     using reference = typename bit_array_base<ConcreteBitArrayT, WordT>::const_reference;
@@ -1165,16 +1179,18 @@ class const_bit_iterator final
     friend class bit_array_base<ConcreteBitArrayT>;
 };  // class bit_array_base::const_bit_iterator
 
-template <std::size_t Nbits>
+template <std::size_t Nbits, typename WordT = psnip_uint64_t>
 class alignas(utils::max_align_v) static_bit_array final
-  : public bit_array_base<static_bit_array<Nbits>>
+  : public bit_array_base<static_bit_array<Nbits, WordT>, WordT>
 {
   private:
-    using base = bit_array_base<static_bit_array<Nbits>>;
+    using base = bit_array_base<static_bit_array<Nbits, WordT>, WordT>;
+  public:
+    using size_type = typename base::size_type;
+  private:
     using word_pointer = typename base::word_pointer;
     using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
-    using size_type = typename base::size_type;
     static constexpr auto bits_per_word = base::bits_per_word;
     /// @brief the number of `word_type`s are being used to represent the
     ///        `size()` bits
@@ -1238,11 +1254,15 @@ class alignas(utils::max_align_v) static_bit_array final
     alignas(utils::max_align_v) std::array<word_type, data_length_+1> data_;
 };
 
+template <typename WordT = psnip_uint64_t>
 class dynamic_bit_array
-  : public bit_array_base<dynamic_bit_array>
+  : public bit_array_base<dynamic_bit_array<WordT>, WordT>
 {
   private:
-    using base = bit_array_base<dynamic_bit_array>;
+    using base = bit_array_base<dynamic_bit_array<WordT>, WordT>;
+  public:
+    using size_type = typename base::size_type;
+  private:
     using word_pointer = typename base::word_pointer;
     using const_word_pointer = typename base::const_word_pointer;
     using word_type = typename base::word_type;
@@ -1257,7 +1277,8 @@ class dynamic_bit_array
     inline explicit dynamic_bit_array(std::size_t nbits,
         allocator alloc = allocator{})
       : data_length_{utils::quotient_ceiling(nbits, bits_per_word)},
-        data_{alloc.allocate_unique_ptr(data_length_+1)}
+        data_{alloc.allocate_unique_ptr(data_length_+1)},
+        num_bits_{nbits}
     {
         if (HEDLEY_UNLIKELY(data_ == nullptr)) throw std::bad_alloc{};
         data_[data_length_] = base::sentinel;
@@ -1334,27 +1355,46 @@ class dynamic_bit_array
 };
 
 /// @brief
-template <typename ConcreteBitArrayT>
-inline constexpr void swap(typename bit_array_base<ConcreteBitArrayT>::bit_reference & lhs,
-    typename bit_array_base<ConcreteBitArrayT>::bit_reference & rhs) noexcept
+template <typename WordT>
+inline constexpr void swap(typename dynamic_bit_array<WordT>::reference & lhs,
+    typename dynamic_bit_array<WordT>::reference & rhs) noexcept
 {
     bool tmp = lhs;
     lhs = rhs;
     rhs = tmp;
 }
 
-template <typename ConcreteBitArrayT>
-inline std::ostream & operator<<(std::ostream & os, typename bit_array_base<ConcreteBitArrayT>::bit_reference bit)
+template <std::size_t Nbits,
+          typename WordT>
+inline constexpr void swap(typename static_bit_array<Nbits, WordT>::reference & lhs,
+    typename static_bit_array<Nbits, WordT>::reference & rhs) noexcept
 {
-    return os << dpf::to_string(bit);
+    bool tmp = lhs;
+    lhs = rhs;
+    rhs = tmp;
 }
+
+namespace utils
+{
+
+template <typename ChildT,
+          typename WordT>
+struct is_bit_array<bit_array_base<ChildT, WordT>> : std::true_type {};
+
+template <std::size_t Nbits,
+          typename WordT>
+struct is_bit_array<static_bit_array<Nbits, WordT>> : std::true_type {};
+
+template <typename WordT>
+struct is_bit_array<dynamic_bit_array<WordT>> : std::true_type {};
+
+}  // namespace utils
 
 }  // namespace dpf
 
 namespace std
 {
 
-// skipcq: CXX-W2017
 template <typename ConcreteBitArrayT,
           typename WordT>
 struct iterator_traits<dpf::bit_iterator<ConcreteBitArrayT, WordT>>
@@ -1370,7 +1410,6 @@ struct iterator_traits<dpf::bit_iterator<ConcreteBitArrayT, WordT>>
     using pointer = typename type::pointer;
 };
 
-// skipcq: CXX-W2017
 template <typename ConcreteBitArrayT,
           typename WordT>
 struct iterator_traits<dpf::const_bit_iterator<ConcreteBitArrayT, WordT>>

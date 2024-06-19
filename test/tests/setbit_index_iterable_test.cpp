@@ -12,8 +12,8 @@ TEST(SetbitIndexIterableTest, BasicUsage)
     auto [buf0, iter0] = dpf::eval_full(dpf0);
     auto [buf1, iter1] = dpf::eval_full(dpf1);
 
-    auto setbit0 = dpf::indices_set_in(buf0),
-         setbit1 = dpf::indices_set_in(buf1);
+    auto setbit0 = dpf::indices_set_in(iter0),
+         setbit1 = dpf::indices_set_in(iter1);
 
     auto it0 = std::begin(setbit0), it0end = std::end(setbit0),
          it1 = std::begin(setbit1), it1end = std::end(setbit1);

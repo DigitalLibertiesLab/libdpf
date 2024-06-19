@@ -3,7 +3,7 @@
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -38,6 +38,7 @@ struct sequence_recipe
     const std::vector<std::size_t> & output_indices() const { return output_indices_; }
     std::size_t num_leaf_nodes() const { return num_leaf_nodes_; }
     const std::vector<std::size_t> & level_endpoints() const { return level_endpoints_; }
+    std::size_t depth() const { return level_endpoints_.size()-1; }
 
   private:
     std::vector<int8_t> recipe_steps_;
@@ -50,10 +51,10 @@ namespace detail
 {
 
 template <typename DpfKey,
-          typename RandomAccessIterator>
-auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
+          typename ForwardIterator>
+auto make_sequence_recipe(ForwardIterator begin, ForwardIterator end)
 {
-    static_assert(std::is_same_v<typename DpfKey::input_type, std::remove_const_t<std::remove_reference_t<decltype(*begin)>>>);
+    static_assert(std::is_same_v<typename DpfKey::input_type, std::decay_t<decltype(*begin)>>);
 
     using dpf_type = DpfKey;
     using input_type = typename DpfKey::input_type;
@@ -65,12 +66,13 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 
     auto mask = dpf_type::msb_mask;
 
-    std::list<RandomAccessIterator> splits{begin, end};
+    std::list<ForwardIterator> splits{begin, end};
 
     std::vector<std::size_t> level_endpoints;
     level_endpoints.push_back(0);
     std::vector<int8_t> recipe_steps;
-    for (std::size_t level_index = 0; level_index < dpf_type::depth; ++level_index, mask>>=1)
+
+    auto func = [&](const bool flip = false)
     {
         // `lower` and `upper` are always adjacent elements of `splits` with `lower` < `upper`
         // [lower, upper) = "block"
@@ -78,7 +80,7 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
         {
             // `upper_bound()` returns iterator to first element where the relevant bit (based on `mask`) is set
             auto it = std::upper_bound(*lower, *upper, mask,
-                [](auto a, auto b){ return a&b; });
+                [&flip](auto a, auto b){ return static_cast<bool>(a&b) ^ flip; });
             if (it == *lower) recipe_steps.push_back(-1);       // right only since first element in "block" requires right traversal
             else if (it == *upper) recipe_steps.push_back(+1);  // left only since no element in "block" requires right traversal
             else
@@ -88,6 +90,15 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
             }
         }
         level_endpoints.push_back(recipe_steps.size());
+    };
+    if (dpf_type::depth > 0)
+    {
+        func(utils::is_signed_integral_v<input_type>);
+        mask >>= 1;
+    }
+    for (std::size_t level_index = 1; level_index < dpf_type::depth; ++level_index, mask>>=1)
+    {
+        func();
     }
 
     std::vector<std::size_t> output_indices;
@@ -107,15 +118,15 @@ auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
 }  // namespace detail
 
 template <typename DpfKey,
-          typename RandomAccessIterator>
-auto make_sequence_recipe(RandomAccessIterator begin, RandomAccessIterator end)
+          typename ForwardIterator>
+auto make_sequence_recipe(ForwardIterator begin, ForwardIterator end)
 {
     return detail::make_sequence_recipe<DpfKey>(begin, end);
 }
 
 template <typename DpfKey,
-          typename RandomAccessIterator>
-auto make_sequence_recipe(const DpfKey &, RandomAccessIterator begin, RandomAccessIterator end)
+          typename ForwardIterator>
+auto make_sequence_recipe(const DpfKey &, ForwardIterator begin, ForwardIterator end)
 {
     return make_sequence_recipe<DpfKey>(begin, end);
 }

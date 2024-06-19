@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -17,37 +17,48 @@
 #include "hedley/hedley.h"
 
 #include "dpf/bit_array.hpp"
+#include "dpf/subinterval_iterable.hpp"
 
 namespace dpf
 {
 
-template <typename ChildT>
+template <typename ChildT,
+          typename WordT>
 class const_setbit_iterator;  // forward declaration
 
-template <typename ChildT>
+template <typename ChildT,
+          typename WordT>
 class setbit_index_iterable
 {
   public:
-    using size_type = typename bit_array_base<ChildT>::size_type;
-    using const_iterator = const_setbit_iterator<ChildT>;
+    using iter = subinterval_iterable<bit_iterator<ChildT, WordT>>;
+    using size_type = typename bit_array_base<ChildT, WordT>::size_type;
+    using word_type = typename bit_array_base<ChildT, WordT>::word_type;
+    using word_pointer = typename bit_array_base<ChildT, WordT>::word_pointer;
+    using const_iterator = const_setbit_iterator<ChildT, WordT>;
+    static constexpr size_type bits_per_word = bit_array_base<ChildT, WordT>::bits_per_word;
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    explicit setbit_index_iterable(const bit_array_base<ChildT> & b, size_type base = 0)
-      : arr_{b}, base_index_{base}
-    { }
+    explicit setbit_index_iterable(const iter & it)
+      : it_{it}, begin_{it_.it_.word_ptr_}, end_{begin_+it.buf_size_}, base_index_{calc_base_index(it_)}, length_{calc_length(it_, base_index_)}
+    {
+        update_bit_array();
+    }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
-    explicit setbit_index_iterable(bit_array_base<ChildT> && b, size_type base = 0)
-      : arr_{b}, base_index_{base}
-    { }
+    explicit setbit_index_iterable(iter && it)
+      : it_{it}, begin_{it_.it_.word_ptr_}, end_{begin_+it.buf_size_}, base_index_{calc_base_index(it_)}, length_{calc_length(it_, base_index_)}
+    {
+        update_bit_array();
+    }
 
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     const_iterator begin() const noexcept
     {
-        return const_iterator{arr_.data(), base_index_,
+        return const_iterator{begin_, base_index_,
             typename const_iterator::const_iterator_begin_tag{}};
     }
     HEDLEY_NO_THROW
@@ -60,7 +71,7 @@ class setbit_index_iterable
     HEDLEY_ALWAYS_INLINE
     const_iterator end() const noexcept
     {
-        return const_iterator{arr_.data() + arr_.data_length(), arr_.size(),
+        return const_iterator{end_, length_,
             typename const_iterator::const_iterator_end_tag{}};
     }
     HEDLEY_NO_THROW
@@ -71,14 +82,67 @@ class setbit_index_iterable
     }
 
   private:
-    const bit_array_base<ChildT> & arr_;
+    const iter & it_;
+    word_pointer begin_;
+    word_pointer end_;
+    size_type length_;
     size_type base_index_;
+
+    static constexpr size_type calc_base_index(const iter & it)
+    {
+        return it.outputs_ == 0 ? it.from_ : utils::quotient_floor(it.from_, it.outputs_) * it.outputs_;
+    }
+
+    static constexpr size_type calc_length(const iter & it, size_type base_index)
+    {
+        return it.outputs_ == 0 ? utils::quotient_ceiling(it.to_, bits_per_word) * bits_per_word : utils::quotient_ceiling(it.to_, it.outputs_) * it.outputs_;
+    }
+
+    // outputs_ == 0 implies generated from eval_sequence
+    //     so no bits need to be zero'd
+    // otherwise generated from eval_interval
+    //     depending on node size, word size, and where the from, to points fall within nodes
+    //     some words will need to be zero'd completely
+    //     while other words just need some bits to be masked out
+    constexpr void update_bit_array()
+    {
+        if (it_.outputs_ == 0)
+        {
+            return;
+        }
+
+        word_type zero = 0;
+        word_type mask = (~word_type(0)) << (it_.from_ % bits_per_word);
+        word_pointer cur = begin_;
+        std::size_t loc = it_.from_ % it_.outputs_;
+
+        while (loc >= bits_per_word)
+        {
+            *cur = zero;
+            ++cur;
+            loc -= bits_per_word;
+        }
+        *cur &= mask;
+
+        mask = (~word_type(0)) >> (bits_per_word - it_.to_ % bits_per_word - 1);
+        cur = end_-1;
+        loc = it_.to_ % it_.outputs_;
+
+        while (loc < it_.outputs_ - bits_per_word)
+        {
+            *cur = zero;
+            --cur;
+            loc += bits_per_word;
+        }
+        *cur &= mask;
+    }
 };  // class dpf::setbit_index_iterable
 
-template <typename ChildT>
+template <typename ChildT,
+          typename WordT>
 class const_setbit_iterator
 {
-    using array_type = bit_array_base<ChildT>;
+    using array_type = bit_array_base<ChildT, WordT>;
   public:
     using value_type = typename array_type::size_type;
     using reference = value_type;
@@ -106,7 +170,7 @@ class const_setbit_iterator
     constexpr reference operator*() const noexcept
     {
         // count trailing zeros -> offset within current_word_
-        return base_index_ + psnip_builtin_ctz64(current_word_);
+        return base_index_ + utils::ctz(current_word_);
     }
 
     HEDLEY_NO_THROW
@@ -131,7 +195,7 @@ class const_setbit_iterator
     const_setbit_iterator & operator--() noexcept
     {
         seek_to_prev_bit();
-        auto clz = psnip_builtin_clz64(current_word_ ^ *word_ptr_);
+        auto clz = utils::clz(current_word_ ^ *word_ptr_);
         current_word_ |= ~(~word_type(0) >> 1) >> clz;
         return *this;
     }
@@ -189,7 +253,7 @@ class const_setbit_iterator
         return !(*this < rhs);
     }
 
-    private:
+  private:
     HEDLEY_NO_THROW
     HEDLEY_ALWAYS_INLINE
     constexpr void seek_to_next_bit() noexcept
@@ -197,7 +261,7 @@ class const_setbit_iterator
         while (HEDLEY_PREDICT(current_word_ == 0, false,
             2.0 / bits_per_word))
         {
-            current_word_ = psnip_endian_le64(*(++word_ptr_));
+            current_word_ = utils::le(*(++word_ptr_));
             base_index_ += bits_per_word;
         }
     }
@@ -210,7 +274,7 @@ class const_setbit_iterator
         while (HEDLEY_PREDICT(lo_bits == 0, false,
             2.0 / bits_per_word))
         {
-            lo_bits = psnip_endian_le64(*(--word_ptr_));
+            lo_bits = utils::le(*(--word_ptr_));
             current_word_ = 0;
             base_index_ -= bits_per_word;
         }
@@ -224,7 +288,7 @@ class const_setbit_iterator
     explicit constexpr const_setbit_iterator(word_pointer word_ptr,
         size_type base_index, const_iterator_begin_tag) noexcept
         : word_ptr_{word_ptr},
-        current_word_{psnip_endian_le64(*word_ptr_)},
+        current_word_{utils::le(*word_ptr_)},
         base_index_{base_index}
     {
         seek_to_next_bit();
@@ -235,7 +299,7 @@ class const_setbit_iterator
     explicit constexpr const_setbit_iterator(word_pointer word_ptr,
         size_type base_index, const_iterator_end_tag) noexcept
         : word_ptr_{word_ptr},
-        current_word_{*word_ptr_},  // psnip_endian_le64(end) is a nop
+        current_word_{*word_ptr_},  // utils::le(end) is a nop
         base_index_{base_index}
     { }
 
@@ -243,33 +307,33 @@ class const_setbit_iterator
     word_type current_word_;
     size_type base_index_;
 
-    template <typename T>
-    friend const_setbit_iterator<T> setbit_index_iterable<T>::begin() const noexcept;
-    template <typename T>
-    friend const_setbit_iterator<T> setbit_index_iterable<T>::end() const noexcept;
+    friend const_setbit_iterator setbit_index_iterable<ChildT, WordT>::begin() const noexcept;
+    friend const_setbit_iterator setbit_index_iterable<ChildT, WordT>::end() const noexcept;
 };  // class dpf::const_setbit_iterator
 
-template <typename ChildT>
+template <typename ChildT,
+          typename WordT>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-dpf::setbit_index_iterable<ChildT> indices_set_in(const bit_array_base<ChildT> & b,
-    std::size_t count_from = 0) noexcept
+dpf::setbit_index_iterable<ChildT, WordT> indices_set_in(const subinterval_iterable<bit_iterator<ChildT, WordT>> & iter) noexcept
 {
-    return dpf::setbit_index_iterable{b, count_from};
+    return dpf::setbit_index_iterable<ChildT, WordT>{iter};
 }
 
-template <typename ChildT>
+template <typename ChildT,
+          typename WordT>
 HEDLEY_PURE
 HEDLEY_ALWAYS_INLINE
-dpf::setbit_index_iterable<ChildT> indices_set_in(bit_array_base<ChildT> && b,
-    std::size_t count_from = 0) noexcept
+dpf::setbit_index_iterable<ChildT, WordT> indices_set_in(subinterval_iterable<bit_iterator<ChildT, WordT>> && iter) noexcept
 {
-    return dpf::setbit_index_iterable{std::forward<bit_array_base<ChildT>>(b), count_from};
+    return dpf::setbit_index_iterable<ChildT, WordT>{std::forward<subinterval_iterable<bit_iterator<ChildT, WordT>>>(iter)};
 }
 
-template <typename ChildT, class UnaryFunction>
+template <typename ChildT,
+          typename WordT,
+          class UnaryFunction>
 HEDLEY_ALWAYS_INLINE
-void for_each_set_index(const bit_array_base<ChildT> & arr, UnaryFunction f)
+void for_each_set_index(const subinterval_iterable<bit_iterator<ChildT, WordT>> & arr, UnaryFunction f)
 {
     for (auto i : indices_set_in(arr)) f(i);
 }
@@ -279,12 +343,12 @@ void for_each_set_index(const bit_array_base<ChildT> & arr, UnaryFunction f)
 namespace std
 {
 
-// skipcq: CXX-W2017
-template <typename ChildT>
-struct iterator_traits<dpf::const_setbit_iterator<ChildT>>
+template <typename ChildT,
+          typename WordT>
+struct iterator_traits<dpf::const_setbit_iterator<ChildT, WordT>>
 {
   private:
-    using type = dpf::const_setbit_iterator<ChildT>;
+    using type = dpf::const_setbit_iterator<ChildT, WordT>;
   public:
     using iterator_category = typename type::iterator_category;
     using difference_type = typename type::difference_type;

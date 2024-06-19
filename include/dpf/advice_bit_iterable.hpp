@@ -26,7 +26,7 @@
 ///              underlying iterable.
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
 /// @author Christopher Jiang <christopher.jiang@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -161,7 +161,7 @@ class advice_bit_iterable_const_iterator
         const advice_bit_iterable_const_iterator &) = default;
 
     advice_bit_iterable_const_iterator & operator=(
-        advice_bit_iterable_const_iterator &&) noexcept = default;
+        advice_bit_iterable_const_iterator &&) = default;
 
     ~advice_bit_iterable_const_iterator() = default;
 

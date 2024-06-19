@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <tagfile>
-  <compound kind="file">
+  <!-- <compound kind="file">
     <name>algorithm</name>
     <filename>cpp/header/algorithm</filename>
     <namespace>std</namespace>
@@ -479,7 +479,7 @@
     <name>version</name>
     <filename>cpp/header/version</filename>
     <namespace>std</namespace>
-  </compound>
+  </compound> -->
   <compound kind="namespace">
     <name>std</name>
     <filename></filename>

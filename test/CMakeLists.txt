@@ -13,11 +13,6 @@ include_directories(../include ../thirdparty ../thirdparty/asio/asio/include)
 link_libraries(gtest_main bsd)
 add_compile_options(-march=native)
 
-option(IGNORE_ATTRIBUTES "Compile with -Wno-ignored-attributes" ON)
-if (IGNORE_ATTRIBUTES)
-    add_compile_options(-Wno-ignored-attributes)
-endif()
-
 option(COVERAGE "Compile with coverage instrumentation" OFF)
 if(COVERAGE)
     add_compile_options(-g -O0 -fno-inline -fno-inline-small-functions -fno-default-inline -fprofile-arcs -ftest-coverage)

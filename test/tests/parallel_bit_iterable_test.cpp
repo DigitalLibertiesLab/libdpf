@@ -10,7 +10,7 @@ TEST(ParallelBitIterableTest, BasicUsageBatchSize02)
     using input_type = uint16_t;
     using output_type = dpf::bit;
     using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
-    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array>::value_type::value_type;
+    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array<>>::value_type::value_type;
     const std::size_t bitlength_of_element = dpf::utils::bitlength_of_v<element_type>;
     auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
          memo1 = dpf::make_basic_full_memoizer<dpf_type>();
@@ -47,7 +47,7 @@ TEST(ParallelBitIterableTest, BasicUsageBatchSize04)
     using input_type = uint16_t;
     using output_type = dpf::bit;
     using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
-    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array>::value_type::value_type;
+    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array<>>::value_type::value_type;
     const std::size_t bitlength_of_element = dpf::utils::bitlength_of_v<element_type>;
     auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
          memo1 = dpf::make_basic_full_memoizer<dpf_type>();
@@ -90,7 +90,7 @@ TEST(ParallelBitIterableTest, BasicUsageBatchSize08)
     using input_type = uint16_t;
     using output_type = dpf::bit;
     using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
-    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array>::value_type::value_type;
+    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array<>>::value_type::value_type;
     const std::size_t bitlength_of_element = dpf::utils::bitlength_of_v<element_type>;
     auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
          memo1 = dpf::make_basic_full_memoizer<dpf_type>();
@@ -146,7 +146,7 @@ TEST(ParallelBitIterableTest, BasicUsageBatchSize16)
     using input_type = uint16_t;
     using output_type = dpf::bit;
     using dpf_type = dpf::utils::dpf_type_t<dpf::prg::aes128, dpf::prg::aes128, input_type, output_type>;
-    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array>::value_type::value_type;
+    using element_type = typename dpf::parallel_const_bit_iterator<test_size, dpf::dynamic_bit_array<>>::value_type::value_type;
     const std::size_t bitlength_of_element = dpf::utils::bitlength_of_v<element_type>;
     auto memo0 = dpf::make_basic_full_memoizer<dpf_type>(),
          memo1 = dpf::make_basic_full_memoizer<dpf_type>();

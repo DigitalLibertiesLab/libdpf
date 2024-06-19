@@ -2,7 +2,7 @@
 /// @brief
 /// @details
 /// @author Ryan Henry <ryan.henry@ucalgary.ca>
-/// @copyright Copyright (c) 2019-2023 Ryan Henry and [others](@ref authors)
+/// @copyright Copyright (c) 2019-2024 Ryan Henry and [others](@ref authors)
 /// @license Released under a GNU General Public v2.0 (GPLv2) license;
 ///          see [LICENSE.md](@ref license) for details.
 
@@ -117,9 +117,9 @@ struct adl_serializer<dpf::dpf_key<InteriorPRG, ExteriorPRG, InputT, OutputT, Ou
     static void to_json(nlohmann::json & j, const dpf_type & dpf)  // NOLINT(runtime/references)
     {
         j = nlohmann::json{
-            {"root", dpf.root},
-            {"correction_words", dpf.correction_words},
-            {"correction_advice", dpf.correction_advice},
+            {"root", dpf.root()},
+            {"correction_words", dpf.correction_words()},
+            {"correction_advice", dpf.correction_advice()},
             {"leaves", dpf.mutable_leaf_tuple()},
             {"wildcards", dpf.mutable_wildcard_mask()},
             {"beavers", dpf.mutable_beaver_tuple()}
@@ -143,7 +143,7 @@ static std::string to_json(const DpfKey & dpf)
 }
 
 template <typename DpfType>
-static auto from_json(const std::string & json_string)
+static auto from_json(std::string json_string)
 {
     nlohmann::json json = nlohmann::json::parse(json_string);
     return static_cast<DpfType>(json);
