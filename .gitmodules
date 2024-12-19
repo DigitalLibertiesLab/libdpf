@@ -1,0 +1,31 @@
+[submodule "thirdparty/hedley"]
+	path = thirdparty/hedley
+	url = https://github.com/DigitalLibertiesLab/hedley.git
+[submodule "thirdparty/portable-snippets"]
+	path = thirdparty/portable-snippets
+	url = https://github.com/DigitalLibertiesLab/portable-snippets.git
+[submodule "thirdparty/doxygen-awesome-css"]
+	path = thirdparty/doxygen-awesome-css
+	url = https://github.com/DigitalLibertiesLab/doxygen-awesome-css.git
+	branch = libdpf
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = https://github.com/DigitalLibertiesLab/json.git
+[submodule "thirdparty/alglib-cpp"]
+	path = thirdparty/alglib-cpp
+	url = https://github.com/DigitalLibertiesLab/alglib-cpp.git
+[submodule "thirdparty/simde"]
+	path = thirdparty/simde
+	url = https://github.com/DigitalLibertiesLab/simde.git
+[submodule "thirdparty/asio"]
+	path = thirdparty/asio
+	url = https://github.com/DigitalLibertiesLab/asio.git
+[submodule "test/googletest"]
+	path = test/googletest
+	url = https://github.com/google/googletest.git
+[submodule "thirdparty/hash-library"]
+	path = thirdparty/hash-library
+	url = https://github.com/stbrumme/hash-library.git
+[submodule "thirdparty/uint256_t"]
+	path = thirdparty/uint256_t
+	url = https://github.com/DigitalLibertiesLab/uint256_t.git

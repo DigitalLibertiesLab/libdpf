@@ -1,0 +1,20 @@
+/// @namespace dpf
+/// @brief the `::dpf` namespace
+/// @details all components of `libdpf++` live in this namespace (or one of
+///          the namespaces nested within it)
+
+/// @namespace dpf::utils
+/// @brief the `dpf::utils` namespace
+/// @details this is where all the utils go
+
+/// @namespace dpf::details
+/// @brief the `dpf::details` namespace`
+/// @details this is where details go
+
+/// @namespace dpf::internal
+/// @brief the `dpf::internal` namespace
+/// @details this is where internal stuff goes
+
+/// @namespace dpf::wildcards
+/// @brief the `dpf::wildcards` namespace
+/// @details this is where pre-define wildcards go
